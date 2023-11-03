@@ -1,0 +1,17 @@
+{
+  "settings": {
+    "index": {
+      "max_ngram_diff": 8
+    }
+  },
+  "mappings": {
+    "properties": {
+      "title": { "type":"text" },
+      "uuid": { "type":"keyword" },
+      "embeddings_vector": {
+        "type": "dense_vector",
+        "dims": 384
+      }
+    }
+  }
+}

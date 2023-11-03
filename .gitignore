@@ -1,0 +1,4 @@
+*/static/js/javascript.js
+*.pt
+node_modules/
+*.pyc

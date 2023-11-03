@@ -1,0 +1,106 @@
+:root {
+  --bs-body-bg: #000 !important;
+  --bs-body-color: #fff !important;
+}
+
+#chatbot-body {
+  width: 60%;
+}
+
+#canvas-container {
+  height: 4rem !important;
+  width: 50%;
+}
+
+.hamburger {
+  background: transparent;
+  border: transparent;
+  cursor: pointer;
+  padding: 0;
+}
+
+.hamburger__line {
+  background: rgb(203 213 225);
+  margin: 0.25rem 0;
+  height: 0.25rem;
+  width: 2rem;
+  transition: all 0.3s ease-out;
+}
+
+.hamburger:hover .hamburger__line:nth-child(1) {
+  transform: translate(-2px, 4px) rotate(-45deg);
+  width: 16px;
+}
+
+.hamburger:hover .hamburger__line:nth-child(3) {
+  transform: translate(-2px, -4px) rotate(45deg);
+  width: 16px;
+}
+
+#menu {
+  position: absolute;
+  top: 5rem;
+  right: 5rem;
+  border: 0.12rem solid #0f0;
+  border-radius: 0.7rem;
+  box-shadow: 0.06rem 0.06rem 0.31rem #00f, -0.06rem -0.06rem 0.31rem #00f;
+  background-color: #0d0926;
+}
+
+.chatbot-container {
+  position: relative;
+  height: 75vh;
+  overflow-y: auto;
+  /* background-image: url("/static/img/background.png"); */
+}
+
+.chatbot-container:before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-image: url("/static/img/background.png");
+  opacity: 0.2;
+  z-index: -1;
+  pointer-events: none; /* Allow text from the main div be selectable */
+}
+
+.chatbot-sidepanel {
+  width: 40%;
+  border-left: #333 solid 2px;
+}
+
+.notice {
+  color: #00eaff;
+  width: 16rem;
+}
+
+.role {
+  color: #7e92c8;
+}
+
+.modal-content {
+  border: 0.12rem solid #fff;
+  background-color: #0d0926 !important;
+  border-color: #3a395f !important;
+}
+
+.form-control, .form-select {
+  background-color: #3c1679 !important;
+  color: #fff !important;
+}
+
+/* Used to hide mustached content before Vue has loaded */
+[v-cloak] {
+  display: none;
+}
+
+.fade-enter-active, .fade-leave-active {
+  transition: opacity 1.0s ease;
+}
+
+.fade-enter-from, .fade-leave-to {
+  opacity: 0;
+}

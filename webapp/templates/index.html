@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="en" data-bs-theme="dark">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Bordercore AI</title>
+        <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='css/styles.css') }}" />
+    </head>
+    <body class="m-3">
+        <div id="vue-app">
+            <div class="d-flex align-items-center">
+                <h1>Bordercore AI</h1>
+                <div id="canvas-container" class="ms-5"></div>
+                <div class="d-flex flex-grow-1 justify-content-end">
+                    <button class="hamburger" @click="handleMenuClick">
+                        <div class="hamburger__line"></div>
+                        <div class="hamburger__line"></div>
+                        <div class="hamburger__line"></div>
+                </button>
+                </div>
+            </div>
+            <hr />
+            <div class="chatbot-container d-flex">
+                <div id="chatbot-body" class="w-75">
+                    <form>
+                        <div class="d-flex mb-3">
+                            <input v-model="prompt" id="prompt" class="form-control w-75" type="text" placeholder="Send a message"  @keydown.enter.prevent="handleSendMessage"/>
+                            <button type="button" class="btn btn-primary text-nowrap ms-2" @click="handleListen" v-html="getListenButtonValue()" v-cloak></button>
+                            <div class="notice animate__animated animate__pulse animate__slower animate__infinite d-flex align-items-center fw-bold ms-3"><span v-cloak>[[ notice ]]</span></div>
+                        </div>
+                    </form>
+                    <div class="message-container">
+                        <div v-for="message in filteredChatHistory" :key="message.id" :class="'chatbot-' + message.role" class="d-flex px-3 mb-2">
+                            <div v-if="message.role === 'user'" class="role fw-bold me-2" v-cloak>
+                                You
+                            </div>
+                            <div v-else class="role fw-bold me-2" v-cloak>
+                                AI
+                            </div>
+                            <div v-html="getMarkdown(message.content)">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="chatbot-sidepanel d-flex flex-column ps-2" v-cloak>
+                    <div>
+                        Model: <span class="text-info fw-bold">[[ model.model_name ]]</span>
+                    </div>
+                    <div class="mt-3">
+                        <select v-model="model.model_name" class="form-select" @change="handleChangeModel">
+                            <option v-for="model in modelList" :value="model.model">
+                                [[ model.name ]]
+                            </option>
+                        </select>
+                    </div>
+                    <div v-if="speak">
+                        <img src="{{ url_for('static', filename='img/speaker-transparent.png') }}" width="64" height="64" />
+                    </div>
+                </div>
+            </div>
+            <Transition name="fade">
+                <div id="menu" v-show="showMenu" class="p-3" v-cloak>
+                    <h4 class="text-info">
+                        Preferences
+                    </h4>
+                    <hr />
+                    <div class="row g-3 align-items-center">
+                        <div class="col-auto">
+                            <label class="col-form-label">Temperature</label>
+                        </div>
+                        <div class="col-auto">
+                            <Slider v-model="temperature" ref="sliderTemperature" :min="0.0" :max="1.0" :step="0.1" />
+                        </div>
+                        <div class="col-auto">
+                            <span class="form-text">
+                                0 (Predictable) to 1 (Random)
+                            </span>
+                        </div>
+                    </div>
+                    <div class="row g-3 align-items-center">
+                        <div class="col-auto">
+                            <label class="col-form-label">Speed</label>
+                        </div>
+                        <div class="col-auto">
+                            <Slider v-model="lengthScale" ref="sliderSpeed" :min="1" :max="10" :step="1" />
+                        </div>
+                        <div class="col-auto">
+                            <span class="form-text">
+                                1 (Slow) to 10 (Fast)
+                            </span>
+                        </div>
+                    </div>
+                    <div class="row g-3 align-items-center">
+                        <div class="col-auto">
+                            <label for="inputSpeak" class="col-form-label">Speak</label>
+                        </div>
+                        <div class="col-auto">
+                            <input v-model="speak" class="form-check-input" type="checkbox" value="" id="inputSpeak">
+                        </div>
+                        <div class="col-auto">
+                            <span class="form-text">
+                                Give the AI a voice
+                            </span>
+                        </div>
+                    </div>
+                </div>
+            </Transition>
+            <div id="modalProcessing" class="modal fade" tabindex="-1" role="dialog" aria-labelledby="mySmallModalLabel" aria-hidden="true">
+                <div class="modal-dialog modal-sm modal-dialog-centered" role="document">
+                    <h4 class="modal-content p-3 d-flex flex-row justify-content-center">
+                        <div>
+                            Processing...
+                        </div>
+                        <div class="spinner-border ms-2 text-secondary" role="status">
+                            <span class="visually-hidden">Loading...</span>
+                        </div>
+                    </h4>
+                </div>
+            </div>
+        </div>
+        <script id="session" type="application/json">{{ session|tojson|safe }}</script>
+        <script src="{{ url_for('static', filename='js/javascript.js') }}"></script>
+    </body>
+</html>
