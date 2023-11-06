@@ -104,3 +104,88 @@
 .fade-enter-from, .fade-leave-to {
   opacity: 0;
 }
+
+/* Border animation for preferences */
+/* Source: https://codepen.io/jlengstorf/pen/WNPGMJo */
+
+/**
+ * `@property` is required for the animation to work.
+ * Without it, the angle values won’t interpolate properly.
+ *
+ * @see https://dev.to/afif/we-can-finally-animate-css-gradient-kdk
+ */
+@property --bg-angle {
+  inherits: false;
+  initial-value: 0deg;
+  syntax: "<angle>";
+}
+
+/**
+ * To animate the gradient, we set the custom property to 1 full
+ * rotation. The animation starts at the default value of `0deg`.
+ */
+@keyframes spin {
+  to {
+    --bg-angle: 360deg;
+  }
+}
+
+
+#menu {
+  /* add the animation, but pause it by default */
+  animation: spin 2.5s infinite linear;
+
+  /**
+   * Using `background-origin` we can create a “border” using two gradients. And to
+   * make the gradients better-looking, we use OKLCH.
+   *
+   * @see https://developer.mozilla.org/en-US/docs/Web/CSS/background-origin
+   * @see https://evilmartians.com/chronicles/oklch-in-css-why-quit-rgb-hsl
+   */
+  background:
+    /* Background colors don’t work with `background-origin`, so use a gradient. */
+    linear-gradient(
+        to bottom,
+        oklch(0.1 0.2 240 / 0.95),
+        oklch(0.1 0.2 240 / 0.95)
+      )
+      padding-box, /* ends at inner border edges */
+    conic-gradient(
+        from var(--bg-angle) in oklch longer hue,
+        oklch(1 0.37 0) 0 0
+      )
+      border-box; /* extends to outer border edges */
+
+  /* a clear border lets the background gradient shine through */
+  border: 6px solid transparent;
+
+  border-radius: 1rem;
+  box-shadow: 0.125rem 0.25rem 0.25rem 0.5rem oklch(0.1 0.37 315 / 0.25);
+  color: white;
+  padding: 1rem;
+}
+
+/*
+  Style the scrollbars
+*/
+
+::-webkit-scrollbar {
+  width: 0.5rem;
+}
+
+::-webkit-scrollbar-track {
+  border-radius: 0.6rem;
+}
+
+::-webkit-scrollbar-thumb {
+  background-color: #0f0f5e;
+  border-radius: 0.6rem;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background-color: #3d4687;
+}
+
+::-webkit-scrollbar-corner {
+  background-color: rgba(0, 0, 0, 0.5);
+}
