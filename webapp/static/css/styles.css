@@ -12,6 +12,12 @@
   width: 50%;
 }
 
+.message-container {
+  position: relative;
+  height: 75vh;
+  overflow-y: auto;
+}
+
 .hamburger {
   background: transparent;
   border: transparent;
@@ -45,13 +51,6 @@
   border-radius: 0.7rem;
   box-shadow: 0.06rem 0.06rem 0.31rem #00f, -0.06rem -0.06rem 0.31rem #00f;
   background-color: #0d0926;
-}
-
-.chatbot-container {
-  position: relative;
-  height: 75vh;
-  overflow-y: auto;
-  /* background-image: url("/static/img/background.png"); */
 }
 
 .chatbot-container:before {
