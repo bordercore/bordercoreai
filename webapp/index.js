@@ -1,15 +1,18 @@
-import {doPost} from "./util.js";
+import {doPost, encodeWAV} from "./util.js";
 
 import axios from "axios";
 import "bootstrap";
 import "bootstrap/dist/css/bootstrap.min.css";
 import {Modal} from "bootstrap";
+import Oruga from "@oruga-ui/oruga-next";
+import "@oruga-ui/oruga-next/dist/oruga-full.css";
+import "@oruga-ui/oruga-next/dist/oruga-full-vars.css";
 import {computed, createApp, nextTick, onMounted, ref} from "vue";
 import Slider from "./src/components/Slider.vue";
 
 import AudioMotionAnalyzer from "audiomotion-analyzer";
 
-const vm = createApp({
+const app = createApp({
     name: "ChatBot",
     delimiters: ["[[", "]]"],
     components: {
@@ -39,9 +42,11 @@ const vm = createApp({
 
         let audioMotion = null;
         const microPhoneOn = ref(false);
+        const microPhoneVADOn = ref(false);
         let micStream = null;
         let mediaRecorder;
         let audioChunks = [];
+        let myvad = null;
 
         const sliderSpeed = ref(null);
         const sliderTemperature = ref(null);
@@ -96,21 +101,10 @@ const vm = createApp({
                     "model": event.srcElement.value,
                 },
                 (response) => {
-                    console.log(response);
                     modal.hide();
                 },
                 "Error loading model",
             );
-        };
-
-        function handleListen() {
-            if (microPhoneOn.value) {
-                // disconnect and release microphone stream
-                audioMotion.disconnectInput( micStream, true );
-                microPhoneOn.value = false;
-                return;
-            }
-            startRecording();
         };
 
         function handleMenuClick(event) {
@@ -140,7 +134,6 @@ const vm = createApp({
                     "action": "list",
                 },
                 (response) => {
-                    console.log(response);
                     modelList.value = response.data.response;
                 },
                 "Error getting model info",
@@ -160,6 +153,15 @@ const vm = createApp({
             }
             audioMotion.gradient = gradient;
             return audioMotion;
+        };
+
+        function connectStream(stream) {
+            // create stream using audioMotion audio context
+            micStream = audioMotion.audioCtx.createMediaStreamSource(stream);
+            // connect microphone stream to analyzer
+            audioMotion.connectInput(micStream);
+            // mute output to prevent feedback loops from the speakers
+            audioMotion.volume = 0;
         };
 
         async function playWav(base64String) {
@@ -206,20 +208,20 @@ const vm = createApp({
             );
         };
 
-        function startRecording() {
+        async function handleListen() {
+            if (microPhoneOn.value) {
+                // disconnect and release microphone stream
+                audioMotion.disconnectInput( micStream, true );
+                return;
+            }
+
             notice.value = "Listening...";
-            microPhoneOn.value = true;
 
             audioMotion = getOrCreateAudioMotionAnalzyer("rainbow");
 
             navigator.mediaDevices.getUserMedia( {audio: true, video: false} )
                 .then( (stream) => {
-                    // create stream using audioMotion audio context
-                    micStream = audioMotion.audioCtx.createMediaStreamSource( stream );
-                    // connect microphone stream to analyzer
-                    audioMotion.connectInput( micStream );
-                    // mute output to prevent feedback loops from the speakers
-                    audioMotion.volume = 0;
+                    connectStream(stream);
 
                     mediaRecorder = new MediaRecorder(stream);
                     mediaRecorder.start();
@@ -252,7 +254,46 @@ const vm = createApp({
                 });
         };
 
-        onMounted(() => {
+        async function handleListenVAD() {
+            if (microPhoneVADOn.value) {
+                // disconnect and release microphone stream
+                audioMotion.disconnectInput( micStream, true );
+                myvad.pause();
+                return;
+            }
+
+            myvad = await vad.MicVAD.new({
+                onSpeechStart: () => {
+                    notice.value = "Listening...";
+                    audioMotion.gradient = "rainbow";
+                },
+                onSpeechEnd: (audio) => {
+                    notice.value = "";
+                    audioMotion.gradient = "steelblue";
+                    const wavBuffer = encodeWAV(audio);
+                    const blob = new Blob([wavBuffer], {type: "audio/wav"});
+                    const formData = new FormData();
+                    formData.append("audio", blob);
+                    notice.value = "Waiting for speech to text";
+                    axios.post("/speech2text",
+                               formData,
+                               {
+                                   headers: {
+                                       "Content-Type": "multipart/form-data",
+                                   },
+                               }).then((response) => {
+                                   sendMessageToChatbot(response.data.input);
+                                   // Delete the current audio in case we want to start a new recording later
+                                   audioChunks = [];
+                               });
+                },
+            });
+            audioMotion = getOrCreateAudioMotionAnalzyer("rainbow");
+            connectStream(myvad.stream);
+            myvad.start();
+        };
+
+       onMounted(() => {
             const menuDiv = document.getElementById("menu");
             const prefsDiv = document.getElementsByClassName("hamburger")[0];
 
@@ -270,10 +311,6 @@ const vm = createApp({
             getModelInfo();
             getModelList();
 
-            // menuDiv.addEventListener("click", function(event) {
-            //     event.stopPropagation();
-            // });
-
             document.getElementById("prompt").focus();
         });
 
@@ -282,6 +319,7 @@ const vm = createApp({
             filteredChatHistory,
             handleChangeModel,
             handleListen,
+            handleListenVAD,
             handleMenuClick,
             handleSendMessage,
             getListenButtonValue,
@@ -289,6 +327,8 @@ const vm = createApp({
             lengthScale,
             model,
             modelList,
+            microPhoneOn,
+            microPhoneVADOn,
             notice,
             prompt,
             showMenu,
@@ -299,7 +339,8 @@ const vm = createApp({
         };
     },
 });
-vm.mount("#vue-app");
+app.use(Oruga, {});
+app.mount("#vue-app");
 
 import "animate.css";
 

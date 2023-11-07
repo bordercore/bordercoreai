@@ -5,7 +5,9 @@
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
         <title>Bordercore AI</title>
         <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='css/styles.css') }}" />
-    </head>
+        <script src="https://cdn.jsdelivr.net/npm/onnxruntime-web/dist/ort.js"></script>
+        <script src="https://cdn.jsdelivr.net/npm/@ricky0123/vad-web@0.0.7/dist/bundle.min.js"></script>
+        </head>
     <body class="m-3">
         <div id="vue-app">
             <div class="d-flex align-items-center">
@@ -25,8 +27,16 @@
                     <form>
                         <div class="d-flex mb-3">
                             <input v-model="prompt" id="prompt" class="form-control w-75" type="text" placeholder="Send a message"  @keydown.enter.prevent="handleSendMessage"/>
-                            <button type="button" class="btn btn-primary text-nowrap ms-2" @click="handleListen" v-html="getListenButtonValue()" v-cloak></button>
-                            <div class="notice animate__animated animate__pulse animate__slower animate__infinite d-flex align-items-center fw-bold ms-3"><span v-cloak>[[ notice ]]</span></div>
+                            <div class="d-flex align-items-center ms-4">
+                                <o-switch v-model="microPhoneOn" @click="handleListen">
+                                    Mic
+                                </o-switch>
+                            </div>
+                            <div class="d-flex align-items-center ms-4 me-4">
+                                <o-switch v-model="microPhoneVADOn" @click="handleListenVAD">
+                                    VAD
+                                </o-switch>
+                            </div>
                         </div>
                     </form>
                     <div class="message-container">
@@ -55,6 +65,9 @@
                     </div>
                     <div v-if="speak">
                         <img src="{{ url_for('static', filename='img/speaker-transparent.png') }}" width="64" height="64" />
+                    </div>
+                    <div class="notice animate__animated animate__pulse animate__slower animate__infinite d-flex align-items-center fw-bold ms-3 mt-5">
+                        <span v-cloak>[[ notice ]]</span>
                     </div>
                 </div>
             </div>
@@ -90,12 +103,11 @@
                             </span>
                         </div>
                     </div>
-                    <div class="row g-3 align-items-center">
+                    <div class="row align-items-center mt-2">
                         <div class="col-auto">
-                            <label for="inputSpeak" class="col-form-label">Speak</label>
-                        </div>
-                        <div class="col-auto">
-                            <input v-model="speak" class="form-check-input" type="checkbox" value="" id="inputSpeak">
+                            <o-switch id="speakSwitch" v-model="speak" position="left">
+                                Speak
+                            </o-switch>
                         </div>
                         <div class="col-auto">
                             <span class="form-text">

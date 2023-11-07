@@ -164,9 +164,27 @@
   padding: 1rem;
 }
 
-/*
-  Style the scrollbars
-*/
+/* Oruga switches */
+
+#speakSwitch {
+  .o-switch__label {
+    margin-left: 0 !important;
+  }
+
+  .o-switch__check {
+    margin-left: 0.5rem !important;
+  }
+}
+
+.o-switch__check--checked {
+  background: #3d4687 !important;
+}
+
+.o-switch__label {
+  margin-left: 1rem !important;
+}
+
+/* Style the scrollbars */
 
 ::-webkit-scrollbar {
   width: 0.5rem;
