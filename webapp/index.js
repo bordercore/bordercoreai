@@ -107,10 +107,6 @@ const app = createApp({
             );
         };
 
-        function handleMenuClick(event) {
-            showMenu.value = !showMenu.value;
-        };
-
         function handleSendMessage(event) {
             sendMessageToChatbot(prompt.value);
         };
@@ -320,7 +316,6 @@ const app = createApp({
             handleChangeModel,
             handleListen,
             handleListenVAD,
-            handleMenuClick,
             handleSendMessage,
             getListenButtonValue,
             getMarkdown,
