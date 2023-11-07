@@ -164,6 +164,11 @@
   padding: 1rem;
 }
 
+/* Slider */
+.custom-slider {
+  width: 11rem;
+}
+
 /* Oruga switches */
 
 #speakSwitch {

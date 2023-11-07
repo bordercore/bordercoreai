@@ -21,6 +21,10 @@
             type: Number,
             default: 50,
         },
+        showInput: {
+            type: Boolean,
+            default: true,
+        },
     });
 
     // define emits for the slider component
@@ -74,6 +78,7 @@
             @input="({ target }) => (sliderValue = parseFloat(target.value))"
         >
         <input
+            v-if="showInput"
             :value="sliderValue"
             type="number"
             :min="min"
@@ -82,6 +87,9 @@
             class="input ms-3"
             @input="({ target }) => (sliderValue = parseFloat(target.value))"
         >
+        <span v-else class="ms-2">
+            <strong>{{ modelValue }}</strong>
+        </span>
     </div>
 </template>
 <style scoped>
