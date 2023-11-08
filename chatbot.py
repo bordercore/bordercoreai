@@ -19,9 +19,6 @@ import sounddevice  # Adding this eliminates an annoying warning
 import websockets
 from pydub import AudioSegment
 from pydub.playback import play
-from rich.panel import Panel
-from rich.style import Style
-from rich.text import Text
 
 from govee import control_lights
 
@@ -142,20 +139,6 @@ ASSISTANT:
 
         os.remove(filename)
 
-    def update_status(self, status, error=False):
-
-        if error:
-            color = self.color_error
-        else:
-            color = self.color_normal
-
-        self.layout["status"].update(
-            Panel(
-                Text(status, justify="center", style=Style(color=color)),
-                title=Text("Status")
-            )
-        )
-
     def get_wake_word(self):
         return f"{self.ASSISTANT_NAME}".lower()
 
@@ -188,7 +171,7 @@ ASSISTANT:
             if self.args["assistant"]:
                 print("Processing...")
 
-            result = self.send_message_to_model_stream(user_input)
+            _ = self.send_message_to_model_stream(user_input)
 
             # if self.args["speak"]:
             #     self.speak(result)
@@ -321,7 +304,6 @@ ASSISTANT:
     def get_model_list():
         response = requests.post(URI_INFO, json={"action": "list"})
         return ChatBot.get_personal_model_names([x for x in response.json()["result"] if x != "None"])
-        # return [x for x in response.json()["result"] if x != "None"]
 
     @staticmethod
     def get_personal_model_names(model_list):
