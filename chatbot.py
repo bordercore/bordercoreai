@@ -23,6 +23,8 @@ from rich.panel import Panel
 from rich.style import Style
 from rich.text import Text
 
+from govee import control_lights
+
 warnings.filterwarnings("ignore", message=".*The 'nopython' keyword.*")
 
 from whisper_mic.whisper_mic import WhisperMic
@@ -290,6 +292,10 @@ ASSISTANT:
         return self.result
 
     def send_message_to_model(self, prompt_raw):
+
+        if self.args["control_lights"] == "true":
+            return control_lights(prompt_raw)
+
         self.handle_prompt(prompt_raw)
         request = self.get_chatbot_params()
 

@@ -31,6 +31,7 @@ const app = createApp({
             ],
         );
         let id = 1;
+        const controlLights = ref(false);
         const lengthScale = ref(session.length_scale || 5);
         const model = ref({});
         const modelList = ref([]);
@@ -192,6 +193,7 @@ const app = createApp({
                     "length_scale": mapSpeechRateValue(lengthScale.value),
                     "speak": speak.value,
                     "temperature": temperature.value,
+                    "control_lights": controlLights.value,
                 },
                 (response) => {
                     addMessage("assistant", response.data.response);
@@ -312,6 +314,7 @@ const app = createApp({
 
         return {
             chatHistory,
+            controlLights,
             filteredChatHistory,
             handleChangeModel,
             handleListen,

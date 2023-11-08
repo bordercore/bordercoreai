@@ -108,6 +108,7 @@ def chat():
     speak = request.form.get("speak", "false")
     length_scale = float(request.form.get("length_scale", 1.0))  # Playback speed
     temperature = float(request.form.get("temperature", 0.7))
+    control_lights = request.form.get("control_lights", False)
 
     session.permanent = True
     session["speak"] = speak.lower() == "true"  # Convert "true" to True, for example
@@ -122,7 +123,8 @@ def chat():
         voice=False,
         speak=False,
         temperature=temperature,
-        new_conversation=True
+        new_conversation=True,
+        control_lights=control_lights
     )
     response = chatbot.send_message_to_model(message)
 
