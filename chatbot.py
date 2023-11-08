@@ -312,7 +312,8 @@ ASSISTANT:
             "TheBloke_CodeLlama-13B-Instruct-AWQ": "CodeLlama 13B Instruct",
             "TheBloke_Karen_theEditor_13B-AWQ": "Karen 13B",
             "TheBloke_WizardLM-13B-V1-0-Uncensored-SuperHOT-8K-GPTQ": "Floyd -- WizardLM 13B",
-            "TheBloke_dolphin-2.1-mistral-7B-AWQ": "Daisy -- Mistral 7B"
+            "TheBloke_dolphin-2.1-mistral-7B-AWQ": "Daisy -- Mistral 7B",
+            "TheBloke_dolphin-2.2.1-mistral-7B-AWQ": "Dolphin 2.2 -- Mistral 7B",
         }
         models = [
             {
