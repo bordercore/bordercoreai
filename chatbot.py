@@ -38,7 +38,6 @@ DISCORD_TOKEN_FLOYD = ""
 DISCORD_CHANNEL_ID = ""
 
 MODE = "chat"
-TEMPERATURE = 0.7
 
 CYAN = "\033[36m"
 WHITE = "\033[37m"
@@ -96,12 +95,13 @@ class ChatBot():
 
     DISCORD_BOT_NAME = "FloydBot"
     ASSISTANT_NAME = "Luna"
+    TEMPERATURE = 0.7
 
     def __init__(self, context, **args):
         self.context = context
         self.args = args
         if "temperature" in self.args:
-            TEMPERATURE = self.args["temperature"]
+            self.TEMPERATURE = self.args["temperature"]
 
     def get_prompt(self, prompt):
 
@@ -207,7 +207,7 @@ ASSISTANT:
             # in presets/preset-name.yaml are used instead of the individual numbers.
             "preset": "None",
             "do_sample": True,
-            "temperature": TEMPERATURE,
+            "temperature": self.TEMPERATURE,
             "top_p": 0.1,
             "typical_p": 1,
             "epsilon_cutoff": 0,  # In units of 1e-4
