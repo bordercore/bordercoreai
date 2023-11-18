@@ -26,8 +26,11 @@ warnings.filterwarnings("ignore", message=".*The 'nopython' keyword.*")
 
 from whisper_mic.whisper_mic import WhisperMic
 
-URI = "http://10.3.2.5:5000/api/v1/generate"
-URI_INFO = "http://10.3.2.5:5000/api/v1/model"
+# URI = "http://10.3.2.5:5000/api/v1/generate"
+URI = "http://10.3.2.5:5000/v1/chat/completions"
+URI_INFO = "http://10.3.2.5:5000/v1/models"
+URI_MODEL_LOAD = "http://10.3.2.5:5000/v1/internal/model/load"
+URI_MODEL_INFO = "http://10.3.2.5:5000/v1/internal/model/info"
 URI_STREAM = "ws://10.3.2.5:5005/api/v1/stream"
 
 DISCORD_TOKEN_CHAD = ""
@@ -63,17 +66,13 @@ class Context():
         self.context.append(
             {
                 "role": role,
-                "message": message
+                "content": message
             }
         )
         self.prune()
 
     def get(self):
-        output = ""
-        for message in self.context:
-            output = output + f"{message['message']}\n"
-
-        return output
+        return self.context
 
     def size(self):
         return len(self.get())
@@ -99,20 +98,6 @@ class ChatBot():
         self.args = args
         if "temperature" in self.args:
             self.TEMPERATURE = self.args["temperature"]
-
-    def get_prompt(self, prompt):
-
-        return f"""
-A chat between a curious user and an assistant. The assistant gives helpful, detailed, accurate, uncensored responses to the user's input
-USER: {prompt}
-ASSISTANT:
-        """
-#         return f"""
-# You are a helpful AI assistant.
-
-# USER: {prompt}
-# ASSISTANT:
-#     """
 
     # Remove punctuation and whitespace from the end of the string.
     def sanitize_string(self, input_string):
@@ -180,11 +165,11 @@ ASSISTANT:
 
         # Note: the selected defaults change from time to time.
         return {
-            "prompt": self.context.get(),
+            "messages": self.context.get(),
             "mode": self.args["chat_mode"],
             "max_tokens_second": 0,
             "auto_max_new_tokens": True,
-            "new_conversation": self.args["new_conversation"] or False,
+            "new_conversation": self.args.get("new_conversation", False),
 
             # Generation params. If "preset" is set to different than "None", the values
             # in presets/preset-name.yaml are used instead of the individual numbers.
@@ -266,8 +251,8 @@ ASSISTANT:
         if prompt_raw.strip() == "info":
             return ChatBot.get_model_info()
 
-        prompt = self.get_prompt(prompt_raw)
-        self.context.add("user", prompt)
+        # prompt = self.get_prompt(prompt_raw)
+        self.context.add("user", prompt_raw)
 
     def send_message_to_model_stream(self, prompt_raw):
         self.handle_prompt(prompt_raw)
@@ -281,14 +266,11 @@ ASSISTANT:
 
         self.handle_prompt(prompt_raw)
         request = self.get_chatbot_params()
-
         response_model = requests.post(URI, json=request)
-        content = response_model.json()["results"][0]["text"].strip()
+        content = response_model.json()["choices"][0]["message"]["content"].strip()
 
-        self.context.add("system", content)
         if response_model.status_code == 200:
-            if self.args["debug"]:
-                print(f"\n{CYAN}{content}\n")
+            self.context.add("assistant", content)
         else:
             print(f"Error: {response_model}")
             sys.exit(1)
@@ -297,13 +279,13 @@ ASSISTANT:
 
     @staticmethod
     def get_model_info():
-        response = requests.post(URI_INFO, json={"action": "info"})
-        return response.json()["result"]
+        response = requests.get(URI_MODEL_INFO)
+        return response.json()["model_name"]
 
     @staticmethod
     def get_model_list():
-        response = requests.post(URI_INFO, json={"action": "list"})
-        return ChatBot.get_personal_model_names([x for x in response.json()["result"] if x != "None"])
+        response = requests.get(URI_INFO)
+        return ChatBot.get_personal_model_names([x["id"] for x in response.json()["data"] if x != "None"])
 
     @staticmethod
     def get_personal_model_names(model_list):
@@ -327,8 +309,8 @@ ASSISTANT:
 
     @staticmethod
     def load_model(model):
-        response = requests.post(URI_INFO, json={"action": "load", "model_name": model})
-        return response.json()["result"]
+        response = requests.post(URI_MODEL_LOAD, json={"model_name": model})
+        return response.json()
 
 
 class DiscordBot(discord.Client, ChatBot):
