@@ -1,7 +1,5 @@
 import base64
 import io
-import json
-import string
 import warnings
 import wave
 
@@ -9,12 +7,12 @@ import ffmpeg
 import numpy as np
 import piper
 import sounddevice  # Adding this eliminates an annoying warning
+from chatbot import ChatBot, Context
 from flask import Flask, jsonify, render_template, request, session
 
 warnings.filterwarnings("ignore", message=".*The 'nopython' keyword.*")
 
 import whisper
-from chatbot import ChatBot, Context
 
 app = Flask(__name__)
 app.debug = True
@@ -23,35 +21,11 @@ app.secret_key = ""
 
 @app.route("/")
 def main():
-    print(session)
 
     return render_template(
         "index.html",
         session=dict(session)
     )
-
-
-# Remove punctuation and whitespace from the end of the string.
-# def sanitize_string(input_string):
-#     while input_string and input_string[-1] in string.punctuation:
-#         input_string = input_string[:-1]
-#     return input_string.strip()
-
-
-# @app.route("/foobar", methods=["GET"])
-# def foobar():
-
-#     from whisper_mic.whisper_mic import WhisperMic
-#     mic = WhisperMic(model="small", energy=100)
-#     print("Listening...")
-#     user_input = sanitize_string(mic.listen())
-#     print("Done listening...")
-
-#     return jsonify(
-#         {
-#             "input": user_input
-#         }
-#     )
 
 
 @app.route("/speech2text", methods=["POST"])

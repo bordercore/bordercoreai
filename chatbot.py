@@ -24,13 +24,18 @@ from govee import control_lights
 
 warnings.filterwarnings("ignore", message=".*The 'nopython' keyword.*")
 
-from whisper_mic.whisper_mic import WhisperMic
+try:
+    from whisper_mic.whisper_mic import WhisperMic
+except ImportError:
+    # WhisperMic will complain if imported without X. This is fine, since
+    #  sometimes I want to run this code as a daemon using supervisor
+    pass
 
-# URI = "http://10.3.2.5:5000/api/v1/generate"
-URI = "http://10.3.2.5:5000/v1/chat/completions"
-URI_INFO = "http://10.3.2.5:5000/v1/models"
-URI_MODEL_LOAD = "http://10.3.2.5:5000/v1/internal/model/load"
-URI_MODEL_INFO = "http://10.3.2.5:5000/v1/internal/model/info"
+HOST = "http://10.3.2.5:5000"
+URI_CHAT = f"{HOST}/v1/chat/completions"
+URI_MODEL_INFO = f"{HOST}/v1/internal/model/info"
+URI_MODEL_LIST = f"{HOST}/v1/models"
+URI_MODEL_LOAD = f"{HOST}/v1/internal/model/load"
 URI_STREAM = "ws://10.3.2.5:5005/api/v1/stream"
 
 DISCORD_TOKEN_CHAD = ""
@@ -284,7 +289,7 @@ class ChatBot():
 
     @staticmethod
     def get_model_list():
-        response = requests.get(URI_INFO)
+        response = requests.get(URI_MODEL_LIST)
         return ChatBot.get_personal_model_names([x["id"] for x in response.json()["data"] if x != "None"])
 
     @staticmethod
