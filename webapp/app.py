@@ -140,7 +140,7 @@ def chat():
     )
 
 
-@app.route("/info", methods=["POST"])
+@app.route("/info")
 def info():
 
     info = ChatBot.get_model_info()
@@ -152,14 +152,14 @@ def info():
     )
 
 
-@app.route("/list", methods=["POST"])
+@app.route("/list")
 def list():
 
-    list = ChatBot.get_model_list()
+    model_list = ChatBot.get_model_list()
 
     return jsonify(
         {
-            "response": list,
+            "response": model_list,
         }
     )
 

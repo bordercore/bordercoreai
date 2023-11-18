@@ -1,4 +1,4 @@
-import {doPost, encodeWAV} from "./util.js";
+import {doGet, doPost, encodeWAV} from "./util.js";
 
 import axios from "axios";
 import "bootstrap";
@@ -113,10 +113,8 @@ const app = createApp({
         };
 
         function getModelInfo() {
-            doPost(
+            doGet(
                 "/info",
-                {
-                },
                 (response) => {
                     model.value = response.data.response;
                 },
@@ -125,15 +123,12 @@ const app = createApp({
         };
 
         function getModelList() {
-            doPost(
+            doGet(
                 "/list",
-                {
-                    "action": "list",
-                },
                 (response) => {
                     modelList.value = response.data.response;
                 },
-                "Error getting model info",
+                "Error getting model list",
             );
         };
 
