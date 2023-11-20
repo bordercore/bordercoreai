@@ -1,5 +1,4 @@
 import argparse
-import asyncio
 import json
 import logging
 import os
@@ -16,6 +15,7 @@ import pysbd
 import requests
 import simpleaudio
 import sounddevice  # Adding this eliminates an annoying warning
+import sseclient
 import websockets
 from pydub import AudioSegment
 from pydub.playback import play
@@ -36,7 +36,6 @@ URI_CHAT = f"{HOST}/v1/chat/completions"
 URI_MODEL_INFO = f"{HOST}/v1/internal/model/info"
 URI_MODEL_LIST = f"{HOST}/v1/models"
 URI_MODEL_LOAD = f"{HOST}/v1/internal/model/load"
-URI_STREAM = "ws://10.3.2.5:5005/api/v1/stream"
 
 DISCORD_TOKEN_CHAD = os.environ.get("DISCORD_TOKEN_CHAD")
 DISCORD_TOKEN_FLOYD = os.environ.get("DISCORD_TOKEN_FLOYD")
@@ -131,10 +130,6 @@ class ChatBot():
         faster_audio = audio.speedup(playback_speed=1.2)
         play(faster_audio)
 
-        # wave_obj = simpleaudio.WaveObject.from_wave_file(filename)
-        # play_obj = wave_obj.play()
-        # play_obj.wait_done()
-
         os.remove(filename)
 
     def get_wake_word(self):
@@ -164,15 +159,12 @@ class ChatBot():
                         sys.exit(0)
                 print(f"\b\b\b\b\b\b\b\b\b\b\b\b{user_input}")
             else:
-                user_input = input(f"{MAGENTA}Prompt:{END} ")
+                user_input = input(f"\n\n{MAGENTA}You{END} ")
 
             if self.args["assistant"]:
                 print("Processing...")
 
-            _ = self.send_message_to_model_stream(user_input)
-
-            # if self.args["speak"]:
-            #     self.speak(result)
+            self.send_message_to_model_stream(user_input)
 
     def get_chatbot_params(self):
 
@@ -219,58 +211,37 @@ class ChatBot():
             "stopping_strings": []
         }
 
-    async def run(self, context):
-        request = self.get_chatbot_params()
-
-        async with websockets.connect(URI_STREAM, ping_interval=None) as websocket:
-            await websocket.send(json.dumps(request))
-
-            # yield context  # Remove this if you just want to see the reply
-
-            while True:
-                incoming_data = await websocket.recv()
-                incoming_data = json.loads(incoming_data)
-
-                if incoming_data["event"] == "text_stream":
-                    yield incoming_data["text"]
-                elif incoming_data["event"] == "stream_end":
-                    return
-
-    def check_if_sentence(self):
-        sentences = seg.segment(self.fragment)
-        if len(sentences) > 1:
-            if self.args["speak"]:
-                self.speak(sentences[0])
-            self.fragment = " ".join(sentences[1:])
-
-    async def print_response_stream(self, prompt):
-        self.fragment = ""
-        self.result = ""
-        print(f"{CYAN}")
-
-        async for response in self.run(prompt):
-            if response.strip() == "":
-                continue
-            self.result += response
-            self.fragment += response
-            print(response, end="")
-            sys.stdout.flush()  # If we don't flush, we won't see tokens in realtime.
-            self.check_if_sentence()
-
-        print(f"{END}\n")
-        self.context.add("system", self.result)
-
     def handle_prompt(self, prompt_raw):
         if prompt_raw.strip() == "info":
             return ChatBot.get_model_info()
 
-        # prompt = self.get_prompt(prompt_raw)
         self.context.add("user", prompt_raw)
 
     def send_message_to_model_stream(self, prompt_raw):
         self.handle_prompt(prompt_raw)
-        asyncio.run(self.print_response_stream(prompt_raw))
-        return self.result
+
+        data = {
+            "mode": "instruct",
+            "stream": True,
+            "messages": self.context.get()
+        }
+
+        headers = {
+            "Content-Type": "application/json"
+        }
+
+        stream_response = requests.post(URI_CHAT, headers=headers, json=data, verify=False, stream=True)
+        client = sseclient.SSEClient(stream_response)
+
+        assistant_message = ""
+        print(f"\n{MAGENTA}AI{CYAN} ", end="")
+        for event in client.events():
+            payload = json.loads(event.data)
+            chunk = payload["choices"][0]["message"]["content"]
+            assistant_message += chunk
+            print(chunk, end="")
+
+        self.context.add("assistant", assistant_message)
 
     def send_message_to_model(self, prompt_raw):
 
@@ -279,7 +250,7 @@ class ChatBot():
 
         self.handle_prompt(prompt_raw)
         request = self.get_chatbot_params()
-        response_model = requests.post(URI, json=request)
+        response_model = requests.post(URI_CHAT, json=request)
         content = response_model.json()["choices"][0]["message"]["content"].strip()
 
         if response_model.status_code == 200:
