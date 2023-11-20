@@ -38,8 +38,8 @@ URI_MODEL_LIST = f"{HOST}/v1/models"
 URI_MODEL_LOAD = f"{HOST}/v1/internal/model/load"
 URI_STREAM = "ws://10.3.2.5:5005/api/v1/stream"
 
-DISCORD_TOKEN_CHAD = ""
-DISCORD_TOKEN_FLOYD = ""
+DISCORD_TOKEN_CHAD = os.environ.get("DISCORD_TOKEN_CHAD")
+DISCORD_TOKEN_FLOYD = os.environ.get("DISCORD_TOKEN_FLOYD")
 DISCORD_CHANNEL_ID = ""
 
 MODE = "chat"
@@ -50,7 +50,7 @@ MAGENTA = "\033[35m"
 RED = "\033[91m"
 END = "\033[0m"
 
-openai.api_key = ""
+openai.api_key = os.environ.get("OPENAI_API_KEY")
 
 seg = pysbd.Segmenter(language="en", clean=False)
 
@@ -60,6 +60,14 @@ logger.setLevel(logging.WARNING)
 # Create a NullHandler to suppress the log messages
 null_handler = logging.NullHandler()
 logger.addHandler(null_handler)
+
+
+if not DISCORD_TOKEN_CHAD:
+    print("Error: DISCORD_TOKEN_CHAD not found.")
+    sys.exit(1)
+if not DISCORD_TOKEN_FLOYD:
+    print("Error: DISCORD_TOKEN_FLOYD not found.")
+    sys.exit(1)
 
 
 class Context():
