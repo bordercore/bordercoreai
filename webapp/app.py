@@ -32,7 +32,7 @@ def main():
 def speech2text():
 
     audio = request.files["audio"].read()
-    model = whisper.load_model("base")
+    model = whisper.load_model("small")
     result = model.transcribe(load_audio(audio))
 
     return jsonify(
