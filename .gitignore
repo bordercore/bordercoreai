@@ -1,4 +1,6 @@
 */static/js/javascript.js
+*.onnx
 *.pt
 node_modules/
 *.pyc
+*.wasm
