@@ -1,4 +1,5 @@
-*/static/js/javascript.js
+webapp/static/js/javascript.js
+webapp/vad.worklet.bundle.min.js
 *.onnx
 *.pt
 node_modules/
