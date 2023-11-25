@@ -71,8 +71,10 @@ if not DISCORD_TOKEN_FLOYD:
 
 class Context():
 
-    context = []
     context_limit = 4096
+
+    def __init__(self):
+        self.context = []
 
     def add(self, role, message):
         self.context.append(
@@ -85,6 +87,9 @@ class Context():
 
     def get(self):
         return self.context
+
+    def set(self, context):
+        self.context = context
 
     def size(self):
         return len(self.get())
@@ -212,10 +217,15 @@ class ChatBot():
         }
 
     def handle_prompt(self, prompt_raw):
-        if prompt_raw.strip() == "info":
-            return ChatBot.get_model_info()
+        # If we're passing in a list, assume this is the complete
+        # chat history and replace it with the new
+        if type(prompt_raw) is list:
+            self.context.set(prompt_raw)
+        else:
+            if prompt_raw.strip() == "info":
+                return ChatBot.get_model_info()
 
-        self.context.add("user", prompt_raw)
+            self.context.add("user", prompt_raw)
 
     def send_message_to_model_stream(self, prompt_raw):
         self.handle_prompt(prompt_raw)

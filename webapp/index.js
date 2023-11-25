@@ -184,7 +184,7 @@ const app = createApp({
             doPost(
                 "/chat",
                 {
-                    "message": message,
+                    "message": JSON.stringify(chatHistory.value),
                     "length_scale": mapSpeechRateValue(lengthScale.value),
                     "speak": speak.value,
                     "temperature": temperature.value,

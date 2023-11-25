@@ -1,5 +1,6 @@
 import base64
 import io
+import json
 import warnings
 import wave
 
@@ -78,7 +79,7 @@ def map_speech_rate_value(x):
 @app.route("/chat", methods=["POST"])
 def chat():
 
-    message = request.form["message"]
+    message = json.loads(request.form["message"])
     speak = request.form.get("speak", "false")
     length_scale = float(request.form.get("length_scale", 1.0))  # Playback speed
     temperature = float(request.form.get("temperature", 0.7))
