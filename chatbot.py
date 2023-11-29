@@ -16,11 +16,10 @@ import requests
 import simpleaudio
 import sounddevice  # Adding this eliminates an annoying warning
 import sseclient
-import websockets
 from pydub import AudioSegment
 from pydub.playback import play
 
-from govee import control_lights
+from govee import run_command
 
 warnings.filterwarnings("ignore", message=".*The 'nopython' keyword.*")
 
@@ -255,19 +254,22 @@ class ChatBot():
 
     def send_message_to_model(self, prompt_raw):
 
-        if self.args["control_lights"] == "true":
-            return control_lights(prompt_raw)
-
-        self.handle_prompt(prompt_raw)
-        request = self.get_chatbot_params()
-        response_model = requests.post(URI_CHAT, json=request)
-        content = response_model.json()["choices"][0]["message"]["content"].strip()
-
-        if response_model.status_code == 200:
-            self.context.add("assistant", content)
+        if self.args.get("control_lights", None) == "true":
+            try:
+                run_command("chatgpt", prompt_raw[-1]["content"])
+                content = "Done"
+            except Exception as e:
+                content = f"Error: {e}"
         else:
-            print(f"Error: {response_model}")
-            sys.exit(1)
+            self.handle_prompt(prompt_raw)
+            request = self.get_chatbot_params()
+            response = requests.post(URI_CHAT, json=request)
+            content = response.json()["choices"][0]["message"]["content"].strip()
+
+            if response.status_code == 200:
+                self.context.add("assistant", content)
+            else:
+                content = f"Error: {response}"
 
         return content
 

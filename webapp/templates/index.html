@@ -66,10 +66,12 @@
                     <div v-if="speak">
                         <img src="{{ url_for('static', filename='img/speaker-transparent.png') }}" width="64" height="64" />
                     </div>
-                    <o-switch v-model="controlLights" position="left">
-                        Control Lights
-                    </o-switch>
-                    <div class="notice animate__animated animate__pulse animate__slower animate__infinite d-flex align-items-center fw-bold ms-3 mt-5">
+                    <div class="text-info d-flex">
+                        <o-switch id="controlLightsSwitch" v-model="controlLights" position="left" class="mt-3">
+                            Control Lights
+                        </o-switch>
+                    </div>
+                    <div v-if="notice" class="notice animate__animated animate__pulse animate__slower animate__infinite d-flex align-items-center fw-bold ms-3 mt-5">
                         <span v-cloak>[[ notice ]]</span>
                     </div>
                 </div>
