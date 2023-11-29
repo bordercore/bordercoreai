@@ -341,7 +341,7 @@ class FloydBot(DiscordBot):
     async def on_message(self, message):
         content = self.get_message_content(message.content)
         if content == "info":
-            await message.channel.send("Model: " + ChatBot.get_model_info()["model_name"])
+            await message.channel.send("Model: " + ChatBot.get_model_info())
         elif content == "reset":
             await message.channel.send("Deleting current context...")
             self.context.clear()
