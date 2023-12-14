@@ -349,7 +349,7 @@ class FloydBot(DiscordBot):
             await super().on_message(message)
 
 
-class ChatGTPDiscordBot(DiscordBot):
+class ChatGPTDiscordBot(DiscordBot):
 
     def __init__(self, **kwargs):
         self.discord_bot_name = "ChadBot"
@@ -392,7 +392,7 @@ if __name__ == "__main__":
     elif mode == "chatgpt":
         intents = discord.Intents.default()
         intents.message_content = True
-        client = ChatGTPDiscordBot(intents=intents)
+        client = ChatGPTDiscordBot(intents=intents)
         client.context = context
         client.args = {"debug": args.debug, "chat_mode": chat_mode}
         client.run(DISCORD_TOKEN_CHAD)
