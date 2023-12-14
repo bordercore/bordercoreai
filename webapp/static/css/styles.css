@@ -3,10 +3,6 @@
   --bs-body-color: #fff !important;
 }
 
-#chatbot-body {
-  width: 60%;
-}
-
 #canvas-container {
   height: 4rem !important;
   width: 50%;
@@ -53,6 +49,11 @@
   background-color: #0d0926;
 }
 
+.chatbot-container {
+  display: grid;
+  grid-template-columns: 4fr 2fr;
+}
+
 .chatbot-container:before {
   content: "";
   position: absolute;
@@ -67,7 +68,6 @@
 }
 
 .chatbot-sidepanel {
-  width: 40%;
   border-left: #333 solid 2px;
 }
 

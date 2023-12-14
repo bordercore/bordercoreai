@@ -22,17 +22,17 @@
                 </div>
             </div>
             <hr />
-            <div class="chatbot-container d-flex">
-                <div id="chatbot-body" class="w-75">
+            <div class="chatbot-container">
+                <div>
                     <form>
-                        <div class="d-flex mb-3">
+                        <div class="d-flex align-items-center mb-3">
                             <input v-model="prompt" id="prompt" class="form-control w-75" type="text" placeholder="Send a message"  @keydown.enter.prevent="handleSendMessage"/>
-                            <div class="d-flex align-items-center ms-4">
+                            <div class="ms-4">
                                 <o-switch v-model="microPhoneOn" @click="handleListen">
                                     Mic
                                 </o-switch>
                             </div>
-                            <div class="d-flex align-items-center ms-4 me-4">
+                            <div class="ms-4 me-4">
                                 <o-switch v-model="microPhoneVADOn" @click="handleListenVAD">
                                     VAD
                                 </o-switch>
@@ -52,7 +52,7 @@
                         </div>
                     </div>
                 </div>
-                <div class="chatbot-sidepanel d-flex flex-column ps-2" v-cloak>
+                <div class="chatbot-sidepanel ps-2" v-cloak>
                     <div class="text-info">
                         Selected Model
                     </div>
