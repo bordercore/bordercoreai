@@ -33,7 +33,7 @@ except ImportError:
 HOST = "http://10.3.2.5:5000"
 URI_CHAT = f"{HOST}/v1/chat/completions"
 URI_MODEL_INFO = f"{HOST}/v1/internal/model/info"
-URI_MODEL_LIST = f"{HOST}/v1/models"
+URI_MODEL_LIST = f"{HOST}/v1/internal/model/list"
 URI_MODEL_LOAD = f"{HOST}/v1/internal/model/load"
 
 DISCORD_TOKEN_CHAD = os.environ.get("DISCORD_TOKEN_CHAD")
@@ -281,7 +281,7 @@ class ChatBot():
     @staticmethod
     def get_model_list():
         response = requests.get(URI_MODEL_LIST)
-        return ChatBot.get_personal_model_names([x["id"] for x in response.json()["data"] if x != "None"])
+        return ChatBot.get_personal_model_names(response.json()["model_names"])
 
     @staticmethod
     def get_personal_model_names(model_list):
