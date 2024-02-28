@@ -104,7 +104,7 @@ def chat():
     response = chatbot.send_message_to_model(message)
 
     audio = None
-    if speak:
+    if session["speak"]:
         audio = generate_audio(response, length_scale)
 
     return jsonify(
