@@ -46,7 +46,7 @@ export function doGet(url, callback, errorMsg = "", responseType = "json") {
  * @param {string} successMsg The message to display on success.
  * @param {string} errorMsg The message to display on error.
  */
-export function doPost(url, params, callback, successMsg = "", errorMsg = "") {
+export function doPost(url, params, callback, successMsg = "", errorCallback = () => {}) {
     const bodyFormData = new URLSearchParams();
 
     for (const [key, value] of Object.entries(params)) {
@@ -57,27 +57,17 @@ export function doPost(url, params, callback, successMsg = "", errorMsg = "") {
         method: "POST",
         data: bodyFormData,
     }).then((response) => {
-        if (response.data.status && response.data.status === "Warning") {
+        if (response.data.status && response.data.status !== "OK") {
             EventBus.$emit(
                 "toast",
                 {
                     title: "Error",
                     body: response.data.message,
-                    variant: "warning",
+                    variant: response.data.status === "Warning" ? "warning" : "danger",
                     autoHide: false,
                 },
             );
-            console.log("Warning: ", response.data.message);
-        } else if (response.data.status && response.data.status !== "OK") {
-            EventBus.$emit(
-                "toast",
-                {
-                    title: "Error",
-                    body: response.data.message,
-                    variant: "danger",
-                    autoHide: false,
-                },
-            );
+            errorCallback();
             console.log("Error: ", response.data.message);
         } else {
             const body = response.data.message ? response.data.message : successMsg;
@@ -104,6 +94,7 @@ export function doPost(url, params, callback, successMsg = "", errorMsg = "") {
                     autoHide: false,
                 },
             );
+            errorCallback();
             console.error(error);
         });
 }

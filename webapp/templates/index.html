@@ -74,6 +74,9 @@
                     <div v-if="notice" class="notice animate__animated animate__pulse animate__slower animate__infinite d-flex align-items-center fw-bold ms-3 mt-5">
                         <span v-cloak>[[ notice ]]</span>
                     </div>
+                    <div v-if="error" class="notice animate__animated animate__pulse animate__slower w-100 mt-3 px-3" :class="'text-' + error.variant">
+                        <span v-cloak>[[ error.body ]]</span>
+                    </div>
                 </div>
             </div>
             <Transition name="fade">

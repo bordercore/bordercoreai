@@ -12,6 +12,14 @@ import Slider from "./src/components/Slider.vue";
 
 import AudioMotionAnalyzer from "audiomotion-analyzer";
 
+const EventBus = {
+  $on: (...args) => emitter.on(...args),
+  $once: (...args) => emitter.once(...args),
+  $off: (...args) => emitter.off(...args),
+    $emit: (...args) => emitter.emit(...args),
+};
+window.EventBus = EventBus;
+
 const app = createApp({
     name: "ChatBot",
     delimiters: ["[[", "]]"],
@@ -32,6 +40,7 @@ const app = createApp({
         );
         let id = 1;
         const controlLights = ref(false);
+        const error = ref("");
         const lengthScale = ref(session.length_scale || 5);
         const model = ref({});
         const modelList = ref([]);
@@ -102,9 +111,18 @@ const app = createApp({
                     "model": event.srcElement.value,
                 },
                 (response) => {
-                    modal.hide();
+                    setTimeout(function(){
+                        modal.hide();
+                    }, 500);
+                    if (response.status !== "OK") {
+                    }
                 },
-                "Error loading model",
+                "",
+                () => {
+                    setTimeout(function(){
+                        modal.hide();
+                    }, 500);
+                }
             );
         };
 
@@ -197,7 +215,7 @@ const app = createApp({
                         playWav(response.data.audio);
                     }
                 },
-                "Error",
+                "",
             );
         };
 
@@ -301,15 +319,20 @@ const app = createApp({
                 }
             });
 
-            getModelInfo();
-            getModelList();
+           EventBus.$on("toast", (payload) => {
+               error.value = payload;
+           });
 
-            document.getElementById("prompt").focus();
+           getModelInfo();
+           getModelList();
+
+           document.getElementById("prompt").focus();
         });
 
         return {
             chatHistory,
             controlLights,
+            error,
             filteredChatHistory,
             handleChangeModel,
             handleListen,
@@ -339,14 +362,6 @@ import "animate.css";
 
 // Use the tiny-emitter package as an event bus
 import emitter from "tiny-emitter/instance";
-
-const EventBus = {
-  $on: (...args) => emitter.on(...args),
-  $once: (...args) => emitter.once(...args),
-  $off: (...args) => emitter.off(...args),
-    $emit: (...args) => emitter.emit(...args),
-};
-window.EventBus = EventBus;
 
 import hljs from "highlight.js";
 const markdown = require("markdown-it")({
