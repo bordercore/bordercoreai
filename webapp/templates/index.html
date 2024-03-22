@@ -4,7 +4,7 @@
         <meta charset="UTF-8">
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
         <title>Bordercore AI</title>
-        <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='css/styles.css') }}" />
+        <link rel="stylesheet" type="text/css" href="{{ url_for("static", filename="css/styles.css") }}" />
         <script src="https://cdn.jsdelivr.net/npm/onnxruntime-web/dist/ort.js"></script>
         <script src="https://cdn.jsdelivr.net/npm/@ricky0123/vad-web@0.0.7/dist/bundle.min.js"></script>
         </head>
@@ -71,7 +71,7 @@
                             Control Lights
                         </o-switch>
                     </div>
-                    <div v-if="notice" class="notice animate__animated animate__pulse animate__slower animate__infinite d-flex align-items-center fw-bold ms-3 mt-5">
+                    <div v-if="notice" class="notice animate__animated animate__pulse animate__slower animate__infinite d-flex align-items-center fw-bold ms-3 mt-5 px-3">
                         <span v-cloak>[[ notice ]]</span>
                     </div>
                     <div v-if="error" class="notice animate__animated animate__pulse animate__slower w-100 mt-3 px-3" :class="'text-' + error.variant">
