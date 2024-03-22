@@ -134,7 +134,7 @@ const app = createApp({
             doGet(
                 "/info",
                 (response) => {
-                    model.value = response.data.response;
+                    model.value = response.data;
                 },
                 "Error getting model info",
             );
@@ -144,7 +144,7 @@ const app = createApp({
             doGet(
                 "/list",
                 (response) => {
-                    modelList.value = response.data.response;
+                    modelList.value = response.data;
                 },
                 "Error getting model list",
             );

@@ -119,24 +119,14 @@ def chat():
 def info():
 
     info = ChatBot.get_model_info()
-
-    return jsonify(
-        {
-            "response": info,
-        }
-    )
+    return jsonify(info)
 
 
 @app.route("/list")
 def list():
 
     model_list = ChatBot.get_model_list()
-
-    return jsonify(
-        {
-            "response": model_list,
-        }
-    )
+    return jsonify(model_list)
 
 
 @app.route("/load", methods=["POST"])
@@ -145,11 +135,7 @@ def load():
     model = request.form["model"]
     info = ChatBot.load_model(model)
 
-    return jsonify(
-        {
-            "response": info,
-        }
-    )
+    return jsonify(info)
 
 
 # Source: https://github.com/openai/whisper/discussions/380#discussioncomment-3928648
