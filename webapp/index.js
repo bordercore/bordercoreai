@@ -3,6 +3,10 @@ import {doGet, doPost, encodeWAV} from "./util.js";
 import axios from "axios";
 import "bootstrap";
 import "bootstrap/dist/css/bootstrap.min.css";
+import {library} from "@fortawesome/fontawesome-svg-core";
+import {FontAwesomeIcon} from "@fortawesome/vue-fontawesome";
+import {faRotateLeft} from "@fortawesome/free-solid-svg-icons";
+library.add(faRotateLeft);
 import {Modal} from "bootstrap";
 import Oruga from "@oruga-ui/oruga-next";
 import "@oruga-ui/oruga-next/dist/oruga-full.css";
@@ -24,6 +28,7 @@ const app = createApp({
     name: "ChatBot",
     delimiters: ["[[", "]]"],
     components: {
+        FontAwesomeIcon,
         Slider,
     },
     setup() {
@@ -126,6 +131,10 @@ const app = createApp({
             );
         };
 
+        function handleRegenerate(event) {
+            sendMessageToChatbot(prompt.value, true);
+        };
+
         function handleSendMessage(event) {
             sendMessageToChatbot(prompt.value);
         };
@@ -195,8 +204,14 @@ const app = createApp({
             });
         }
 
-        async function sendMessageToChatbot(message) {
-            addMessage("user", message);
+        async function sendMessageToChatbot(message, regenerate=false) {
+            // If we're regenerating the response, remove the last response from
+            //   chatHistory and resubmit everything else to the AI.
+            if (regenerate) {
+                chatHistory.value.pop();
+            } else {
+                addMessage("user", message);
+            }
             prompt.value = "";
             notice.value = "Waiting for the AI";
             doPost(
@@ -337,6 +352,7 @@ const app = createApp({
             handleChangeModel,
             handleListen,
             handleListenVAD,
+            handleRegenerate,
             handleSendMessage,
             getListenButtonValue,
             getMarkdown,

@@ -27,6 +27,9 @@
                     <form>
                         <div class="d-flex align-items-center mb-3">
                             <input v-model="prompt" id="prompt" class="form-control w-75" type="text" placeholder="Send a message"  @keydown.enter.prevent="handleSendMessage"/>
+                            <div v-if="chatHistory.length > 2" class="icon ms-3" @click="handleRegenerate">
+                                <font-awesome-icon icon="rotate-left" />
+                            </div>
                             <div class="ms-4">
                                 <o-switch v-model="microPhoneOn" @click="handleListen">
                                     Mic

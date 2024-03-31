@@ -3,6 +3,9 @@
     "build": "webpack"
   },
   "dependencies": {
+    "@fortawesome/fontawesome-svg-core": "^6.5.1",
+    "@fortawesome/free-solid-svg-icons": "^6.5.1",
+    "@fortawesome/vue-fontawesome": "^3.0.6",
     "@oruga-ui/oruga-next": "^0.5.10",
     "@ricky0123/vad-web": "^0.0.12",
     "animate.css": "^4.1.1",

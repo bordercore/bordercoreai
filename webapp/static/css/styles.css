@@ -39,6 +39,15 @@
   width: 16px;
 }
 
+.icon {
+  &:hover {
+    filter: drop-shadow(0.12rem 0.12rem 0.62rem #fff) drop-shadow(-0.12rem -0.12rem 0.62rem #fff);
+    color: #9f9fdd;
+    cursor: pointer;
+    transform: translateY(-0.06rem);
+  }
+}
+
 #menu {
   position: absolute;
   top: 5rem;
