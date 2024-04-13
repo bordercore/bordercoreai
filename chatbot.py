@@ -16,6 +16,7 @@ import requests
 import simpleaudio
 import sounddevice  # Adding this eliminates an annoying warning
 import sseclient
+import yaml
 from pydub import AudioSegment
 from pydub.playback import play
 
@@ -58,6 +59,10 @@ logger.setLevel(logging.WARNING)
 # Create a NullHandler to suppress the log messages
 null_handler = logging.NullHandler()
 logger.addHandler(null_handler)
+
+
+with open("../api/models.yaml", "r") as file:
+    model_info = yaml.safe_load(file)
 
 
 if not DISCORD_TOKEN_CHAD:
@@ -285,18 +290,10 @@ class ChatBot():
 
     @staticmethod
     def get_personal_model_names(model_list):
-        mapping = {
-            "TheBloke_CodeLlama-7B-Instruct-AWQ": "CodeLlama 7B Instruct",
-            "TheBloke_CodeLlama-13B-Instruct-AWQ": "CodeLlama 13B Instruct",
-            "TheBloke_Karen_theEditor_13B-AWQ": "Karen 13B",
-            "TheBloke_WizardLM-13B-V1-0-Uncensored-SuperHOT-8K-GPTQ": "Floyd -- WizardLM 13B",
-            "TheBloke_dolphin-2.1-mistral-7B-AWQ": "Daisy -- Mistral 7B",
-            "TheBloke_dolphin-2.2.1-mistral-7B-AWQ": "Dolphin 2.2 -- Mistral 7B",
-        }
         models = [
             {
                 "model": x,
-                "name": mapping.get(x, x)
+                "name": model_info.get(x, {"name": x}).get("name", x)
             }
             for x in
             model_list
