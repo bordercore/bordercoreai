@@ -1,0 +1,6 @@
+Mistral-7B-Instruct-v0.2:
+  template: llama2
+NousResearch_Nous-Hermes-2-Mistral-7B-DPO:
+  template: chatml
+solidrust_dolphin-2.8-mistral-7b-v02-AWQ:
+  template: chatml
