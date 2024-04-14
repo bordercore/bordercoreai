@@ -286,7 +286,10 @@ class ChatBot():
     @staticmethod
     def get_model_list():
         response = requests.get(URI_MODEL_LIST)
-        return ChatBot.get_personal_model_names(response.json()["model_names"])
+        return sorted(
+            ChatBot.get_personal_model_names(response.json()["model_names"]),
+            key=lambda x: x["name"].lower()
+        )
 
     @staticmethod
     def get_personal_model_names(model_list):
