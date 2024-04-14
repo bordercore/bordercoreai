@@ -41,48 +41,60 @@ def get_model_list(path):
     return directories
 
 
-def get_prompt_template(tokenizer, messages, template_type="llama2"):
+def get_prompt_template(tokenizer, messages):
 
     # Remove any 'system' roles to avoid this error when using a llama2 template:
     #   jinja2.exceptions.TemplateError: Conversation roles must alternate user/assistant/user/assistant/...
     # Is this required for all template types?
-
     messages = [x for x in messages if x["role"] != "system"]
+
     if hasattr(tokenizer, "chat_template"):
         return tokenizer.apply_chat_template(messages, tokenize=False, add_generation_prompt=True)
-    elif template_type == "chatml":
-
-        # Use chatML
-        prompt_template = """
-    <|im_start|>system
-    {system_message}<|im_end|>
-    <|im_start|>user
-    {prompt}<|im_end|>
-    <|im_start|>assistant
-            """
-        return prompt_template.format(system_message="", prompt=messages[0]["content"])
     else:
-        print("Warning: no chat template found. Using llama2.")
-        # Assume llama2
-        foobar = ""
-        for message in messages:
-            if message["role"] == "system":
-                next
-            elif message["role"] == "user":
-                foobar += f"<s>[INST]{message['content']}[/INST]"
-            elif message["role"] == "assistant":
-                foobar += f"{message['content']}</s>"
-        return foobar
-        # prompt_template = "<s>[INST]{prompt}[/INST]{response}</s>"
-        # return prompt_template.format(system_message="", prompt=messages[0]["content"])
+        template_type = get_template_type()
+        if template_type == "chatml":
+
+            # Use chatML
+            prompt_template = """
+        <|im_start|>system
+        {system_message}<|im_end|>
+        <|im_start|>user
+        {prompt}<|im_end|>
+        <|im_start|>assistant
+                """
+            return prompt_template.format(system_message="", prompt=messages[0]["content"])
+        else:
+            print("Warning: no chat template found. Using llama2.")
+            # Assume llama2
+            template = ""
+            for message in messages:
+                if message["role"] == "system":
+                    next
+                elif message["role"] == "user":
+                    # template += f"<s>[INST]{message['content']}[/INST]"
+                    template += f"[INST]{message['content']}[/INST]"
+                elif message["role"] == "assistant":
+                    template += f"{message['content']}</s>"
+            return template
+            # prompt_template = "<s>[INST]{prompt}[/INST]{response}</s>"
+            # return prompt_template.format(system_message="", prompt=messages[0]["content"])
+
+
+def get_template_type():
+    if shared.model_name in model_info and "template" in model_info[shared.model_name]:
+        return model_info[shared.model_name]["template"]
+    else:
+        print("No chat template found in models.yaml. Using llama2.")
+        return "llama2"
 
 
 def parse_response(response):
 
     if shared.model_name in model_info:
-        if model_info[shared.model_name]["template"] == "llama2":
+        template_type = get_template_type()
+        if template_type == "llama2":
             return parse_response_llama2(response)
-        elif model_info[shared.model_name]["template"] == "chatml":
+        elif template_type == "chatml":
             return parse_response_chatml(response)
         else:
             print("No chat template found in models.yaml. Using llama2.")
