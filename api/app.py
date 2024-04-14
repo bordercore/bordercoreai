@@ -9,6 +9,7 @@ import re
 
 import torch
 import yaml
+from awq import AutoAWQForCausalLM
 from flask import Flask, jsonify, request
 from transformers import (AutoModelForCausalLM, BitsAndBytesConfig,
                           GenerationConfig)
@@ -27,7 +28,7 @@ with open("models.yaml", "r") as file:
 
 
 def get_model_list(path):
-    """Return a list of all directories within the specified path."""
+    """Return a list of all models within the specified path."""
 
     if not os.path.isdir(path):
         raise ValueError(f"The specified path: {path} is not a valid directory.")
@@ -157,7 +158,18 @@ def load_model(model_name):
     if "quantization_config" not in model_config:
         args["quantization_config"] = get_quantization_config()
 
-    shared.model = AutoModelForCausalLM.from_pretrained(model_path, **args)
+    if "awq" in model_name.lower():
+        shared.model = AutoAWQForCausalLM.from_quantized(
+            model_path,
+            **args,
+            fuse_layers=True,
+            safetensors=True,
+            max_new_tokens=512,
+            batch_size=1,
+            max_memory={0: "8000MiB", "cpu": "99GiB"}
+        ).model
+    else:
+        shared.model = AutoModelForCausalLM.from_pretrained(model_path, **args)
 
     shared.tokenizer = get_tokenizer(model_path)
 
