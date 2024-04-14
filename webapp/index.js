@@ -5,8 +5,8 @@ import "bootstrap";
 import "bootstrap/dist/css/bootstrap.min.css";
 import {library} from "@fortawesome/fontawesome-svg-core";
 import {FontAwesomeIcon} from "@fortawesome/vue-fontawesome";
-import {faRotateLeft} from "@fortawesome/free-solid-svg-icons";
-library.add(faRotateLeft);
+import {faPlus, faRotateLeft} from "@fortawesome/free-solid-svg-icons";
+library.add(faPlus, faRotateLeft);
 import {Modal} from "bootstrap";
 import Oruga from "@oruga-ui/oruga-next";
 import "@oruga-ui/oruga-next/dist/oruga-full.css";
@@ -129,6 +129,10 @@ const app = createApp({
                     }, 500);
                 }
             );
+        };
+
+        function handleNewChat(event) {
+            chatHistory.value.length = 1;
         };
 
         function handleRegenerate(event) {
@@ -352,6 +356,7 @@ const app = createApp({
             handleChangeModel,
             handleListen,
             handleListenVAD,
+            handleNewChat,
             handleRegenerate,
             handleSendMessage,
             getListenButtonValue,
