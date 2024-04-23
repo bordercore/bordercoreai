@@ -3,29 +3,21 @@
 # $ PYTHONPATH=. FLASK_RUN_HOST=0.0.0.0 flask --app app run
 
 import gc
-import json
 import os
-import re
 import time
 
 import torch
-import yaml
-from awq import AutoAWQForCausalLM
 from flask import Flask, jsonify, request
-from transformers import (AutoModelForCausalLM, BitsAndBytesConfig,
-                          GenerationConfig)
+from transformers import GenerationConfig
 
 import shared
 
+from ..inference import Inference
 from ..util import get_tokenizer
 
 app = Flask(__name__)
 
 device = "cuda:0" if torch.cuda.is_available() else "cpu"
-
-
-with open("models.yaml", "r") as file:
-    model_info = yaml.safe_load(file)
 
 
 def get_model_list(path):
@@ -40,110 +32,6 @@ def get_model_list(path):
         if os.path.isdir(full_path) or full_path.endswith("gguf"):
             directories.append(item)
     return directories
-
-
-def get_prompt_template(tokenizer, messages):
-
-    # Remove any 'system' roles to avoid this error when using a llama2 template:
-    #   jinja2.exceptions.TemplateError: Conversation roles must alternate user/assistant/user/assistant/...
-    # Is this required for all template types?
-    messages = [x for x in messages if x["role"] != "system"]
-
-    if hasattr(tokenizer, "chat_template"):
-        return tokenizer.apply_chat_template(messages, tokenize=False, add_generation_prompt=True)
-    else:
-        template_type = get_template_type()
-        if template_type == "chatml":
-
-            # Use chatML
-            prompt_template = """
-        <|im_start|>system
-        {system_message}<|im_end|>
-        <|im_start|>user
-        {prompt}<|im_end|>
-        <|im_start|>assistant
-                """
-            return prompt_template.format(system_message="", prompt=messages[0]["content"])
-        else:
-            print("Warning: no chat template found. Using llama2.")
-            # Assume llama2
-            template = ""
-            for message in messages:
-                if message["role"] == "system":
-                    next
-                elif message["role"] == "user":
-                    # template += f"<s>[INST]{message['content']}[/INST]"
-                    template += f"[INST]{message['content']}[/INST]"
-                elif message["role"] == "assistant":
-                    template += f"{message['content']}</s>"
-            return template
-            # prompt_template = "<s>[INST]{prompt}[/INST]{response}</s>"
-            # return prompt_template.format(system_message="", prompt=messages[0]["content"])
-
-
-def get_template_type():
-    if shared.model_name in model_info and "template" in model_info[shared.model_name]:
-        return model_info[shared.model_name]["template"]
-    else:
-        print("No chat template found in models.yaml. Using llama2.")
-        return "llama2"
-
-
-def parse_response(response):
-
-    if shared.model_name in model_info:
-        template_type = get_template_type()
-        if template_type == "llama2":
-            return parse_response_llama2(response)
-        elif template_type == "chatml":
-            return parse_response_chatml(response)
-        else:
-            print("No chat template found in models.yaml. Using llama2.")
-            return parse_response_llama2(response)
-    else:
-        return response
-
-
-def parse_response_chatml(response):
-    # pattern = ".*\n assistant\n(.*)"
-    pattern = ".*assistant\n(.*)"
-    matches = re.search(pattern, response, re.DOTALL)
-
-    # Extracting and printing the matched content
-    if matches:
-        return matches.group(1).strip()
-    else:
-        return f"Error: not able to parse response: {response}"
-
-
-def parse_response_llama2(response):
-    pattern = r".*\[\/INST\](.*)"
-    matches = re.search(pattern, response, re.DOTALL)
-
-    # Extracting and printing the matched content
-    if matches:
-        return matches.group(1).strip()
-    else:
-        return f"Error: not able to parse response: {response}"
-
-
-def get_quantization_config():
-    return BitsAndBytesConfig(
-        load_in_4bit=True,
-        bnb_4bit_compute_dtype=torch.bfloat16,
-        bnb_4bit_quant_type="nf4",
-    )
-
-
-def get_model_config(model_path):
-    config_file = f"{model_path}/config.json"
-
-    if not os.path.isdir(model_path) or not os.path.isfile(config_file):
-        return {}
-
-    with open(config_file, "r") as file:
-        config = json.load(file)
-    return config
 
 
 def unload_model():
@@ -162,28 +50,13 @@ def load_model(model_name):
     shared.model_name = model_name
 
     model_path = f"{shared.model_dir}/{shared.model_name}"
-    model_config = get_model_config(model_path)
 
-    args = {
-        "device_map": {"": 0}
-    }
-
-    if "quantization_config" not in model_config:
-        args["quantization_config"] = get_quantization_config()
-
-    if "awq" in model_name.lower():
-        shared.model = AutoAWQForCausalLM.from_quantized(
-            model_path,
-            **args,
-            fuse_layers=True,
-            safetensors=True,
-            max_new_tokens=512,
-            batch_size=1,
-            max_memory={0: "8000MiB", "cpu": "99GiB"}
-        ).model
-    else:
-        shared.model = AutoModelForCausalLM.from_pretrained(model_path, **args)
-
+    inference = Inference(
+        dir=shared.model_dir,
+        model_name=shared.model_name,
+        quantize=True
+    )
+    shared.model = inference.load_model()
     shared.tokenizer = get_tokenizer(model_path)
 
 
@@ -221,20 +94,29 @@ def load():
 def main(id=None):
 
     payload = request.json
-    # prompt_template = get_prompt_template(shared.tokenizer, [payload["messages"][-1]])
-    prompt_template = get_prompt_template(shared.tokenizer, payload["messages"])
+
+    inference = Inference(dir=shared.model_dir, model_name=shared.model_name)
+    prompt_template = inference.get_prompt_template(
+        shared.tokenizer,
+        payload["messages"]
+    )
 
     token_input = shared.tokenizer(
         prompt_template,
         return_tensors="pt"
     ).input_ids.to(device)
 
+    terminators = [
+        shared.tokenizer.eos_token_id,
+        shared.tokenizer.convert_tokens_to_ids("<|eot_id|>")  # LLama3
+    ]
+
     generation_config = GenerationConfig(
         do_sample=True,
         temperature=payload["temperature"] if "temperature" in payload else shared.temperature,
         top_p=0.95,
         top_k=40,
-        eos_token_id=shared.tokenizer.eos_token_id,
+        eos_token_id=terminators,
         max_new_tokens=750
     )
 
@@ -253,6 +135,5 @@ def main(id=None):
     text_output = shared.tokenizer.decode(token_output, skip_special_tokens=True)
 
     print(f"{text_output=}")
-    response = parse_response(text_output)
-    print(f"{response=}")
-    return jsonify(choices=[{"message": {"content": response}}], status="OK")
+    response = inference.parse_response(text_output)
+    return jsonify(choices=[{"message": {"content": response, "speed": speed}}], status="OK")

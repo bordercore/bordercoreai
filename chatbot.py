@@ -61,7 +61,7 @@ null_handler = logging.NullHandler()
 logger.addHandler(null_handler)
 
 
-with open("../api/models.yaml", "r") as file:
+with open("../models.yaml", "r") as file:
     model_info = yaml.safe_load(file)
 
 
