@@ -105,11 +105,12 @@ def chat():
 
     audio = None
     if session["speak"]:
-        audio = generate_audio(response, length_scale)
+        audio = generate_audio(response["content"], length_scale)
 
     return jsonify(
         {
-            "response": response,
+            "response": response["content"],
+            "speed": response["speed"],
             "audio": audio
         }
     )

@@ -6,6 +6,7 @@ import gc
 import json
 import os
 import re
+import time
 
 import torch
 import yaml
@@ -237,11 +238,15 @@ def main(id=None):
         max_new_tokens=750
     )
 
+    start = time.time()
+
     generation_output = shared.model.generate(
         token_input,
         pad_token_id=shared.tokenizer.eos_token_id,
         generation_config=generation_config,
     )
+
+    speed = int(len(generation_output[0]) / (time.time() - start))
 
     # Get the tokens from the output, decode them, print them
     token_output = generation_output[0]

@@ -229,6 +229,7 @@ const app = createApp({
                 },
                 (response) => {
                     addMessage("assistant", response.data.response);
+                    console.log(`Speed: ${response.data.speed} t/s`);
                     notice.value = "";
                     if (speak.value && response.data.audio) {
                         playWav(response.data.audio);

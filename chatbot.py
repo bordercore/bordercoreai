@@ -270,13 +270,14 @@ class ChatBot():
             request = self.get_chatbot_params()
             response = requests.post(URI_CHAT, json=request)
             content = response.json()["choices"][0]["message"]["content"].strip()
+            speed = response.json()["choices"][0]["message"]["speed"]
 
             if response.status_code == 200:
                 self.context.add("assistant", content)
             else:
                 content = f"Error: {response}"
 
-        return content
+        return {"content": content, "speed": speed}
 
     @staticmethod
     def get_model_info():
