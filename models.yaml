@@ -12,6 +12,8 @@ NousResearch_Nous-Hermes-2-Mistral-7B-DPO:
   template: chatml
   type: mistral
 microsoft_Phi-3-mini-128k-instruct:
+  name: Phi 3 mini 128k instruct
+  type: phi
 solidrust_dolphin-2.8-mistral-7b-v02-AWQ:
   template: chatml
 TheBloke_CodeLlama-7B-Instruct-AWQ:

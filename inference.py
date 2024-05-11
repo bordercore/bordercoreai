@@ -87,6 +87,8 @@ class Inference:
                 return self.parse_response_llama2(response)
             elif response_type == "chatml":
                 return self.parse_response_chatml(response)
+            elif response_type == "phi":
+                return self.parse_response_phi(response)
             else:
                 return response
         else:
@@ -104,6 +106,16 @@ class Inference:
 
     def parse_response_llama2(self, response):
         pattern = r".*\[\/INST\](.*)"
+        matches = re.search(pattern, response, re.DOTALL)
+
+        # Extracting and printing the matched content
+        if matches:
+            return matches.group(1).strip()
+        else:
+            return f"Error: not able to parse response: {response}"
+
+    def parse_response_phi(self, response):
+        pattern = r".*\n(.*)"
         matches = re.search(pattern, response, re.DOTALL)
 
         # Extracting and printing the matched content
