@@ -148,7 +148,8 @@ class Inference:
 
         model_config = self.get_model_config()
         args = {
-            "device_map": {"": 0}
+            "device_map": {"": 0},
+            "trust_remote_code": True
         }
 
         if "quantization_config" not in model_config:
