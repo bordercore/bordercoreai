@@ -65,13 +65,6 @@ class Inference:
             <|im_start|>assistant
                     """
                 return prompt_template.format(system_message="", prompt=messages[0]["content"])
-            # elif template_type == "llama3":
-            #     prompt_template = """
-            #     <|begin_of_text|><|start_header_id|>system<|end_header_id|>
-            #     {system_message}<|eot_id|><|start_header_id|>user<|end_header_id|>
-            #     {prompt}<|eot_id|><|start_header_id|>assistant<|end_header_id|>
-            #     """
-            #     return prompt_template.format(system_message="", prompt=messages[0]["content"])
             else:
                 print("Warning: no chat template found. Using llama2.")
 
@@ -89,19 +82,17 @@ class Inference:
     def parse_response(self, response):
 
         if self.model_name in self.model_info:
-            template_type = self.get_template_type()
-            if template_type == "llama2":
+            response_type = self.model_info[self.model_name].get("type", None)
+            if response_type == "llama2":
                 return self.parse_response_llama2(response)
-            elif template_type == "chatml" or template_type == "llama3":
+            elif response_type == "chatml":
                 return self.parse_response_chatml(response)
             else:
-                print("No chat template found in models.yaml. Using llama2.")
-                return self.parse_response_llama2(response)
+                return response
         else:
             return response
 
     def parse_response_chatml(self, response):
-        # pattern = ".*\n assistant\n(.*)"
         pattern = ".*assistant\n(.*)"
         matches = re.search(pattern, response, re.DOTALL)
 

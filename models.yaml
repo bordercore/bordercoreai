@@ -1,11 +1,17 @@
 llama3-instruct-awq:
   template: llama3
   name: LLama3 Instruct AWQ
+  type: chatml
+hermes-pro-llama3-awq:
+  type: chatml
 Mistral-7B-Instruct-v0.2:
   template: llama2
+  type: llama2
 NousResearch_Nous-Hermes-2-Mistral-7B-DPO:
   name: Nous Research Hermes 2 Mistral 7B DPO
   template: chatml
+  type: mistral
+microsoft_Phi-3-mini-128k-instruct:
 solidrust_dolphin-2.8-mistral-7b-v02-AWQ:
   template: chatml
 TheBloke_CodeLlama-7B-Instruct-AWQ:
