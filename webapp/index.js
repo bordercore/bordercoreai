@@ -17,9 +17,9 @@ import Slider from "./src/components/Slider.vue";
 import AudioMotionAnalyzer from "audiomotion-analyzer";
 
 const EventBus = {
-  $on: (...args) => emitter.on(...args),
-  $once: (...args) => emitter.once(...args),
-  $off: (...args) => emitter.off(...args),
+    $on: (...args) => emitter.on(...args),
+    $once: (...args) => emitter.once(...args),
+    $off: (...args) => emitter.off(...args),
     $emit: (...args) => emitter.emit(...args),
 };
 window.EventBus = EventBus;
@@ -55,6 +55,9 @@ const app = createApp({
         const speak = ref(session.speak !== undefined ? session.speak : true);
         const temperature = ref(0.7);
 
+        const tts = "alltalk";
+        const audioElement = new Audio();
+        audioElement.crossOrigin = "anonymous";
         let audioMotion = null;
         const microPhoneOn = ref(false);
         const microPhoneVADOn = ref(false);
@@ -163,7 +166,7 @@ const app = createApp({
             );
         };
 
-        function getOrCreateAudioMotionAnalzyer(gradient) {
+        function getOrCreateAudioMotionAnalyzer(gradient, audioElement) {
             if (!audioMotion) {
                 audioMotion = new AudioMotionAnalyzer(
                     document.getElementById("canvas-container"),
@@ -171,6 +174,7 @@ const app = createApp({
                         bgAlpha: 0,
                         overlay: true,
                         showScaleX: false,
+                        source: audioElement,
                     },
                 );
             }
@@ -196,7 +200,7 @@ const app = createApp({
                 uint8Array[i] = byteString.charCodeAt(i);
             }
 
-            audioMotion = getOrCreateAudioMotionAnalzyer("steelblue");
+            audioMotion = getOrCreateAudioMotionAnalyzer("steelblue");
 
             // Decode and play the audio, with visualization
             audioMotion.audioCtx.decodeAudioData(arrayBuffer, (audioBuffer) => {
@@ -223,7 +227,7 @@ const app = createApp({
                 {
                     "message": JSON.stringify(chatHistory.value),
                     "length_scale": mapSpeechRateValue(lengthScale.value),
-                    "speak": speak.value,
+                    "speak": speak.value && tts !== "alltalk",
                     "temperature": temperature.value,
                     "control_lights": controlLights.value,
                 },
@@ -231,9 +235,23 @@ const app = createApp({
                     addMessage("assistant", response.data.response);
                     console.log(`Speed: ${response.data.speed} t/s`);
                     notice.value = "";
-                    if (speak.value && response.data.audio) {
-                        playWav(response.data.audio);
+
+                    if (speak.value) {
+                        if (tts === "alltalk") {
+                            const host = "10.3.2.5:7851"
+                            const voice = "valerie.wav";
+                            const outputFile = "stream_output.wav";
+                            const streamingUrl = `http://${host}/api/tts-generate-streaming?text=${response.data.response}&voice=${voice}&language=en&output_file=${outputFile}`;
+                            audioElement.src = streamingUrl;
+                            audioMotion = getOrCreateAudioMotionAnalyzer("steelblue", audioElement);
+                            audioElement.play();
+                        } else {
+                            if (response.data.audio) {
+                                playWav(response.data.audio);
+                            }
+                        }
                     }
+
                 },
                 "",
             );
@@ -248,7 +266,7 @@ const app = createApp({
 
             notice.value = "Listening...";
 
-            audioMotion = getOrCreateAudioMotionAnalzyer("rainbow");
+            audioMotion = getOrCreateAudioMotionAnalyzer("rainbow");
 
             navigator.mediaDevices.getUserMedia( {audio: true, video: false} )
                 .then( (stream) => {
@@ -297,6 +315,7 @@ const app = createApp({
                 onSpeechStart: () => {
                     notice.value = "Listening...";
                     audioMotion.gradient = "rainbow";
+                    audioMotion.volume = 0;
                 },
                 onSpeechEnd: (audio) => {
                     notice.value = "";
