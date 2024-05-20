@@ -19,7 +19,7 @@
         },
         modelValue: {
             type: Number,
-            default: 50,
+            default: 1,
         },
         showInput: {
             type: Boolean,

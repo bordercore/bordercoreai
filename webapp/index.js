@@ -46,7 +46,7 @@ const app = createApp({
         let id = 1;
         const controlLights = ref(false);
         const error = ref("");
-        const lengthScale = ref(session.length_scale || 5);
+        const audioSpeed = ref(session.audio_speed || 1);
         const model = ref({});
         const modelList = ref([]);
         const notice = ref("");
@@ -87,20 +87,6 @@ const app = createApp({
                 scrollableDiv.scrollTop = scrollableDiv.scrollHeight;
             });
         };
-
-        // Map values used by the UI, range 1 (slow) to 10 (fast)
-        // to values used by Piper TTS, range 0.5 (fast) to 1.5 (slow)
-        function mapSpeechRateValue(x) {
-            // Source range
-            const a = 1;
-            const b = 10;
-
-            // Target range
-            const c = 1.5;
-            const d = 0.5;
-
-            return c + (d - c) * (x - a) / (b - a);
-        }
 
         function getListenButtonValue() {
             return microPhoneOn.value ? "Mic Off" : "Mic On";
@@ -166,20 +152,16 @@ const app = createApp({
             );
         };
 
-        function getOrCreateAudioMotionAnalyzer(gradient, audioElement) {
-            if (!audioMotion) {
-                audioMotion = new AudioMotionAnalyzer(
-                    document.getElementById("canvas-container"),
-                    {
-                        bgAlpha: 0,
-                        overlay: true,
-                        showScaleX: false,
-                        source: audioElement,
-                    },
-                );
-            }
-            audioMotion.gradient = gradient;
-            return audioMotion;
+        function createAudioMotionAnalyzer(audioElement) {
+            audioMotion = new AudioMotionAnalyzer(
+                document.getElementById("canvas-container"),
+                {
+                    bgAlpha: 0,
+                    overlay: true,
+                    showScaleX: false,
+                    source: audioElement,
+                },
+            );
         };
 
         function connectStream(stream) {
@@ -200,7 +182,7 @@ const app = createApp({
                 uint8Array[i] = byteString.charCodeAt(i);
             }
 
-            audioMotion = getOrCreateAudioMotionAnalyzer("steelblue");
+            audioMotion.gradient = "steelblue";
 
             // Decode and play the audio, with visualization
             audioMotion.audioCtx.decodeAudioData(arrayBuffer, (audioBuffer) => {
@@ -226,8 +208,9 @@ const app = createApp({
                 "/chat",
                 {
                     "message": JSON.stringify(chatHistory.value),
-                    "length_scale": mapSpeechRateValue(lengthScale.value),
-                    "speak": speak.value && tts !== "alltalk",
+                    "audio_speed": audioSpeed.value,
+                    "speak": speak.value,
+                    "tts": tts,
                     "temperature": temperature.value,
                     "control_lights": controlLights.value,
                 },
@@ -236,20 +219,22 @@ const app = createApp({
                     console.log(`Speed: ${response.data.speed} t/s`);
                     notice.value = "";
 
-                    if (speak.value) {
-                        if (tts === "alltalk") {
-                            const host = "10.3.2.5:7851"
-                            const voice = "valerie.wav";
-                            const outputFile = "stream_output.wav";
-                            const streamingUrl = `http://${host}/api/tts-generate-streaming?text=${response.data.response}&voice=${voice}&language=en&output_file=${outputFile}`;
-                            audioElement.src = streamingUrl;
-                            audioMotion = getOrCreateAudioMotionAnalyzer("steelblue", audioElement);
-                            audioElement.play();
-                        } else {
-                            if (response.data.audio) {
-                                playWav(response.data.audio);
-                            }
-                        }
+                    if (!speak.value) {
+                        return;
+                    }
+
+                    if (tts === "alltalk") {
+                        const host = "10.3.2.5:7851"
+                        const voice = "valerie.wav";
+                        const outputFile = "stream_output.wav";
+                        const streamingUrl = `http://${host}/api/tts-generate-streaming?text=${response.data.response}&voice=${voice}&language=en&output_file=${outputFile}`;
+                        audioElement.src = streamingUrl;
+                        audioMotion.gradient = "steelblue";
+                        audioMotion.volume = 1;
+                        audioElement.playbackRate = audioSpeed.value;
+                        audioElement.play();
+                    } else if (response.data.audio) {
+                        playWav(response.data.audio);
                     }
 
                 },
@@ -266,7 +251,7 @@ const app = createApp({
 
             notice.value = "Listening...";
 
-            audioMotion = getOrCreateAudioMotionAnalyzer("rainbow");
+            audioMotion.gradient = "rainbow";
 
             navigator.mediaDevices.getUserMedia( {audio: true, video: false} )
                 .then( (stream) => {
@@ -319,7 +304,6 @@ const app = createApp({
                 },
                 onSpeechEnd: (audio) => {
                     notice.value = "";
-                    audioMotion.gradient = "steelblue";
                     const wavBuffer = encodeWAV(audio);
                     const blob = new Blob([wavBuffer], {type: "audio/wav"});
                     const formData = new FormData();
@@ -338,25 +322,27 @@ const app = createApp({
                                });
                 },
             });
-            audioMotion = getOrCreateAudioMotionAnalzyer("rainbow");
+            audioMotion.gradient = "rainbow";
             connectStream(myvad.stream);
             myvad.start();
         };
 
        onMounted(() => {
-            const menuDiv = document.getElementById("menu");
-            const prefsDiv = document.getElementsByClassName("hamburger")[0];
+           const menuDiv = document.getElementById("menu");
+           const prefsDiv = document.getElementsByClassName("hamburger")[0];
 
-            document.addEventListener("click", function(event) {
-                // Check if the clicked area is menuDiv or a descendant of menuDiv
-                const isClickInside = menuDiv.contains(event.target);
+           document.addEventListener("click", function(event) {
+               // Check if the clicked area is menuDiv or a descendant of menuDiv
+               const isClickInside = menuDiv.contains(event.target);
 
-                // If the clicked area is outside menuDiv and we're not clicking the
-                //  hamburger menu icon, hide it!
-                if (!isClickInside && !prefsDiv.contains(event.target)) {
-                    showMenu.value = false;
-                }
-            });
+               // If the clicked area is outside menuDiv and we're not clicking the
+               //  hamburger menu icon, hide it!
+               if (!isClickInside && !prefsDiv.contains(event.target)) {
+                   showMenu.value = false;
+               }
+           });
+
+           createAudioMotionAnalyzer(audioElement);
 
            EventBus.$on("toast", (payload) => {
                error.value = payload;
@@ -381,7 +367,7 @@ const app = createApp({
             handleSendMessage,
             getListenButtonValue,
             getMarkdown,
-            lengthScale,
+            audioSpeed,
             model,
             modelList,
             microPhoneOn,

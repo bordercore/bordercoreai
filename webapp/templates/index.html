@@ -106,14 +106,14 @@
                     </div>
                     <div class="row g-3 align-items-center">
                         <div class="col-auto">
-                            <label class="col-form-label">Speed</label>
+                            <label class="col-form-label">Audio Speed</label>
                         </div>
                         <div class="col-auto">
-                            <Slider v-model="lengthScale" ref="sliderSpeed" :min="1" :max="10" :step="1" :show-input="false" />
+                            <Slider v-model="audioSpeed" ref="sliderSpeed" :min="0" :max="2" :step="0.1" :show-input="false" />
                         </div>
                         <div class="col-auto">
                             <span class="form-text">
-                                1 (Slow) to 10 (Fast)
+                                0 (Slow) to 2 (Fast)
                             </span>
                         </div>
                     </div>

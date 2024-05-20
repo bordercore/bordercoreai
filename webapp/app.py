@@ -43,7 +43,10 @@ def speech2text():
     )
 
 
-def generate_audio(message, length_scale):
+def generate_audio(message, audio_speed):
+
+    audio_speed = map_speech_rate_value(audio_speed)
+
     voice = piper.PiperVoice.load(
         model_path="en_US-amy-medium.onnx",
         config_path="en_US-amy-medium.onnx.json"
@@ -53,7 +56,7 @@ def generate_audio(message, length_scale):
 
     # Use the binary stream as the destination for the WAV data
     with wave.open(binary_stream, "wb") as wav:
-        voice.synthesize(message, wav, length_scale=length_scale)
+        voice.synthesize(message, wav, length_scale=audio_speed)
 
     # Get the binary data from the stream
     binary_data = binary_stream.getvalue()
@@ -61,19 +64,26 @@ def generate_audio(message, length_scale):
     return base64.b64encode(binary_data).decode("utf-8")
 
 
-def map_speech_rate_value(x):
-    """
-    Map values used by Piper TTS, range 0.5 (fast) to 1.5 (slow)
-    to values used by the UI, range 1 (slow) to 10 (fast)
-    """
+def map_speech_rate_value(input_value):
 
     # Source range
-    a, b = 0.5, 1.5
+    in_min = 0
+    in_max = 2
 
     # Target range
-    c, d = 10, 1
+    out_min = 0.5
+    out_max = 1.5
 
-    return c + (d - c) * (x - a) / (b - a)
+    # Normalize input to a 0-1 range
+    normalized_input = (input_value - in_min) / (in_max - in_min)
+
+    # Inverse the normalized value (1 becomes 0, 0 becomes 1)
+    inverted_input = 1 - normalized_input
+
+    # Map the inverted value to the output range
+    output_value = inverted_input * (out_max - out_min) + out_min
+
+    return output_value
 
 
 @app.route("/chat", methods=["POST"])
@@ -81,13 +91,14 @@ def chat():
 
     message = json.loads(request.form["message"])
     speak = request.form.get("speak", "false")
-    length_scale = float(request.form.get("length_scale", 1.0))  # Playback speed
+    audio_speed = float(request.form.get("audio_speed", 1.0))  # Playback speed
     temperature = float(request.form.get("temperature", 0.7))
     control_lights = request.form.get("control_lights", False)
+    tts = request.form.get("tts", None)
 
     session.permanent = True
     session["speak"] = speak.lower() == "true"  # Convert "true" to True, for example
-    session["length_scale"] = map_speech_rate_value(length_scale)
+    session["audio_speed"] = audio_speed
 
     context = Context()
     chatbot = ChatBot(
@@ -104,8 +115,8 @@ def chat():
     response = chatbot.send_message_to_model(message)
 
     audio = None
-    if session["speak"]:
-        audio = generate_audio(response["content"], length_scale)
+    if tts != "alltalk":
+        audio = generate_audio(response["content"], audio_speed)
 
     return jsonify(
         {
