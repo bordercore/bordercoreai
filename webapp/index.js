@@ -56,6 +56,7 @@ const app = createApp({
         const temperature = ref(0.7);
 
         const tts = "alltalk";
+        let tts_host = ref("10.3.2.5:7851")
         const audioElement = new Audio();
         audioElement.crossOrigin = "anonymous";
         let audioMotion = null;
@@ -224,10 +225,9 @@ const app = createApp({
                     }
 
                     if (tts === "alltalk") {
-                        const host = "10.3.2.5:7851"
                         const voice = "valerie.wav";
                         const outputFile = "stream_output.wav";
-                        const streamingUrl = `http://${host}/api/tts-generate-streaming?text=${response.data.response}&voice=${voice}&language=en&output_file=${outputFile}`;
+                        const streamingUrl = `http://${tts_host.value}/api/tts-generate-streaming?text=${response.data.response}&voice=${voice}&language=en&output_file=${outputFile}`;
                         audioElement.src = streamingUrl;
                         audioMotion.gradient = "steelblue";
                         audioMotion.volume = 1;
@@ -379,6 +379,7 @@ const app = createApp({
             sliderTemperature,
             speak,
             temperature,
+            tts_host
         };
     },
 });
