@@ -11,6 +11,8 @@ import sounddevice  # Adding this eliminates an annoying warning
 from chatbot import ChatBot, Context
 from flask import Flask, jsonify, render_template, request, session
 
+from flask_session import Session
+
 warnings.filterwarnings("ignore", message=".*The 'nopython' keyword.*")
 
 import whisper
@@ -18,6 +20,9 @@ import whisper
 app = Flask(__name__)
 app.debug = True
 app.secret_key = ""
+app.config["SESSION_TYPE"] = "filesystem"
+
+Session(app)  # Initialize session management
 
 
 @app.route("/")
