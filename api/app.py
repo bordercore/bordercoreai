@@ -60,6 +60,14 @@ def load_model(model_name):
     shared.tokenizer = get_tokenizer(model_path)
 
 
+def get_temperature(payload):
+    temp = payload["temperature"] if "temperature" in payload else shared.temperature
+    # the temperature must be a strictly positive float
+    if temp == 0:
+        temp = 0.1
+    return temp
+
+
 load_model(shared.model_name)
 
 
@@ -113,7 +121,7 @@ def main(id=None):
 
     generation_config = GenerationConfig(
         do_sample=True,
-        temperature=payload["temperature"] if "temperature" in payload else shared.temperature,
+        temperature=get_temperature(payload),
         top_p=0.95,
         top_k=40,
         eos_token_id=terminators,
