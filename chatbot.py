@@ -7,6 +7,7 @@ import string
 import sys
 import warnings
 import wave
+from pathlib import Path
 
 import discord
 import openai
@@ -61,7 +62,8 @@ null_handler = logging.NullHandler()
 logger.addHandler(null_handler)
 
 
-with open("../models.yaml", "r") as file:
+models_file_path = Path(__file__).resolve().parent / Path("models.yaml")
+with open(models_file_path, "r") as file:
     model_info = yaml.safe_load(file)
 
 
@@ -168,12 +170,13 @@ class ChatBot():
                         sys.exit(0)
                 print(f"\b\b\b\b\b\b\b\b\b\b\b\b{user_input}")
             else:
-                user_input = input(f"\n\n{MAGENTA}You{END} ")
+                user_input = input(f"\n{MAGENTA}You{END} ")
 
             if self.args["assistant"]:
                 print("Processing...")
 
-            self.send_message_to_model_stream(user_input)
+            response = self.send_message_to_model(user_input)
+            print(f"\n{MAGENTA}AI{CYAN} {response['content']}")
 
     def get_chatbot_params(self):
 
