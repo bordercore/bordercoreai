@@ -109,6 +109,9 @@ def main(id=None):
         payload["messages"]
     )
 
+    if inference.model_info[shared.model_name].get("add_bos_token", None):
+        prompt_template = f"<|begin_of_text|>{prompt_template}"
+
     token_input = shared.tokenizer(
         prompt_template,
         return_tensors="pt"

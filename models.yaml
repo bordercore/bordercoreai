@@ -5,6 +5,7 @@ llama3-instruct-awq:
 hermes-pro-llama3-awq:
   name: Nous Research Hermes 2 LLama3 8B AWQ
   type: chatml
+  add_bos_token: true
 Mistral-7B-Instruct-v0.2:
   template: llama2
   type: llama2
