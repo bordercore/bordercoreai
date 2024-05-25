@@ -107,7 +107,7 @@ python3 ./chatbot.py -m interactive
 
 Options:
 
-- -s: enable alltalk_tts (TTS)
+- -s: enable AllTalk TTS
 
 # Usage
 

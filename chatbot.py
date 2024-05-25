@@ -5,6 +5,7 @@ import os
 import re
 import string
 import sys
+import urllib.parse
 import warnings
 import wave
 from pathlib import Path
@@ -12,6 +13,7 @@ from pathlib import Path
 import discord
 import openai
 import piper
+import pyaudio
 import pysbd
 import requests
 import simpleaudio
@@ -20,7 +22,9 @@ import sseclient
 import yaml
 from pydub import AudioSegment
 from pydub.playback import play
+from requests.exceptions import ConnectionError
 
+from api import shared
 from govee import run_command
 
 warnings.filterwarnings("ignore", message=".*The 'nopython' keyword.*")
@@ -146,10 +150,28 @@ class ChatBot():
     def get_wake_word(self):
         return f"{self.ASSISTANT_NAME}".lower()
 
+    def play_response(self, response):
+
+        text = urllib.parse.quote(response)
+        host = shared.tts_host
+        voice = shared.tts_voice
+        output_file = "output.wav"
+        url = f"http://{host}/api/tts-generate-streaming?text={text}&voice={voice}&language=en&output_file={output_file}"
+        response = requests.get(url, stream=True)
+        if response.status_code == 200:
+            p = pyaudio.PyAudio()
+            stream = p.open(format=8, channels=1, rate=24000, output=True)
+            for chunk in response.iter_content(chunk_size=1024):
+                stream.write(chunk)
+        else:
+            print(f"Failed to get audio: statu_code = {response.status_code}")
+
+
     def interactive(self):
 
-        mic = WhisperMic(model="small", energy=100)
-        active = False
+        if self.args["voice"]:
+            mic = WhisperMic(model="small", energy=100)
+            active = False
 
         while True:
             if self.args["voice"]:
@@ -175,8 +197,14 @@ class ChatBot():
             if self.args["assistant"]:
                 print("Processing...")
 
-            response = self.send_message_to_model(user_input)
-            print(f"\n{MAGENTA}AI{CYAN} {response['content']}")
+            try:
+                response = self.send_message_to_model(user_input)
+                print(f"\n{MAGENTA}AI{CYAN} {response['content']}")
+                if self.args["speak"]:
+                    self.play_response(response["content"])
+
+            except ConnectionError:
+                print("Error: API refusing connections.")
 
     def get_chatbot_params(self):
 
