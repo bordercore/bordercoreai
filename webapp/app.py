@@ -17,9 +17,11 @@ warnings.filterwarnings("ignore", message=".*The 'nopython' keyword.*")
 
 import whisper
 
+from ..api import shared
+
 app = Flask(__name__)
 app.debug = True
-app.secret_key = ""
+app.secret_key = shared.flask_secret_key
 app.config["SESSION_TYPE"] = "filesystem"
 
 Session(app)  # Initialize session management

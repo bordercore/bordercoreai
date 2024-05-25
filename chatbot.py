@@ -44,7 +44,7 @@ URI_MODEL_LOAD = f"{HOST}/v1/internal/model/load"
 
 DISCORD_TOKEN_CHAD = os.environ.get("DISCORD_TOKEN_CHAD")
 DISCORD_TOKEN_FLOYD = os.environ.get("DISCORD_TOKEN_FLOYD")
-DISCORD_CHANNEL_ID = ""
+DISCORD_CHANNEL_ID = shared.discord_channel_id
 
 MODE = "chat"
 
