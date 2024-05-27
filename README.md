@@ -72,7 +72,7 @@ To install the API, first create and activate a virtual environment. Then:
 pip install requirements/api.txt
 ```
 
-Edit `api/shared.py` and set the following:
+Copy `api/shared_template.py` to `api/shared.py` and set the following:
 
 **model_name**: default model to load
 **model_dir**: the relative directory containing your models

@@ -8,5 +8,5 @@ tokenizer = None
 
 discord_channel_id = ""
 
-tts_host = "10.3.2.5:7851"
-tts_voice = "valerie.wav"
+tts_host = ""
+tts_voice = "voice.wav"
