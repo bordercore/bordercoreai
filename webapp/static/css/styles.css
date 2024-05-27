@@ -3,6 +3,10 @@
   --bs-body-color: #fff !important;
 }
 
+body {
+  background-color: var(--bs-body-bg);
+}
+
 #canvas-container {
   height: 4rem !important;
   width: 50%;
