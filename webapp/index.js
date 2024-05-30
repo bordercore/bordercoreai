@@ -5,8 +5,8 @@ import "bootstrap";
 import "bootstrap/dist/css/bootstrap.min.css";
 import {library} from "@fortawesome/fontawesome-svg-core";
 import {FontAwesomeIcon} from "@fortawesome/vue-fontawesome";
-import {faPlus, faRotateLeft} from "@fortawesome/free-solid-svg-icons";
-library.add(faPlus, faRotateLeft);
+import {faFileAlt, faPlus, faRotateLeft} from "@fortawesome/free-solid-svg-icons";
+library.add(faFileAlt, faPlus, faRotateLeft);
 import {Modal} from "bootstrap";
 import Oruga from "@oruga-ui/oruga-next";
 import "@oruga-ui/oruga-next/dist/oruga-full.css";
@@ -51,6 +51,9 @@ const app = createApp({
         const modelList = ref([]);
         const notice = ref("");
         const prompt = ref("");
+        const ragFileUploaded = ref(false);
+        const ragFileSize = ref(null);
+        const sha1sum = ref("");
         const showMenu = ref(false);
         const speak = ref(session.speak !== undefined ? session.speak : true);
         const temperature = ref(0.7);
@@ -73,6 +76,8 @@ const app = createApp({
         const filteredChatHistory = computed(() => {
             return chatHistory.value.filter((x) => x.role !== "system");
         });
+
+        const chatHandlers = {sendMessageToChatbotRag, sendMessageToChatbot};
 
         function addMessage(role, message) {
             id++;
@@ -106,7 +111,7 @@ const app = createApp({
                     "model": event.srcElement.value,
                 },
                 (response) => {
-                    setTimeout(function(){
+                    setTimeout(function() {
                         modal.hide();
                     }, 500);
                     if (response.status !== "OK") {
@@ -114,15 +119,61 @@ const app = createApp({
                 },
                 "",
                 () => {
-                    setTimeout(function(){
+                    setTimeout(function() {
                         modal.hide();
                     }, 500);
-                }
+                },
             );
+        };
+
+        function handleFileUpload(event) {
+            const formData = new FormData();
+            const fileData = event.target.files[0];
+            if (!fileData) {
+                return;
+            }
+            ragFileSize.value = fileData.size;
+            formData.append("file", fileData);
+            axios.post(
+                "rag/upload",
+                formData,
+                {
+                    headers: {
+                        "Content-Type": "multipart/form-data",
+                    },
+                }).then((response) => {
+                    ragFileUploaded.value = true;
+                    sha1sum.value = response.data.sha1sum;
+                });
         };
 
         function handleNewChat(event) {
             chatHistory.value.length = 1;
+        };
+
+        function handleSendMessageRag(event) {
+            sendMessageToChatbotRag(prompt.value);
+        };
+
+        function sendMessageToChatbotRag(message) {
+            addMessage("user", message);
+            prompt.value = "";
+            doPost(
+                "/rag/chat",
+                {
+                    "message": message,
+                    "sha1sum": sha1sum.value,
+                    "audio_speed": audioSpeed.value,
+                    "speak": speak.value,
+                    "tts": tts,
+                },
+                (response) => {
+                    addMessage("assistant", response.data.response);
+                    notice.value = "";
+                    doTTS(response.data.response);
+                },
+                "",
+            );
         };
 
         function handleRegenerate(event) {
@@ -219,30 +270,13 @@ const app = createApp({
                     addMessage("assistant", response.data.response);
                     console.log(`Speed: ${response.data.speed} t/s`);
                     notice.value = "";
-
-                    if (!speak.value) {
-                        return;
-                    }
-
-                    if (tts === "alltalk") {
-                        const voice = "valerie.wav";
-                        const outputFile = "stream_output.wav";
-                        const streamingUrl = `http://${tts_host.value}/api/tts-generate-streaming?text=${response.data.response}&voice=${voice}&language=en&output_file=${outputFile}`;
-                        audioElement.src = streamingUrl;
-                        audioMotion.gradient = "steelblue";
-                        audioMotion.volume = 1;
-                        audioElement.playbackRate = audioSpeed.value;
-                        audioElement.play();
-                    } else if (response.data.audio) {
-                        playWav(response.data.audio);
-                    }
-
+                    doTTS(response.data.response);
                 },
                 "",
             );
         };
 
-        async function handleListen() {
+        async function handleListen(chatHandler) {
             if (microPhoneOn.value) {
                 // disconnect and release microphone stream
                 audioMotion.disconnectInput( micStream, true );
@@ -270,17 +304,16 @@ const app = createApp({
                         formData.append("audio", blob);
                         notice.value = "Waiting for speech to text";
                         axios.post("/speech2text",
-                                   formData,
-                                   {
-                                       headers: {
-                                           "Content-Type": "multipart/form-data",
-                                       },
-                                   }).then((response) => {
-                                       sendMessageToChatbot(response.data.input);
-
-                                       // Delete the current audio in case we want to start a new recording later
-                                       audioChunks = [];
-                                   });
+                            formData,
+                            {
+                                headers: {
+                                    "Content-Type": "multipart/form-data",
+                                },
+                            }).then((response) => {
+                                chatHandlers[chatHandler](response.data.input);
+                                // Delete the current audio in case we want to start a new recording later
+                                audioChunks = [];
+                            });
                     };
                 })
                 .catch( (err) => {
@@ -310,16 +343,16 @@ const app = createApp({
                     formData.append("audio", blob);
                     notice.value = "Waiting for speech to text";
                     axios.post("/speech2text",
-                               formData,
-                               {
-                                   headers: {
-                                       "Content-Type": "multipart/form-data",
-                                   },
-                               }).then((response) => {
-                                   sendMessageToChatbot(response.data.input);
-                                   // Delete the current audio in case we want to start a new recording later
-                                   audioChunks = [];
-                               });
+                        formData,
+                        {
+                            headers: {
+                                "Content-Type": "multipart/form-data",
+                            },
+                        }).then((response) => {
+                            sendMessageToChatbot(response.data.input);
+                            // Delete the current audio in case we want to start a new recording later
+                            audioChunks = [];
+                        });
                 },
             });
             audioMotion.gradient = "rainbow";
@@ -327,31 +360,65 @@ const app = createApp({
             myvad.start();
         };
 
-       onMounted(() => {
-           const menuDiv = document.getElementById("menu");
-           const prefsDiv = document.getElementsByClassName("hamburger")[0];
+        function doTTS(text) {
+            if (!speak.value) {
+                return;
+            }
 
-           document.addEventListener("click", function(event) {
-               // Check if the clicked area is menuDiv or a descendant of menuDiv
-               const isClickInside = menuDiv.contains(event.target);
+            if (tts === "alltalk") {
+                const voice = "perdita.wav";
+                const outputFile = "stream_output.wav";
+                const streamingUrl = `http://${tts_host.value}/api/tts-generate-streaming?text=${text}&voice=${voice}&language=en&output_file=${outputFile}`;
+                audioElement.src = streamingUrl;
+                audioMotion.gradient = "steelblue";
+                audioMotion.volume = 1;
+                audioElement.playbackRate = audioSpeed.value;
+                audioElement.play();
+            } else if (response.data.audio) {
+                playWav(response.data.audio);
+            }
+        }
 
-               // If the clicked area is outside menuDiv and we're not clicking the
-               //  hamburger menu icon, hide it!
-               if (!isClickInside && !prefsDiv.contains(event.target)) {
-                   showMenu.value = false;
-               }
-           });
+        function getRagFileSize() {
+            return formatBytes(ragFileSize.value);
+        };
 
-           createAudioMotionAnalyzer(audioElement);
+        function formatBytes(bytes, decimals = 2) {
+            if (!+bytes) return "0 Bytes";
 
-           EventBus.$on("toast", (payload) => {
-               error.value = payload;
-           });
+            const k = 1024;
+            const dm = decimals < 0 ? 0 : decimals;
+            const sizes = ["b", "k", "M", "G", "T", "P", "E", "Z", "Y"];
 
-           getModelInfo();
-           getModelList();
+            const i = Math.floor(Math.log(bytes) / Math.log(k));
+            return `${parseInt((bytes / Math.pow(k, i)).toFixed(dm))} ${sizes[i]}`;
+        }
 
-           document.getElementById("prompt").focus();
+        onMounted(() => {
+            const menuDiv = document.getElementById("menu");
+            const prefsDiv = document.getElementsByClassName("hamburger")[0];
+
+            document.addEventListener("click", function(event) {
+                // Check if the clicked area is menuDiv or a descendant of menuDiv
+                const isClickInside = menuDiv.contains(event.target);
+
+                // If the clicked area is outside menuDiv and we're not clicking the
+                //  hamburger menu icon, hide it!
+                if (!isClickInside && !prefsDiv.contains(event.target)) {
+                    showMenu.value = false;
+                }
+            });
+
+            createAudioMotionAnalyzer(audioElement);
+
+            EventBus.$on("toast", (payload) => {
+                error.value = payload;
+            });
+
+            getModelInfo();
+            getModelList();
+
+            document.getElementById("prompt").focus();
         });
 
         return {
@@ -360,11 +427,14 @@ const app = createApp({
             error,
             filteredChatHistory,
             handleChangeModel,
+            handleFileUpload,
             handleListen,
             handleListenVAD,
             handleNewChat,
             handleRegenerate,
             handleSendMessage,
+            handleSendMessageRag,
+            getRagFileSize,
             getListenButtonValue,
             getMarkdown,
             audioSpeed,
@@ -374,6 +444,7 @@ const app = createApp({
             microPhoneVADOn,
             notice,
             prompt,
+            ragFileUploaded,
             showMenu,
             sliderSpeed,
             sliderTemperature,
@@ -394,11 +465,11 @@ import emitter from "tiny-emitter/instance";
 import hljs from "highlight.js";
 const markdown = require("markdown-it")({
     highlight: function(str) {
-      try {
-          return hljs.highlightAuto(str).value;
-      } catch (__) {}
+        try {
+            return hljs.highlightAuto(str).value;
+        } catch (__) {}
 
-    return "";
+        return "";
     },
 });
 window.markdown = markdown;

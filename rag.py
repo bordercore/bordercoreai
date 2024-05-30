@@ -1,17 +1,13 @@
 import argparse
 import hashlib
 import os
-import sys
 import uuid
 
 import chromadb
-# import nltk
 import openai
-from aws.index_blobs.lib.embeddings import len_safe_get_embedding
 from nltk.tokenize import sent_tokenize
 
-# nltk.download("punkt")
-
+from embeddings import len_safe_get_embedding
 
 CYAN = "\033[36m"
 WHITE = "\033[37m"
@@ -30,38 +26,40 @@ class RAG():
     # The number of characters each chunk overlaps with the next.
     overlap = 20
 
-    def __init__(self, file, use_openai, force_index):
-        self.file = file
+    def __init__(self, use_openai=True):
         self.use_openai = use_openai
         self.client = chromadb.PersistentClient(path="chromdb")
 
-    def get_collection(self):
-        sha1sum = self.sha1sum(self.file)
+    def add_document(self, text=None, filename=None, name=None):
+        if filename:
+            with open(filename, "r") as file:
+                self.document = file.read()
+        else:
+            self.document = text.decode("utf-8")
+
+        sha1sum = self.get_sha1sum()
         try:
             self.collection = self.client.get_collection(sha1sum)
-            if force_index:
-                self.index(self.file)
         except ValueError:
             self.collection = self.client.create_collection(
                 name=sha1sum,
                 metadata={
                     "hnsw:space": "cosine",
-                    "filename": self.file
+                    "filename": filename or name
                 }
             )
-            self.index(file)
+            self.index()
+
+    def get_collection(self, sha1sum):
+        self.collection = self.client.get_collection(sha1sum)
 
     def list_collections(self):
         for collection in self.client.list_collections():
             print(collection.metadata["filename"])
 
-    def sha1sum(self, filename):
+    def get_sha1sum(self):
         hash_sha1 = hashlib.sha1()
-
-        with open(filename, "rb") as f:
-            for chunk in iter(lambda: f.read(4096), b""):
-                hash_sha1.update(chunk)
-
+        hash_sha1.update(self.document.encode("utf-8"))
         return hash_sha1.hexdigest()
 
     def chunk_text_by_sentence(self, text):
@@ -94,15 +92,11 @@ class RAG():
 
         return chunks
 
-    def index(self, file):
+    def index(self):
 
         print("Indexing...")
 
-        with open(file, "r") as file:
-            text = file.read()
-
-        chunks = self.chunk_text_by_sentence(text)
-        # chunks = self.divide_text_into_chunks(text)
+        chunks = self.chunk_text_by_sentence(self.document)
 
         for chunk in chunks:
             args = {
@@ -116,9 +110,9 @@ class RAG():
         print(f"Added {self.collection.count()} chunks.")
 
     def get_response(self, question, chunks):
-        prompt = f"Please answer the following question based only on the provided chunks of text and nothing else. Here is the question: {question}."
+        prompt = f"Please answer the following question based only on the provided text and nothing else. Here is the question: {question}."
         for chunk in chunks:
-            prompt += f"Here is one chunk: {chunk}. "
+            prompt += f"Here is one chunk of text: {chunk}. "
 
         response = openai.ChatCompletion.create(
             model="gpt-3.5-turbo",
@@ -130,13 +124,24 @@ class RAG():
 
         return response["choices"][0]["message"]["content"]
 
-    def query(self):
+    def query_document(self, query):
+        args = {
+            "n_results": 3
+        }
+        if self.use_openai:
+            embeddings = len_safe_get_embedding(query)
+            args["query_embeddings"] = [embeddings]
+        else:
+            args["query_texts"] = [query]
 
-        if not self.file:
-            print("Error: no file specified")
-            sys.exit(1)
+        results = self.collection.query(**args)
 
-        self.get_collection()
+        return self.get_response(query, results["documents"])
+
+    def run(self, force_index=False):
+
+        if force_index:
+            self.index()
 
         while True:
             user_input = input(f"\n\n{MAGENTA}You>{END} ")
@@ -159,18 +164,26 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="")
     parser.add_argument("-i", "--index", help="Index document", action="store_true")
     parser.add_argument("-o", "--openai", help="Use OpenAI embeddings", action="store_true", default=False)
-    parser.add_argument("-f", "--file", help="The file to query")
+    parser.add_argument("-f", "--filename", help="The file to query")
+    parser.add_argument("-t", "--text", help="The text to query")
     parser.add_argument("-l", "--list", help="List collections", action="store_true")
     args = parser.parse_args()
 
     force_index = args.index
     use_openai = args.openai
-    file = args.file
+    filename = args.filename
+    text = args.text
     list_collections = args.list
 
-    rag = RAG(file=file, use_openai=use_openai, force_index=force_index)
+    if filename and text:
+        raise ValueError("Error: you cannot specify both a filename and text.")
+    if not filename and not text:
+        raise ValueError("Error: you must specify either a filename or some text to query.")
+
+    rag = RAG(use_openai=use_openai)
+    rag.add_document(text=text, filename=filename)
 
     if list_collections:
         rag.list_collections()
     else:
-        rag.query()
+        rag.run(force_index)

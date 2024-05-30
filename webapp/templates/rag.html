@@ -1,0 +1,19 @@
+{% extends "base.html" %}
+
+{% block input %}
+<input v-model="prompt" id="prompt" class="form-control w-75" type="text" placeholder="Prompt" @keydown.enter.prevent="handleSendMessageRag" :disabled="! ragFileUploaded" />
+{% endblock %}
+
+{% block chat_handler %}sendMessageToChatbotRag{% endblock %}
+
+{% block content %}
+    <div class="d-flex mb-3">
+        <input type="file" class="form-control w-50" @change="handleFileUpload" />
+        <div v-if="ragFileUploaded" class="d-flex align-items-center">
+            <div>
+                <font-awesome-icon icon="file-alt" class="fa-lg text-primary ms-3" />
+            </div>
+            <div class="ms-2" v-html="getRagFileSize()"></div>
+        </div>
+    </div>
+{% endblock %}

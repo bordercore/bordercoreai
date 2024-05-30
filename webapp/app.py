@@ -16,6 +16,7 @@ from flask_session import Session
 warnings.filterwarnings("ignore", message=".*The 'nopython' keyword.*")
 
 import whisper
+from rag import RAG
 
 from ..api import shared
 
@@ -34,6 +35,66 @@ def main():
         "index.html",
         session=dict(session)
     )
+
+
+@app.route("/rag")
+def rag():
+
+    return render_template(
+        "rag.html",
+        session=dict(session)
+    )
+
+
+@app.route("/rag/upload", methods=["POST"])
+def rag_upload():
+
+    name = request.files["file"].name
+
+    text = request.files["file"].read()
+    rag = RAG(use_openai=True)
+    rag.add_document(text=text, name=name)
+    # rag.get_collection(sha1sum=rag.sha1sum, filename=name)
+
+    return jsonify(
+        {
+            "sha1sum": rag.get_sha1sum()
+        }
+    )
+
+
+@app.route("/rag/chat", methods=["POST"])
+def rag_chat():
+
+    sha1sum = request.form["sha1sum"]
+    message = request.form["message"]
+    speak = request.form.get("speak", "false")
+    audio_speed = float(request.form.get("audio_speed", 1.0))
+    tts = request.form.get("tts", None)
+
+    session.permanent = True
+    session["speak"] = speak.lower() == "true"  # Convert "true" to True, for example
+    session["audio_speed"] = audio_speed
+
+    rag = RAG(use_openai=True)
+    try:
+        rag.get_collection(sha1sum=sha1sum)
+        answer = rag.query_document(message)
+
+        audio = None
+        if tts != "alltalk":
+            audio = generate_audio(answer, audio_speed)
+        response = {
+            "response": answer,
+            "audio": audio
+        }
+    except ValueError:
+        response = {
+            "status": "error",
+            "message": "Document not found"
+        }
+
+    return jsonify(response)
 
 
 @app.route("/speech2text", methods=["POST"])

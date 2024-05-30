@@ -164,7 +164,7 @@ class ChatBot():
             for chunk in response.iter_content(chunk_size=1024):
                 stream.write(chunk)
         else:
-            print(f"Failed to get audio: statu_code = {response.status_code}")
+            print(f"Failed to get audio: status_code = {response.status_code}")
 
 
     def interactive(self):
