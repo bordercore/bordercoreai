@@ -26,9 +26,9 @@ class RAG():
     # The number of characters each chunk overlaps with the next.
     overlap = 20
 
-    def __init__(self, use_openai=True):
+    def __init__(self, chromdb="chromdb", use_openai=True):
         self.use_openai = use_openai
-        self.client = chromadb.PersistentClient(path="chromdb")
+        self.client = chromadb.PersistentClient(path=chromdb)
 
     def add_document(self, text=None, filename=None, name=None):
         if filename:

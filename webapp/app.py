@@ -52,9 +52,9 @@ def rag_upload():
     name = request.files["file"].name
 
     text = request.files["file"].read()
-    rag = RAG(use_openai=True)
+    chromdb = Path(__file__).resolve().parent.parent / "chromdb"
+    rag = RAG(chromdb=str(chromdb), use_openai=True)
     rag.add_document(text=text, name=name)
-    # rag.get_collection(sha1sum=rag.sha1sum, filename=name)
 
     return jsonify(
         {
@@ -76,7 +76,8 @@ def rag_chat():
     session["speak"] = speak.lower() == "true"  # Convert "true" to True, for example
     session["audio_speed"] = audio_speed
 
-    rag = RAG(use_openai=True)
+    chromdb = Path(__file__).resolve().parent.parent / "chromdb"
+    rag = RAG(chromdb=str(chromdb), use_openai=True)
     try:
         rag.get_collection(sha1sum=sha1sum)
         answer = rag.query_document(message)
