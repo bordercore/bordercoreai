@@ -7,3 +7,4 @@ node_modules/
 *.pyc
 *.wasm
 api/shared.py
+chromdb/
