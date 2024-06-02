@@ -3,6 +3,7 @@ import io
 import json
 import warnings
 import wave
+from pathlib import Path
 
 import ffmpeg
 import numpy as np
@@ -26,6 +27,12 @@ app.secret_key = shared.flask_secret_key
 app.config["SESSION_TYPE"] = "filesystem"
 
 Session(app)  # Initialize session management
+
+
+@app.before_request
+def before_request_func():
+    session["tts_host"] = shared.tts_host
+    session["tts_voice"] = shared.tts_voice
 
 
 @app.route("/")
