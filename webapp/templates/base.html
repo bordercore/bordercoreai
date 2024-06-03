@@ -10,15 +10,20 @@
     </head>
     <body class="m-3">
         <div id="vue-app">
-            <div class="d-flex align-items-center">
-                <h1>Bordercore AI</h1>
+            <div id="top-header" class="d-flex align-items-start" __style="height: 170px">
+                <img src="{{ url_for('static', filename='img/logo.png') }}" width="864" height="170" />
                 <div id="canvas-container" class="ms-5"></div>
-                <div class="d-flex flex-grow-1 justify-content-end">
-                    <button class="hamburger" @click="showMenu = !showMenu">
-                        <div class="hamburger__line"></div>
-                        <div class="hamburger__line"></div>
-                        <div class="hamburger__line"></div>
-                    </button>
+                <div id="top-right" class="d-flex flex-column flex-grow-1" ___style="height: 170px">
+                    <div class="d-flex justify-content-end">
+                        <button class="hamburger" @click="showMenu = !showMenu">
+                            <div class="hamburger__line"></div>
+                            <div class="hamburger__line"></div>
+                            <div class="hamburger__line"></div>
+                        </button>
+                    </div>
+                    <div class="text-nowrap mt-auto">
+                        {% block nav %}{% endblock %}
+                    </div>
                 </div>
             </div>
             <hr />

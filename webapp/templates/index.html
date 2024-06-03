@@ -1,5 +1,10 @@
 {% extends "base.html" %}
 
+{% block nav %}
+Chat |
+<a href="/rag">RAG</a>
+{% endblock %}
+
 {% block input %}
 <input v-model="prompt" id="prompt" class="form-control w-75" type="text" placeholder="Prompt" @keydown.enter.prevent="handleSendMessage" />
 {% endblock %}

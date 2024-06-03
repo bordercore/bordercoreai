@@ -18,6 +18,10 @@ body {
   overflow-y: auto;
 }
 
+#top-header, #top-right {
+  height: 170px;
+}
+
 .hamburger {
   background: transparent;
   border: transparent;
