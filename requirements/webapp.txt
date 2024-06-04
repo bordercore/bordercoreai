@@ -10,6 +10,7 @@ openai-whisper==20231106
 piper-tts==1.2.0
 pydub==0.25.1
 pysbd==0.3.4
+pytest==8.2.2
 PyYAML==6.0
 simpleaudio==1.0.4
 sounddevice==0.4.6
