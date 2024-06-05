@@ -109,6 +109,12 @@ Options:
 
 - -s: enable AllTalk TTS
 
+To use RAG with a local file:
+
+```bash
+python3 ./rag.py -f <filename>
+```
+
 # Usage
 
 ## UI

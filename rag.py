@@ -2,9 +2,11 @@ import argparse
 import hashlib
 import os
 import uuid
+from io import BytesIO
 
 import chromadb
 import openai
+import PyPDF2
 from nltk.tokenize import sent_tokenize
 
 from embeddings import len_safe_get_embedding
@@ -30,12 +32,25 @@ class RAG():
         self.use_openai = use_openai
         self.client = chromadb.PersistentClient(path=chromdb)
 
+    def extract_text_from_pdf(self, pdf):
+        reader = PyPDF2.PdfReader(pdf)
+        content = ""
+        for page in reader.pages:
+            content += page.extract_text()
+        return content
+
     def add_document(self, text=None, filename=None, name=None):
         if filename:
-            with open(filename, "r") as file:
-                self.document = file.read()
+            with open(filename, "rb") as file:
+                if filename.endswith("pdf"):
+                    self.document = self.extract_text_from_pdf(file)
+                else:
+                    self.document = file.read()
         else:
-            self.document = text.decode("utf-8")
+            if name.lower().endswith("pdf"):
+                self.document = self.extract_text_from_pdf(BytesIO(text))
+            else:
+                self.document = text.decode("utf-8")
 
         sha1sum = self.get_sha1sum()
         try:
@@ -145,18 +160,7 @@ class RAG():
 
         while True:
             user_input = input(f"\n\n{MAGENTA}You>{END} ")
-            args = {
-                "n_results": 3
-            }
-            if self.use_openai:
-                embeddings = len_safe_get_embedding(user_input)
-                args["query_embeddings"] = [embeddings]
-            else:
-                args["query_texts"] = [user_input]
-
-            results = self.collection.query(**args)
-
-            answer = self.get_response(user_input, results["documents"])
+            answer = self.query_document(user_input)
             print(f"\n{answer}")
 
 

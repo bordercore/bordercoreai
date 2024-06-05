@@ -55,9 +55,7 @@ def rag():
 
 @app.route("/rag/upload", methods=["POST"])
 def rag_upload():
-
-    name = request.files["file"].name
-
+    name = request.files["file"].filename
     text = request.files["file"].read()
     chromdb = Path(__file__).resolve().parent.parent / "chromdb"
     rag = RAG(chromdb=str(chromdb), use_openai=True)
