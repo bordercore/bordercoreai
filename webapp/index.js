@@ -127,6 +127,9 @@ const app = createApp({
         };
 
         function handleFileUpload(event) {
+            const modal = new Modal("#modalProcessing");
+            modal.show();
+
             const formData = new FormData();
             const fileData = event.target.files[0];
             if (!fileData) {
@@ -144,6 +147,7 @@ const app = createApp({
                 }).then((response) => {
                     ragFileUploaded.value = true;
                     sha1sum.value = response.data.sha1sum;
+                    modal.hide();
                 });
         };
 
