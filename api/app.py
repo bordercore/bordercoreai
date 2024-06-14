@@ -138,8 +138,8 @@ def main(id=None):
         pad_token_id=settings.tokenizer.eos_token_id,
         generation_config=generation_config,
     )
-
-    speed = int(len(generation_output[0]) / (time.time() - start))
+    num_tokens = len(generation_output[0])
+    speed = int(num_tokens / (time.time() - start))
 
     # Get the tokens from the output, decode them, print them
     token_output = generation_output[0]
@@ -147,4 +147,4 @@ def main(id=None):
 
     print(f"{text_output=}")
     response = inference.parse_response(text_output)
-    return jsonify(choices=[{"message": {"content": response, "speed": speed}}], status="OK")
+    return jsonify(choices=[{"message": {"content": response, "speed": speed, "num_tokens": num_tokens}}], status="OK")

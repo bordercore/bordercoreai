@@ -286,10 +286,10 @@ class ChatBot():
         self.context.add("assistant", assistant_message)
 
     def send_message_to_model(self, prompt_raw):
-
         if self.args.get("control_lights", None) == "true":
+            speed = None
             try:
-                run_command("chatgpt", prompt_raw[-1]["content"])
+                speed = run_command("llama", prompt_raw[-1]["content"])
                 content = "Done"
             except Exception as e:
                 content = f"Error: {e}"
