@@ -26,7 +26,7 @@ from requests.exceptions import ConnectionError
 
 from api import settings
 from govee import run_command
-from util import get_model_info
+from util import get_model_info, sort_models
 
 warnings.filterwarnings("ignore", message=".*The 'nopython' keyword.*")
 
@@ -315,9 +315,11 @@ class ChatBot():
     @staticmethod
     def get_model_list():
         response = requests.get(URI_MODEL_LIST)
-        return sorted(
-            ChatBot.get_personal_model_names(response.json()["model_names"]),
-            key=lambda x: x["name"].lower()
+        model_list = ChatBot.get_personal_model_names(response.json()["model_names"])
+
+        return sort_models(
+            model_list,
+            [v.get("name", None) for k, v in model_info.items()]
         )
 
     @staticmethod
