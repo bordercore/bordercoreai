@@ -10,7 +10,7 @@ import torch
 from flask import Flask, jsonify, request
 from transformers import GenerationConfig
 
-import shared
+import settings
 
 from ..inference import Inference
 from ..util import get_tokenizer
@@ -37,50 +37,50 @@ def get_model_list(path):
 def unload_model():
 
     # Remove model from VRAM
-    del shared.model
+    del settings.model
     gc.collect()
     torch.cuda.empty_cache()
-    shared.model = None
+    settings.model = None
 
 
 def load_model(model_name):
-    if shared.model:
+    if settings.model:
         return
 
-    shared.model_name = model_name
+    settings.model_name = model_name
 
-    model_path = f"{shared.model_dir}/{shared.model_name}"
+    model_path = f"{settings.model_dir}/{settings.model_name}"
 
     inference = Inference(
-        dir=shared.model_dir,
-        model_name=shared.model_name,
+        dir=settings.model_dir,
+        model_name=settings.model_name,
         quantize=True
     )
-    shared.model = inference.load_model()
-    shared.tokenizer = get_tokenizer(model_path)
+    settings.model = inference.load_model()
+    settings.tokenizer = get_tokenizer(model_path)
 
 
 def get_temperature(payload):
-    temp = payload["temperature"] if "temperature" in payload else shared.temperature
+    temp = payload["temperature"] if "temperature" in payload else settings.temperature
     # the temperature must be a strictly positive float
     if temp == 0:
         temp = 0.1
     return temp
 
 
-load_model(shared.model_name)
+load_model(settings.model_name)
 
 
 @app.route("/v1/internal/model/info")
 def info():
 
-    return jsonify(model_name=shared.model_name)
+    return jsonify(model_name=settings.model_name)
 
 
 @app.route("/v1/internal/model/list")
 def list():
 
-    return jsonify(model_names=get_model_list(shared.model_dir))
+    return jsonify(model_names=get_model_list(settings.model_dir))
 
 
 @app.route("/v1/internal/model/load", methods=["POST"])
@@ -103,23 +103,23 @@ def main(id=None):
 
     payload = request.json
 
-    inference = Inference(dir=shared.model_dir, model_name=shared.model_name)
+    inference = Inference(dir=settings.model_dir, model_name=settings.model_name)
     prompt_template = inference.get_prompt_template(
-        shared.tokenizer,
+        settings.tokenizer,
         payload["messages"]
     )
 
-    if inference.model_info[shared.model_name].get("add_bos_token", None):
+    if inference.model_info[settings.model_name].get("add_bos_token", None):
         prompt_template = f"<|begin_of_text|>{prompt_template}"
 
-    token_input = shared.tokenizer(
+    token_input = settings.tokenizer(
         prompt_template,
         return_tensors="pt"
     ).input_ids.to(device)
 
     terminators = [
-        shared.tokenizer.eos_token_id,
-        shared.tokenizer.convert_tokens_to_ids("<|eot_id|>")  # LLama3
+        settings.tokenizer.eos_token_id,
+        settings.tokenizer.convert_tokens_to_ids("<|eot_id|>")  # LLama3
     ]
 
     generation_config = GenerationConfig(
@@ -133,9 +133,9 @@ def main(id=None):
 
     start = time.time()
 
-    generation_output = shared.model.generate(
+    generation_output = settings.model.generate(
         token_input,
-        pad_token_id=shared.tokenizer.eos_token_id,
+        pad_token_id=settings.tokenizer.eos_token_id,
         generation_config=generation_config,
     )
 
@@ -143,7 +143,7 @@ def main(id=None):
 
     # Get the tokens from the output, decode them, print them
     token_output = generation_output[0]
-    text_output = shared.tokenizer.decode(token_output, skip_special_tokens=True)
+    text_output = settings.tokenizer.decode(token_output, skip_special_tokens=True)
 
     print(f"{text_output=}")
     response = inference.parse_response(text_output)

@@ -10,3 +10,5 @@ discord_channel_id = ""
 
 tts_host = ""
 tts_voice = "voice.wav"
+
+openai_api_key = ""

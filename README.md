@@ -20,7 +20,7 @@ Two TTS engines are supported: [AllTalk TTS](https://github.com/erew123/alltalk_
 
 Discord bots can be backed by either OpenAI's ChatGPT or an open source LLM.
 
-Set your server's channel ID in `shared.discord_channel_id`.
+Set your server's channel ID in `settings.discord_channel_id`.
 
 Set the environment variables `DISCORD_TOKEN_CHAD` (for a ChatGPT bot) and `DISCORD_TOKEN_FLOYD` (for an open source LLM).
 
@@ -72,7 +72,7 @@ To install the API, first create and activate a virtual environment. Then:
 pip install requirements/api.txt
 ```
 
-Copy `api/shared_template.py` to `api/shared.py` and set the following:
+Copy `api/settings_template.py` to `api/settings.py` and set the following:
 
 **model_name**: default model to load
 **model_dir**: the relative directory containing your models

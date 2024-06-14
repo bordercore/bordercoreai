@@ -19,11 +19,11 @@ warnings.filterwarnings("ignore", message=".*The 'nopython' keyword.*")
 import whisper
 from rag import RAG
 
-from ..api import shared
+from ..api import settings
 
 app = Flask(__name__)
 app.debug = True
-app.secret_key = shared.flask_secret_key
+app.secret_key = settings.flask_secret_key
 app.config["SESSION_TYPE"] = "filesystem"
 
 Session(app)  # Initialize session management
@@ -31,8 +31,8 @@ Session(app)  # Initialize session management
 
 @app.before_request
 def before_request_func():
-    session["tts_host"] = shared.tts_host
-    session["tts_voice"] = shared.tts_voice
+    session["tts_host"] = settings.tts_host
+    session["tts_voice"] = settings.tts_voice
 
 
 @app.route("/")

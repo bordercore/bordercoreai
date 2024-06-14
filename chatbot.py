@@ -24,7 +24,7 @@ from pydub import AudioSegment
 from pydub.playback import play
 from requests.exceptions import ConnectionError
 
-from api import shared
+from api import settings
 from govee import run_command
 from util import get_model_info
 
@@ -45,7 +45,7 @@ URI_MODEL_LOAD = f"{HOST}/v1/internal/model/load"
 
 DISCORD_TOKEN_CHAD = os.environ.get("DISCORD_TOKEN_CHAD")
 DISCORD_TOKEN_FLOYD = os.environ.get("DISCORD_TOKEN_FLOYD")
-DISCORD_CHANNEL_ID = shared.discord_channel_id
+DISCORD_CHANNEL_ID = settings.discord_channel_id
 
 MODE = "chat"
 
@@ -150,8 +150,8 @@ class ChatBot():
     def play_response(self, response):
 
         text = urllib.parse.quote(response)
-        host = shared.tts_host
-        voice = shared.tts_voice
+        host = settings.tts_host
+        voice = settings.tts_voice
         output_file = "output.wav"
         url = f"http://{host}/api/tts-generate-streaming?text={text}&voice={voice}&language=en&output_file={output_file}"
         response = requests.get(url, stream=True)
