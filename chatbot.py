@@ -26,6 +26,7 @@ from requests.exceptions import ConnectionError
 
 from api import shared
 from govee import run_command
+from util import get_model_info
 
 warnings.filterwarnings("ignore", message=".*The 'nopython' keyword.*")
 
@@ -65,11 +66,7 @@ logger.setLevel(logging.WARNING)
 null_handler = logging.NullHandler()
 logger.addHandler(null_handler)
 
-
-models_file_path = Path(__file__).resolve().parent / Path("models.yaml")
-with open(models_file_path, "r") as file:
-    model_info = yaml.safe_load(file)
-
+model_info = get_model_info()
 
 if not DISCORD_TOKEN_CHAD:
     print("Error: DISCORD_TOKEN_CHAD not found.")

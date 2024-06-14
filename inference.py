@@ -11,7 +11,7 @@ from transformers import (AutoModelForCausalLM, BitsAndBytesConfig,
                           TextStreamer, pipeline)
 
 # from .util import get_tokenizer
-from util import get_tokenizer
+from util import get_model_info, get_tokenizer
 
 device = "cuda:0" if torch.cuda.is_available() else "cpu"
 
@@ -32,11 +32,7 @@ class Inference:
         self.model_name = model_name
         self.model_path = f"{dir}/{model_name}"
         self.quantize = quantize
-
-        # Load the model config file
-        full_path = os.path.join(os.path.dirname(__file__), self.models_config_path)
-        with open(full_path, "r") as file:
-            self.model_info = yaml.safe_load(file)
+        self.model_info = get_model_info()
 
     def get_template_type(self):
         if self.model_name in self.model_info and "template" in self.model_info[self.model_name]:

@@ -1,3 +1,6 @@
+from pathlib import Path
+
+import yaml
 from transformers import AutoTokenizer
 
 
@@ -16,3 +19,13 @@ def get_tokenizer(model_path):
     # self.tokenizer.add_special_tokens(dict(eos_token="<|im_end|>"))
 
     return tokenizer
+
+
+# Load the model config file
+def get_model_info():
+
+    models_file_path = Path(__file__).resolve().parent / Path("models.yaml")
+    with open(models_file_path, "r") as file:
+        model_info = yaml.safe_load(file)
+
+    return model_info
