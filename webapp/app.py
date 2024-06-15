@@ -164,6 +164,7 @@ def map_speech_rate_value(input_value):
 def chat():
 
     message = json.loads(request.form["message"])
+    model_name = request.form["model"]
     speak = request.form.get("speak", "false")
     audio_speed = float(request.form.get("audio_speed", 1.0))  # Playback speed
     temperature = float(request.form.get("temperature", 0.7))
@@ -177,6 +178,7 @@ def chat():
     context = Context()
     chatbot = ChatBot(
         context,
+        model_name=model_name,
         assistant=False,
         debug=False,
         chat_mode="instruct",
@@ -219,7 +221,12 @@ def list():
 def load():
 
     model = request.form["model"]
-    info = ChatBot.load_model(model)
+    type = ChatBot.get_model_type(model)
+
+    if type == "openai":
+        info = {"status": "OK"}
+    else:
+        info = ChatBot.load_model(model)
 
     return jsonify(info)
 

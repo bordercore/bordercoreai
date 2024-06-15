@@ -264,6 +264,7 @@ const app = createApp({
                 "/chat",
                 {
                     "message": JSON.stringify(chatHistory.value),
+                    "model": model.value,
                     "audio_speed": audioSpeed.value,
                     "speak": speak.value,
                     "tts": tts,

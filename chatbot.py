@@ -5,10 +5,10 @@ import os
 import re
 import string
 import sys
+import time
 import urllib.parse
 import warnings
 import wave
-from pathlib import Path
 
 import discord
 import openai
@@ -19,7 +19,6 @@ import requests
 import simpleaudio
 import sounddevice  # Adding this eliminates an annoying warning
 import sseclient
-import yaml
 from pydub import AudioSegment
 from pydub.playback import play
 from requests.exceptions import ConnectionError
@@ -113,13 +112,13 @@ class Context():
 
 class ChatBot():
 
-    DISCORD_BOT_NAME = "FloydBot"
     ASSISTANT_NAME = "Luna"
     TEMPERATURE = 0.7
 
-    def __init__(self, context, **args):
+    def __init__(self, context, model_name=None, **args):
         self.context = context
         self.args = args
+        self.model_name = model_name
         if "temperature" in self.args:
             self.TEMPERATURE = self.args["temperature"]
 
@@ -286,13 +285,26 @@ class ChatBot():
         self.context.add("assistant", assistant_message)
 
     def send_message_to_model(self, prompt_raw):
+
+        model_type = ChatBot.get_model_type(self.model_name)
+
         if self.args.get("control_lights", None) == "true":
             speed = None
             try:
-                speed = run_command("llama", prompt_raw[-1]["content"])
+                speed = run_command(model_type, prompt_raw[-1]["content"])
                 content = "Done"
             except Exception as e:
                 content = f"Error: {e}"
+        elif model_type == "openai":
+            start = time.time()
+            response = openai.ChatCompletion.create(
+                model=self.model_name,
+                messages=prompt_raw
+            )
+            return {
+                "content": response["choices"][0]["message"]["content"],
+                "speed": int(response["usage"]["completion_tokens"] / (time.time() - start))
+            }
         else:
             self.handle_prompt(prompt_raw)
             request = self.get_chatbot_params()
@@ -308,6 +320,13 @@ class ChatBot():
         return {"content": content, "speed": speed}
 
     @staticmethod
+    def get_model_type(model_name):
+        if model_name and \
+           model_name in model_info and \
+           "type" in model_info[model_name]:
+            return model_info[model_name]["type"]
+
+    @staticmethod
     def get_model_info():
         response = requests.get(URI_MODEL_INFO)
         return response.json()["model_name"]
@@ -315,7 +334,13 @@ class ChatBot():
     @staticmethod
     def get_model_list():
         response = requests.get(URI_MODEL_LIST)
-        model_list = ChatBot.get_personal_model_names(response.json()["model_names"])
+
+        model_names = response.json()["model_names"]
+
+        # Add proprietary models
+        model_names.extend(["gpt-4o", "gpt-4-turbo"])
+
+        model_list = ChatBot.get_personal_model_names(model_names)
 
         return sort_models(
             model_list,
