@@ -1,4 +1,4 @@
-webapp/flask_session/
+flask_session/
 webapp/static/js/javascript.js
 webapp/vad.worklet.bundle.min.js
 *.onnx
