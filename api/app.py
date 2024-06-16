@@ -1,19 +1,14 @@
-# To run
-#
-# $ PYTHONPATH=. FLASK_RUN_HOST=0.0.0.0 flask --app app run
-
 import gc
 import os
 import time
 
 import torch
 from flask import Flask, jsonify, request
+from inference import Inference
 from transformers import GenerationConfig
+from util import get_tokenizer
 
-import settings
-
-from ..inference import Inference
-from ..util import get_tokenizer
+from api import settings
 
 app = Flask(__name__)
 

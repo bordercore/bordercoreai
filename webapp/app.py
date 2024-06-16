@@ -17,9 +17,8 @@ from flask_session import Session
 warnings.filterwarnings("ignore", message=".*The 'nopython' keyword.*")
 
 import whisper
+from api import settings
 from rag import RAG
-
-from ..api import settings
 
 app = Flask(__name__)
 app.debug = True

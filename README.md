@@ -58,8 +58,7 @@ npm run build
 To run:
 
 ```bash
-cd webapp
-PYTHONPATH=.. flask --app app run
+python3 -m webapp
 ```
 
 To access: http://localhost:5000/
@@ -93,8 +92,7 @@ The **type** is used to parse the response from the model.
 To run:
 
 ```bash
-cd api
-PYTHONPATH=. FLASK_RUN_HOST=0.0.0.0 flask --app app run
+python -m api
 ```
 
 ## Command line
