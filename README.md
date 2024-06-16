@@ -138,3 +138,11 @@ The hamburger menu to the upper-right lets you adjust the following:
 **Speak**: This enables TTS.
 
 **TTS Host**: The hostname and port for the TTS server.
+
+# Tests
+
+To run the unit tests:
+
+```bash
+pytest
+```
