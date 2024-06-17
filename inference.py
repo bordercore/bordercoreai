@@ -2,15 +2,14 @@ import argparse
 import json
 import os
 import re
+import time
 
 import torch
 import transformers
-import yaml
 from awq import AutoAWQForCausalLM
 from transformers import (AutoModelForCausalLM, BitsAndBytesConfig,
-                          TextStreamer, pipeline)
+                          GenerationConfig, TextStreamer, pipeline)
 
-# from .util import get_tokenizer
 from util import get_model_info, get_tokenizer
 
 device = "cuda:0" if torch.cuda.is_available() else "cpu"
@@ -25,14 +24,16 @@ system_message = ""
 class Inference:
 
     max_new_tokens = 256
-    temperature = 0.7
+    temperature_default = 0.7
     models_config_path = "models.yaml"
 
-    def __init__(self, dir, model_name, quantize=False):
+    def __init__(self, model_dir, model_name, temperature=None, quantize=False):
         self.model_name = model_name
-        self.model_path = f"{dir}/{model_name}"
+        self.model_path = f"{model_dir}/{model_name}"
         self.quantize = quantize
         self.model_info = get_model_info()
+        self.temperature = temperature or self.temperature_default
+        self.tokenizer = get_tokenizer(self.model_path)
 
     def get_template_type(self):
         if self.model_name in self.model_info and "template" in self.model_info[self.model_name]:
@@ -152,7 +153,7 @@ class Inference:
             args["quantization_config"] = self.get_quantization_config()
 
         if "awq" in self.model_name.lower():
-            model = AutoAWQForCausalLM.from_quantized(
+            self.model = AutoAWQForCausalLM.from_quantized(
                 self.model_path,
                 **args,
                 fuse_layers=True,
@@ -162,73 +163,90 @@ class Inference:
                 max_memory={0: "8000MiB", "cpu": "99GiB"}
             ).model
         else:
-            model = AutoModelForCausalLM.from_pretrained(
+            self.model = AutoModelForCausalLM.from_pretrained(
                 self.model_path,
                 **args
             )
+        self.tokenizer = get_tokenizer(self.model_path)
 
-        return model
+    def generate(self, messages):
+        prompt_template = self.get_prompt_template(self.tokenizer, messages)
+
+        if self.model_info[self.model_name].get("add_bos_token", None):
+            prompt_template = f"<|begin_of_text|>{prompt_template}"
+
+        token_input = self.tokenizer(
+            prompt_template,
+            return_tensors="pt"
+        ).input_ids.to(device)
+
+        terminators = [
+            self.tokenizer.eos_token_id,
+            self.tokenizer.convert_tokens_to_ids("<|eot_id|>")  # LLama3
+        ]
+
+        generation_config = GenerationConfig(
+            do_sample=True,
+            temperature=self.temperature,
+            top_p=0.95,
+            top_k=40,
+            eos_token_id=terminators,
+            max_new_tokens=750
+        )
+
+        start = time.time()
+
+        generation_output = self.model.generate(
+            token_input,
+            pad_token_id=self.tokenizer.eos_token_id,
+            generation_config=generation_config,
+        )
+        num_tokens = len(generation_output[0])
+        speed = int(num_tokens / (time.time() - start))
+
+        # Get the tokens from the output, decode them, print them
+        token_output = generation_output[0]
+        text_output = self.tokenizer.decode(token_output, skip_special_tokens=True)
+        return self.parse_response(text_output), num_tokens, speed
+
+        # streamer = TextStreamer(self.tokenizer)
+
+        # terminators = [
+        #     self.tokenizer.eos_token_id,
+        #     self.tokenizer.convert_tokens_to_ids("<|eot_id|>")  # LLama3
+        # ]
+
+        # pipe = pipeline(
+        #     "text-generation",
+        #     model=model,
+        #     tokenizer=self.tokenizer,
+        #     streamer=streamer,
+        #     max_new_tokens=self.max_new_tokens,
+        #     eos_token_id=terminators,
+        #     do_sample=True,
+        #     temperature=self.temperature,
+        #     top_p=0.95,
+        #     top_k=40,
+        #     repetition_penalty=1.1
+        # )
+
+        # pipe(prompt_template)[0]["generated_text"]
+        # # self.parse_response(pipe(prompt_template)[0]["generated_text"])
 
     def run(self):
 
         print(f"Using model {self.model_name}.\n")
 
-        model = self.load_model()
-
-        self.tokenizer = get_tokenizer(self.model_path)
+        self.load_model()
 
         while True:
             user_input = input("\nPrompt: ")
-
             messages = [
                 {"role": "user", "content": user_input}
             ]
-            prompt_template = self.get_prompt_template(self.tokenizer, messages)
 
-            # generation_config = GenerationConfig(
-            #     do_sample=True,
-            #     temperature=self.temperature,
-            #     top_p=0.95,
-            #     top_k=40,
-            #     max_new_tokens=256
-            # )
-            # # Generate output
-            # # TODO: explicitly setting pad_token_id avoids a warning.
-            # #  what exactly does this do?
-            # generation_output = model.generate(
-            #     token_input,
-            #     pad_token_id=self.tokenizer.eos_token_id,
-            #     generation_config=generation_config,
-            # )
-
-            # # Get the tokens from the output, decode them, print them
-            # token_output = generation_output[0]
-            # text_output = self.tokenizer.decode(token_output, skip_special_tokens=True)
-            # print("\n" + self.parse_response(text_output) + "\n")
-
-            streamer = TextStreamer(self.tokenizer)
-
-            terminators = [
-                self.tokenizer.eos_token_id,
-                self.tokenizer.convert_tokens_to_ids("<|eot_id|>")  # LLama3
-            ]
-
-            pipe = pipeline(
-                "text-generation",
-                model=model,
-                tokenizer=self.tokenizer,
-                streamer=streamer,
-                max_new_tokens=self.max_new_tokens,
-                eos_token_id=terminators,
-                do_sample=True,
-                temperature=self.temperature,
-                top_p=0.95,
-                top_k=40,
-                repetition_penalty=1.1
-            )
-
-            pipe(prompt_template)[0]["generated_text"]
-            # self.parse_response(pipe(prompt_template)[0]["generated_text"])
+            response, num_tokens, speed = self.generate(messages)
+            print("\n" + response)
 
 
 if __name__ == "__main__":
@@ -258,5 +276,5 @@ if __name__ == "__main__":
     model_name = args.model_name
     quantize = args.quantize
 
-    inference = Inference(dir=dir, model_name=model_name, quantize=quantize)
+    inference = Inference(model_dir=dir, model_name=model_name, quantize=quantize)
     inference.run()

@@ -47,11 +47,12 @@ def load_model(model_name):
     model_path = f"{settings.model_dir}/{settings.model_name}"
 
     inference = Inference(
-        dir=settings.model_dir,
+        model_dir=settings.model_dir,
         model_name=settings.model_name,
         quantize=True
     )
-    settings.model = inference.load_model()
+    inference.load_model()
+    settings.model = inference.model
     settings.tokenizer = get_tokenizer(model_path)
 
 
@@ -98,48 +99,22 @@ def main(id=None):
 
     payload = request.json
 
-    inference = Inference(dir=settings.model_dir, model_name=settings.model_name)
-    prompt_template = inference.get_prompt_template(
-        settings.tokenizer,
-        payload["messages"]
+    inference = Inference(
+        model_dir=settings.model_dir,
+        model_name=settings.model_name,
+        temperature=get_temperature(payload)
     )
+    inference.model = settings.model
+    response, num_tokens, speed = inference.generate(payload["messages"])
 
-    if inference.model_info[settings.model_name].get("add_bos_token", None):
-        prompt_template = f"<|begin_of_text|>{prompt_template}"
-
-    token_input = settings.tokenizer(
-        prompt_template,
-        return_tensors="pt"
-    ).input_ids.to(device)
-
-    terminators = [
-        settings.tokenizer.eos_token_id,
-        settings.tokenizer.convert_tokens_to_ids("<|eot_id|>")  # LLama3
-    ]
-
-    generation_config = GenerationConfig(
-        do_sample=True,
-        temperature=get_temperature(payload),
-        top_p=0.95,
-        top_k=40,
-        eos_token_id=terminators,
-        max_new_tokens=750
+    return jsonify(
+        choices=[
+            {
+                "message": {
+                    "content": response,
+                    "speed": speed,
+                    "num_tokens": num_tokens
+                }
+            }
+        ], status="OK"
     )
-
-    start = time.time()
-
-    generation_output = settings.model.generate(
-        token_input,
-        pad_token_id=settings.tokenizer.eos_token_id,
-        generation_config=generation_config,
-    )
-    num_tokens = len(generation_output[0])
-    speed = int(num_tokens / (time.time() - start))
-
-    # Get the tokens from the output, decode them, print them
-    token_output = generation_output[0]
-    text_output = settings.tokenizer.decode(token_output, skip_special_tokens=True)
-
-    print(f"{text_output=}")
-    response = inference.parse_response(text_output)
-    return jsonify(choices=[{"message": {"content": response, "speed": speed, "num_tokens": num_tokens}}], status="OK")
