@@ -56,7 +56,7 @@ const app = createApp({
         const sha1sum = ref("");
         const showMenu = ref(false);
         const speak = ref(session.speak !== undefined ? session.speak : true);
-        const temperature = ref(0.7);
+        const temperature = ref(session.temperature || 0.7);
 
         const tts = "alltalk";
         const ttsHost = ref(session.tts_host);

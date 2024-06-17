@@ -11,7 +11,6 @@ import piper
 import sounddevice  # Adding this eliminates an annoying warning
 from chatbot import ChatBot, Context
 from flask import Flask, jsonify, render_template, request, session
-
 from flask_session import Session
 
 warnings.filterwarnings("ignore", message=".*The 'nopython' keyword.*")
@@ -173,6 +172,7 @@ def chat():
     session.permanent = True
     session["speak"] = speak.lower() == "true"  # Convert "true" to True, for example
     session["audio_speed"] = audio_speed
+    session["temperature"] = temperature
 
     context = Context()
     chatbot = ChatBot(
