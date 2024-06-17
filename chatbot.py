@@ -37,7 +37,7 @@ except ImportError:
     #  sometimes I want to run this code as a daemon using supervisor
     pass
 
-HOST = "http://10.3.2.5:5000"
+HOST = settings.api_host
 URI_CHAT = f"{HOST}/v1/chat/completions"
 URI_MODEL_INFO = f"{HOST}/v1/internal/model/info"
 URI_MODEL_LIST = f"{HOST}/v1/internal/model/list"

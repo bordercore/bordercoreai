@@ -2,6 +2,7 @@ import os
 
 flask_secret_key = "b'LT\xec\xb3\xc5\xeb\xa3,\x96\x96\xfebJ1\xf1k\xc2k\x14\x11\xe1\r;\x82'"
 
+api_host = "http://10.3.2.5:5000"
 model_name = "hermes-pro-llama3-awq"
 model_dir = "../models"
 temperature = 0.7
