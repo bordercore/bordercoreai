@@ -12,7 +12,7 @@ Mistral-7B-Instruct-v0.2:
 NousResearch_Nous-Hermes-2-Mistral-7B-DPO:
   name: Nous Research Hermes 2 Mistral 7B DPO
   template: chatml
-  type: mistral
+  type: chatml
 gpt-4o:
   name: ChatGPT-4o
   type: openai
