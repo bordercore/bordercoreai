@@ -28,13 +28,14 @@ class Inference:
     temperature_default = 0.7
     models_config_path = "models.yaml"
 
-    def __init__(self, model_dir, model_name, temperature=None, quantize=False):
+    def __init__(self, model_dir, model_name, temperature=None, quantize=False, debug=False):
         self.model_name = model_name
         self.model_path = f"{model_dir}/{model_name}"
         self.quantize = quantize
         self.model_info = get_model_info()
         self.temperature = temperature or self.temperature_default
         self.tokenizer = get_tokenizer(self.model_path)
+        self.debug = debug
 
     def get_template_type(self):
         if self.model_name in self.model_info and "template" in self.model_info[self.model_name]:
@@ -208,7 +209,10 @@ class Inference:
         # Get the tokens from the output, decode them, print them
         token_output = generation_output[0]
         text_output = self.tokenizer.decode(token_output, skip_special_tokens=True)
-        return self.parse_response(text_output), num_tokens, speed
+        response = self.parse_response(text_output)
+        if self.debug:
+            print("\n" + response)
+        return response, num_tokens, speed
 
         # streamer = TextStreamer(self.tokenizer)
 

@@ -102,7 +102,8 @@ def main(id=None):
     inference = Inference(
         model_dir=settings.model_dir,
         model_name=settings.model_name,
-        temperature=get_temperature(payload)
+        temperature=get_temperature(payload),
+        debug=True
     )
     inference.model = settings.model
     response, num_tokens, speed = inference.generate(payload["messages"])
