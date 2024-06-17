@@ -55,7 +55,7 @@ MAGENTA = "\033[35m"
 RED = "\033[91m"
 END = "\033[0m"
 
-openai.api_key = os.environ.get("OPENAI_API_KEY")
+openai.api_key = settings.openai_api_key
 
 seg = pysbd.Segmenter(language="en", clean=False)
 
