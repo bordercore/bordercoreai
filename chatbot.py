@@ -24,6 +24,7 @@ from pydub.playback import play
 from requests.exceptions import ConnectionError
 
 from api import settings
+from context import Context
 from govee import run_command
 from util import get_model_info, sort_models
 
@@ -73,41 +74,6 @@ if not DISCORD_TOKEN_CHAD:
 if not DISCORD_TOKEN_FLOYD:
     print("Error: DISCORD_TOKEN_FLOYD not found.")
     sys.exit(1)
-
-
-class Context():
-
-    context_limit = 4096
-
-    def __init__(self):
-        self.context = []
-
-    def add(self, role, message):
-        self.context.append(
-            {
-                "role": role,
-                "content": message
-            }
-        )
-        self.prune()
-
-    def get(self):
-        return self.context
-
-    def set(self, context):
-        self.context = context
-
-    def size(self):
-        return len(self.get())
-
-    def clear(self):
-        self.context = []
-
-    def prune(self):
-        for message in list(self.context):
-            if self.size() < self.context_limit:
-                break
-            self.context.pop(0)
 
 
 class ChatBot():
