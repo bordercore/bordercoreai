@@ -10,6 +10,7 @@ from awq import AutoAWQForCausalLM
 from transformers import (AutoModelForCausalLM, BitsAndBytesConfig,
                           GenerationConfig, TextStreamer, pipeline)
 
+from context import Context
 from util import get_model_info, get_tokenizer
 
 device = "cuda:0" if torch.cuda.is_available() else "cpu"
@@ -239,13 +240,13 @@ class Inference:
 
         self.load_model()
 
+        context = Context()
+
         while True:
             user_input = input("\nPrompt: ")
-            messages = [
-                {"role": "user", "content": user_input}
-            ]
-
-            response, num_tokens, speed = self.generate(messages)
+            context.add("user", user_input)
+            response, num_tokens, speed = self.generate(context.get())
+            context.add("assistant", response)
             print("\n" + response)
 
 
