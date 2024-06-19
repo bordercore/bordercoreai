@@ -1,14 +1,13 @@
 import argparse
 import json
 import os
-import re
 import time
 
 import torch
 import transformers
 from awq import AutoAWQForCausalLM
 from transformers import (AutoModelForCausalLM, BitsAndBytesConfig,
-                          GenerationConfig, TextStreamer, pipeline)
+                          TextStreamer, pipeline)
 
 from context import Context
 from util import get_model_info, get_tokenizer
@@ -24,17 +23,20 @@ system_message = ""
 
 class Inference:
 
-    max_new_tokens = 256
+    max_new_tokens = 750
     temperature_default = 0.7
+    top_p = 0.95
+    top_k = 40
     models_config_path = "models.yaml"
 
-    def __init__(self, model_dir, model_name, temperature=None, quantize=False, debug=False):
+    def __init__(self, model_dir, model_name, temperature=None, quantize=False, stream=False, debug=False):
         self.model_name = model_name
         self.model_path = f"{model_dir}/{model_name}"
         self.quantize = quantize
         self.model_info = get_model_info()
         self.temperature = temperature or self.temperature_default
         self.tokenizer = get_tokenizer(self.model_path)
+        self.stream = stream
         self.debug = debug
 
     def get_template_type(self):
@@ -77,51 +79,6 @@ class Inference:
                     elif message["role"] == "assistant":
                         template += f"{message['content']}</s>"
                 return template
-
-    def parse_response(self, response):
-
-        if self.model_name in self.model_info:
-            response_type = self.model_info[self.model_name].get("type", None)
-            if response_type == "llama2":
-                return self.parse_response_llama2(response)
-            elif response_type == "chatml":
-                return self.parse_response_chatml(response)
-            elif response_type == "phi":
-                return self.parse_response_phi(response)
-            else:
-                return response
-        else:
-            return response
-
-    def parse_response_chatml(self, response):
-        pattern = ".*assistant\n(.*)"
-        matches = re.search(pattern, response, re.DOTALL)
-
-        # Extracting and printing the matched content
-        if matches:
-            return matches.group(1).strip()
-        else:
-            return f"Error: not able to parse response: {response}"
-
-    def parse_response_llama2(self, response):
-        pattern = r".*\[\/INST\](.*)"
-        matches = re.search(pattern, response, re.DOTALL)
-
-        # Extracting and printing the matched content
-        if matches:
-            return matches.group(1).strip()
-        else:
-            return f"Error: not able to parse response: {response}"
-
-    def parse_response_phi(self, response):
-        pattern = r".*\n(.*)"
-        matches = re.search(pattern, response, re.DOTALL)
-
-        # Extracting and printing the matched content
-        if matches:
-            return matches.group(1).strip()
-        else:
-            return f"Error: not able to parse response: {response}"
 
     def get_model_config(self):
         config_file = f"{self.model_path}/config.json"
@@ -177,66 +134,40 @@ class Inference:
         if self.model_info[self.model_name].get("add_bos_token", None):
             prompt_template = f"<|begin_of_text|>{prompt_template}"
 
-        token_input = self.tokenizer(
-            prompt_template,
-            return_tensors="pt"
-        ).input_ids.to(device)
-
         terminators = [
             self.tokenizer.eos_token_id,
             self.tokenizer.convert_tokens_to_ids("<|eot_id|>")  # LLama3
         ]
 
-        generation_config = GenerationConfig(
-            do_sample=True,
-            temperature=self.temperature,
-            top_p=0.95,
-            top_k=40,
-            eos_token_id=terminators,
-            max_new_tokens=750
-        )
+        streamer = TextStreamer(self.tokenizer, skip_prompt=True, skip_special_tokens=True)
+
+        args = {
+            "model": self.model,
+            "tokenizer": self.tokenizer,
+            "max_new_tokens": self.max_new_tokens,
+            "do_sample": True,
+            "temperature": self.temperature,
+            "top_p": self.top_p,
+            "top_k": self.top_k,
+            "eos_token_id": terminators
+        }
+        if self.stream:
+            args["streamer"] = streamer
+            print()
 
         start = time.time()
 
-        generation_output = self.model.generate(
-            token_input,
-            pad_token_id=self.tokenizer.eos_token_id,
-            generation_config=generation_config,
-        )
-        num_tokens = len(generation_output[0])
+        generator = pipeline("text-generation", **args)
+        generation_output = generator(prompt_template, return_full_text=False)
+        response = generation_output[0]["generated_text"]
+
+        num_tokens = len(response)
         speed = int(num_tokens / (time.time() - start))
 
-        # Get the tokens from the output, decode them, print them
-        token_output = generation_output[0]
-        text_output = self.tokenizer.decode(token_output, skip_special_tokens=True)
-        response = self.parse_response(text_output)
         if self.debug:
             print("\n" + response)
+
         return response, num_tokens, speed
-
-        # streamer = TextStreamer(self.tokenizer)
-
-        # terminators = [
-        #     self.tokenizer.eos_token_id,
-        #     self.tokenizer.convert_tokens_to_ids("<|eot_id|>")  # LLama3
-        # ]
-
-        # pipe = pipeline(
-        #     "text-generation",
-        #     model=model,
-        #     tokenizer=self.tokenizer,
-        #     streamer=streamer,
-        #     max_new_tokens=self.max_new_tokens,
-        #     eos_token_id=terminators,
-        #     do_sample=True,
-        #     temperature=self.temperature,
-        #     top_p=0.95,
-        #     top_k=40,
-        #     repetition_penalty=1.1
-        # )
-
-        # pipe(prompt_template)[0]["generated_text"]
-        # # self.parse_response(pipe(prompt_template)[0]["generated_text"])
 
     def run(self):
 
@@ -251,7 +182,9 @@ class Inference:
             context.add("user", user_input)
             response, num_tokens, speed = self.generate(context.get())
             context.add("assistant", response)
-            print("\n" + response)
+
+            if not self.stream:
+                print("\n" + response)
 
 
 if __name__ == "__main__":
@@ -270,6 +203,13 @@ if __name__ == "__main__":
         default="Mistral-7B-Instruct-v0.2-finetuned"
     )
     parser.add_argument(
+        "-s",
+        "--stream",
+        help="Stream responses from LLM",
+        action="store_true",
+        default=False
+    )
+    parser.add_argument(
         "-q",
         "--quantize",
         help="Quantize the target model on-the-fly",
@@ -279,7 +219,13 @@ if __name__ == "__main__":
     args = parser.parse_args()
     dir = args.directory
     model_name = args.model_name
+    stream = args.stream
     quantize = args.quantize
 
-    inference = Inference(model_dir=dir, model_name=model_name, quantize=quantize)
+    inference = Inference(
+        model_dir=dir,
+        model_name=model_name,
+        quantize=quantize,
+        stream=stream
+    )
     inference.run()
