@@ -190,7 +190,7 @@ def chat():
         control_lights=control_lights,
         play_music=play_music
     )
-    response = chatbot.send_message_to_model(message)
+    response = chatbot.handle_message(message)
 
     audio = None
     if tts != "alltalk":

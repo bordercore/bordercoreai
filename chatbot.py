@@ -250,18 +250,20 @@ class ChatBot():
 
         self.context.add("assistant", assistant_message)
 
-    def send_message_to_model(self, prompt_raw):
+    def handle_message(self, prompt_raw):
 
         model_type = ChatBot.get_model_type(self.model_name)
 
-        if self.args.get("control_lights", None) == "true":
+        request_type = self.get_request_type(model_type, prompt_raw[-1]["content"])
+
+        if request_type["category"] == "lights":
             speed = None
             try:
                 speed = run_command(model_type, prompt_raw[-1]["content"])
                 content = "Done"
             except Exception as e:
                 content = f"Error: {e}"
-        elif self.args.get("play_music", None) == "true":
+        elif request_type["category"] == "music":
             try:
                 return play_music(model_type, self.model_name, prompt_raw[-1]["content"])
             except Exception as e:
@@ -283,6 +285,27 @@ class ChatBot():
 
         return {"content": content, "speed": speed}
 
+    def get_request_type(self, model_type, message):
+        prompt = """
+        I want you to put this instruction into one of three categories. If the instruction is to play some music, the category is "music". If the instruction is to control lights, the category is "lights". For everything else, the category is "other". Give me the category in JSON format with the field name "category". Do not format the JSON by including newlines. Give only the JSON and no additional characters, text, or comments. Here is the instruction:
+        """
+        prompt = prompt + message
+
+        from chatbot import ChatBot
+        args = {"temperature": 0.1}
+        payload, speed = ChatBot.send_message_to_model(self.model_name, model_type, prompt, args)
+        print(f"{payload=}")
+        return json.loads(payload["choices"][0]["message"]["content"])
+
+    @staticmethod
+    def send_message_to_model(model_name, model_type, prompt, args={}):
+        messages = [{"role": "user", "content": prompt}]
+        if model_type == "openai":
+            payload, speed = ChatBot.send_message_to_model_openai(model_name, messages, args)
+        else:
+            payload, speed = ChatBot.send_message_to_model_local_llm(messages, args)
+        return payload, speed
+
     @staticmethod
     def send_message_to_model_openai(model_name, messages, args={}):
         start = time.time()
@@ -293,6 +316,20 @@ class ChatBot():
         )
         speed = int(response["usage"]["completion_tokens"] / (time.time() - start))
         return response, speed
+
+    @staticmethod
+    def send_message_to_model_local_llm(messages, args):
+        request = {
+            "mode": "instruct",
+            "messages": messages,
+            **args
+        }
+        response = requests.post(URI_CHAT, json=request)
+        payload = response.json()
+        if response.status_code != 200:
+            raise Exception(f"Error from local LLM: {response}")
+        speed = payload["choices"][0]["message"]["speed"]
+        return payload, speed
 
     @staticmethod
     def get_model_type(model_name):

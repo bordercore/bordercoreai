@@ -46,14 +46,12 @@ const app = createApp({
             ],
         );
         let id = 1;
-        const controlLights = ref(false);
         const error = ref("");
         const audioSpeed = ref(session.audio_speed || 1);
         const model = ref({});
         const modelList = ref([]);
         const musicInfo = ref(null);
         const notice = ref("");
-        const playMusic = ref(false);
         const prompt = ref("");
         const ragFileUploaded = ref(false);
         const ragFileSize = ref(null);
@@ -273,15 +271,11 @@ const app = createApp({
                     "speak": speak.value,
                     "tts": tts,
                     "temperature": temperature.value,
-                    "control_lights": controlLights.value,
-                    "play_music": playMusic.value,
                 },
                 (response) => {
-                    if (playMusic.value === true) {
-                        if (response.data.music_info.length > 0) {
-                            musicInfo.value = response.data.music_info[0];
-                            playSong();
-                        }
+                    if (response.data?.music_info?.length > 0) {
+                        musicInfo.value = response.data.music_info[0];
+                        playSong();
                     }
                     addMessage("assistant", response.data.content);
                     console.log(`Speed: ${response.data.speed} t/s`);
@@ -445,7 +439,6 @@ const app = createApp({
 
         return {
             chatHistory,
-            controlLights,
             error,
             filteredChatHistory,
             handleChangeModel,
@@ -466,7 +459,6 @@ const app = createApp({
             microPhoneVADOn,
             musicInfo,
             notice,
-            playMusic,
             prompt,
             ragFileUploaded,
             showMenu,

@@ -5,7 +5,6 @@ import urllib.parse
 import requests
 from api import settings
 
-URI_CHAT = f"{settings.api_host}/v1/chat/completions"
 URI_MUSIC = f"{settings.music_api_host}/api/search/music"
 
 
@@ -23,23 +22,10 @@ Here is the instruction:
     """
 
     prompt = prompt + command
-    messages = [{"role": "user", "content": prompt}]
     args = {"temperature": 0.1}
 
-    if model_type == "openai":
-        from chatbot import ChatBot
-        payload, speed = ChatBot.send_message_to_model_openai(model_name, messages, args)
-    else:
-        request = {
-            "mode": "instruct",
-            "messages": messages,
-            **args
-        }
-        response = requests.post(URI_CHAT, json=request)
-        payload = response.json()
-        if response.status_code != 200:
-            raise Exception(f"Error from local LLM: {response}")
-        speed = payload["choices"][0]["message"]["speed"]
+    from chatbot import ChatBot
+    payload, speed = ChatBot.send_message_to_model(model_name, model_type, prompt, args)
 
     # Get the song info from the music API
     headers = {
