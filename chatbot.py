@@ -364,7 +364,8 @@ class ChatBot():
         models = [
             {
                 "model": x,
-                "name": model_info.get(x, {"name": x}).get("name", x)
+                "name": model_info.get(x, {"name": x}).get("name", x),
+                "type": model_info.get(x, {"type": x}).get("type", None),
             }
             for x in
             model_list

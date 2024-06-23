@@ -104,26 +104,37 @@ const app = createApp({
             return markdown.render(content);
         };
 
+        function getModelType(modelName) {
+            const result = modelList.value.find((obj) => obj.model === modelName);
+            return result ? result.type : "";
+        };
+
         function handleChangeModel(event) {
-            const modal = new Modal("#modalProcessing");
-            modal.show();
+            const modelType = getModelType(event.srcElement.value);
+            let modal = null;
+            if (modelType !== "openai") {
+                modal = new Modal("#modalProcessing");
+                modal.show();
+            }
             doPost(
                 "/load",
                 {
                     "model": event.srcElement.value,
                 },
                 (response) => {
-                    setTimeout(function() {
-                        modal.hide();
-                    }, 500);
-                    if (response.status !== "OK") {
+                    if (modelType !== "openai") {
+                        setTimeout(function() {
+                            modal.hide();
+                        }, 500);
                     }
                 },
                 "",
                 () => {
-                    setTimeout(function() {
-                        modal.hide();
-                    }, 500);
+                    if (modelType !== "openai") {
+                        setTimeout(function() {
+                            modal.hide();
+                        }, 500);
+                    }
                 },
             );
         };
