@@ -6,5 +6,5 @@ webapp/vad.worklet.bundle.min.js
 node_modules/
 *.pyc
 *.wasm
-api/shared.py
+api/settings.py
 chromdb/
