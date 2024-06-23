@@ -17,8 +17,11 @@ device = "cuda:0" if torch.cuda.is_available() else "cpu"
 # This stifles the "Special tokens have been added in the vocabulary..." warning
 transformers.logging.set_verbosity_error()
 
-# TODO: What system message to use?
 system_message = ""
+
+COLOR_GREEN = "\033[32m"
+COLOR_BLUE = "\033[34m"
+COLOR_RESET = "\033[0m"
 
 
 class Inference:
@@ -153,7 +156,7 @@ class Inference:
         }
         if self.stream:
             args["streamer"] = streamer
-            print()
+            print(f"\n{COLOR_BLUE}Assistant{COLOR_RESET}: ", end="")
 
         start = time.time()
 
@@ -178,13 +181,13 @@ class Inference:
         context = Context()
 
         while True:
-            user_input = input("\nPrompt: ")
+            user_input = input(f"\n{COLOR_GREEN}User{COLOR_RESET}: ")
             context.add("user", user_input)
             response, num_tokens, speed = self.generate(context.get())
             context.add("assistant", response)
 
             if not self.stream:
-                print("\n" + response)
+                print(f"\n{COLOR_BLUE}Assistant{COLOR_RESET}: " + response)
 
 
 if __name__ == "__main__":
