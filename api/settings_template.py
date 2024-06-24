@@ -14,5 +14,7 @@ tts_voice = "voice.wav"
 
 openai_api_key = ""
 
+govee_api_key = ""
+
 music_api_host = ""
 music_uri = ""

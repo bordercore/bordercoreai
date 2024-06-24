@@ -24,7 +24,7 @@ from requests.exceptions import ConnectionError
 
 from api import settings
 from context import Context
-from govee import run_command
+from modules.govee import run_command
 from modules.music import play_music
 from util import get_model_info, sort_models
 
@@ -257,12 +257,10 @@ class ChatBot():
         request_type = self.get_request_type(model_type, prompt_raw[-1]["content"])
 
         if request_type["category"] == "lights":
-            speed = None
             try:
-                speed = run_command(model_type, prompt_raw[-1]["content"])
-                content = "Done"
+                return run_command(model_type, self.model_name, prompt_raw[-1]["content"])
             except Exception as e:
-                content = f"Error: {e}"
+                return {"content": f"Error: {e}", "speed": None}
         elif request_type["category"] == "music":
             try:
                 return play_music(model_type, self.model_name, prompt_raw[-1]["content"])
