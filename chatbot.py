@@ -16,7 +16,6 @@ import piper
 import pyaudio
 import pysbd
 import requests
-import simpleaudio
 import sounddevice  # Adding this eliminates an annoying warning
 import sseclient
 from pydub import AudioSegment
@@ -26,6 +25,7 @@ from requests.exceptions import ConnectionError
 from api import settings
 from context import Context
 from govee import run_command
+from modules.music import play_music
 from util import get_model_info, sort_models
 
 warnings.filterwarnings("ignore", message=".*The 'nopython' keyword.*")
@@ -261,16 +261,14 @@ class ChatBot():
                 content = "Done"
             except Exception as e:
                 content = f"Error: {e}"
+        elif self.args.get("play_music", None) == "true":
+            try:
+                return play_music(model_type, self.model_name, prompt_raw[-1]["content"])
+            except Exception as e:
+                return {"content": f"Error: {e}", "speed": None}
         elif model_type == "openai":
-            start = time.time()
-            response = openai.ChatCompletion.create(
-                model=self.model_name,
-                messages=prompt_raw
-            )
-            return {
-                "content": response["choices"][0]["message"]["content"],
-                "speed": int(response["usage"]["completion_tokens"] / (time.time() - start))
-            }
+            response, speed = ChatBot.send_message_to_model_openai(self.model_name, prompt_raw)
+            content = response["choices"][0]["message"]["content"]
         else:
             self.handle_prompt(prompt_raw)
             request = self.get_chatbot_params()
@@ -284,6 +282,17 @@ class ChatBot():
                 content = f"Error: {response}"
 
         return {"content": content, "speed": speed}
+
+    @staticmethod
+    def send_message_to_model_openai(model_name, messages, args={}):
+        start = time.time()
+        response = openai.ChatCompletion.create(
+            model=model_name,
+            messages=messages,
+            **args
+        )
+        speed = int(response["usage"]["completion_tokens"] / (time.time() - start))
+        return response, speed
 
     @staticmethod
     def get_model_type(model_name):

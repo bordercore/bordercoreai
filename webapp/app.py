@@ -38,7 +38,8 @@ def main():
 
     return render_template(
         "index.html",
-        session=dict(session)
+        session=dict(session),
+        settings=dict(music_uri=settings.music_uri)
     )
 
 
@@ -167,6 +168,7 @@ def chat():
     audio_speed = float(request.form.get("audio_speed", 1.0))  # Playback speed
     temperature = float(request.form.get("temperature", 0.7))
     control_lights = request.form.get("control_lights", False)
+    play_music = request.form.get("play_music", False)
     tts = request.form.get("tts", None)
 
     session.permanent = True
@@ -185,7 +187,8 @@ def chat():
         speak=False,
         temperature=temperature,
         new_conversation=True,
-        control_lights=control_lights
+        control_lights=control_lights,
+        play_music=play_music
     )
     response = chatbot.send_message_to_model(message)
 
@@ -195,8 +198,7 @@ def chat():
 
     return jsonify(
         {
-            "response": response["content"],
-            "speed": response["speed"],
+            **response,
             "audio": audio
         }
     )

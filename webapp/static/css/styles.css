@@ -206,6 +206,39 @@ body {
   margin-left: 1rem !important;
 }
 
+#audioPlayer {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  height: 4rem;
+  width: 100%;
+  background-color: #021930;
+  padding: 10px;
+  text-align: center;
+  border-top: 1px solid #dee2e6;
+}
+
+media-controller {
+  background-color: #021930;
+  border-radius: 0.40rem;
+}
+
+.media-control-bar {
+  background-color: #021930;
+  flex-flow: wrap;
+}
+
+@media screen and (max-width: 1200px) {
+  media-playback-rate-button {
+    display: none;
+  }
+}
+
+media-volume-range {
+  flex-grow: 1;
+}
+
+
 /* Style the scrollbars */
 
 ::-webkit-scrollbar {

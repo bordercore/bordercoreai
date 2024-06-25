@@ -7,6 +7,7 @@ import {library} from "@fortawesome/fontawesome-svg-core";
 import {FontAwesomeIcon} from "@fortawesome/vue-fontawesome";
 import {faFileAlt, faPlus, faRotateLeft} from "@fortawesome/free-solid-svg-icons";
 library.add(faFileAlt, faPlus, faRotateLeft);
+import "media-chrome";
 import {Modal} from "bootstrap";
 import Oruga from "@oruga-ui/oruga-next";
 import "@oruga-ui/oruga-next/dist/oruga-full.css";
@@ -33,6 +34,7 @@ const app = createApp({
     },
     setup() {
         const session = JSON.parse(document.getElementById("session").textContent);
+        const settings = JSON.parse(document.getElementById("settings").textContent);
 
         const chatHistory = ref(
             [
@@ -49,7 +51,9 @@ const app = createApp({
         const audioSpeed = ref(session.audio_speed || 1);
         const model = ref({});
         const modelList = ref([]);
+        const musicInfo = ref(null);
         const notice = ref("");
+        const playMusic = ref(false);
         const prompt = ref("");
         const ragFileUploaded = ref(false);
         const ragFileSize = ref(null);
@@ -270,12 +274,19 @@ const app = createApp({
                     "tts": tts,
                     "temperature": temperature.value,
                     "control_lights": controlLights.value,
+                    "play_music": playMusic.value,
                 },
                 (response) => {
-                    addMessage("assistant", response.data.response);
+                    if (playMusic.value === true) {
+                        if (response.data.music_info.length > 0) {
+                            musicInfo.value = response.data.music_info[0];
+                            playSong();
+                        }
+                    }
+                    addMessage("assistant", response.data.content);
                     console.log(`Speed: ${response.data.speed} t/s`);
                     notice.value = "";
-                    doTTS(response.data.response);
+                    doTTS(response.data.content);
                 },
                 "",
             );
@@ -384,6 +395,12 @@ const app = createApp({
             }
         }
 
+        function playSong() {
+            const el = document.getElementById("player");
+            el.src = settings.music_uri + musicInfo.value.uuid;
+            el.play();
+        };
+
         function getRagFileSize() {
             return formatBytes(ragFileSize.value);
         };
@@ -447,7 +464,9 @@ const app = createApp({
             modelList,
             microPhoneOn,
             microPhoneVADOn,
+            musicInfo,
             notice,
+            playMusic,
             prompt,
             ragFileUploaded,
             showMenu,

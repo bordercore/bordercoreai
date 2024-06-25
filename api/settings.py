@@ -16,3 +16,5 @@ tts_voice = "valerie.wav"
 
 openai_api_key = os.environ.get("OPENAI_API_KEY")
 govee_api_key = ""
+
+music_api_host = "http://localhost:8000"

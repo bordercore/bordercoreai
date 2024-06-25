@@ -16,6 +16,7 @@
     "eslint-plugin-vue": "^9.26.0",
     "highlight.js": "^11.9.0",
     "markdown-it": "^12.3.2",
+    "media-chrome": "^3.2.3",
     "onnxruntime-web": "^1.16.1",
     "tiny-emitter": "^2.1.0",
     "vue": "^3.2.45"
