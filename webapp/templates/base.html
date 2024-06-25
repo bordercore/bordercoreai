@@ -86,13 +86,14 @@
                     </div>
                 </div>
             </div>
-            <div id="audioPlayer" class="d-flex">
-                <div id="audioPlayerInfo" class="d-flex align-items-center w-100">
+            <div id="audioPlayer" class="d-none">
+                <div id="audioPlayerInfo" class="d-flex align-items-center justify-content-center w-100">
                     <div v-if="musicInfo">
+                        <img id="isPlaying" src="{{ url_for('static', filename='img/equaliser-animated-green.gif') }}" class="mb-1 me-2"  width="20" height="20" />
                         Playing <span class="text-info">[[ musicInfo.title ]]</span> by <span class="text-info">[[  musicInfo.artist ]]</span>
                     </div>
                 </div>
-                <media-controller v-pre audio class="w-100">
+                <media-controller v-pre audio>
                     <audio
                         id="player"
                         slot="media"
