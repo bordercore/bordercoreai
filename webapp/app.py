@@ -190,7 +190,10 @@ def chat():
         control_lights=control_lights,
         play_music=play_music
     )
-    response = chatbot.handle_message(message)
+    try:
+        response = chatbot.handle_message(message)
+    except Exception as e:
+        response = {"content": f"Error: {e}", "speed": None}
 
     audio = None
     if tts != "alltalk":

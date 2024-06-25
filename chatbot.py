@@ -257,15 +257,12 @@ class ChatBot():
         request_type = self.get_request_type(model_type, prompt_raw[-1]["content"])
 
         if request_type["category"] == "lights":
-            try:
-                return run_command(model_type, self.model_name, prompt_raw[-1]["content"])
-            except Exception as e:
-                return {"content": f"Error: {e}", "speed": None}
+            return run_command(model_type, self.model_name, prompt_raw[-1]["content"])
         elif request_type["category"] == "music":
-            try:
-                return play_music(model_type, self.model_name, prompt_raw[-1]["content"])
-            except Exception as e:
-                return {"content": f"Error: {e}", "speed": None}
+            return play_music(model_type, self.model_name, prompt_raw[-1]["content"])
+        elif request_type["category"] == "weather":
+            return get_weather_info(model_type, self.model_name, prompt_raw[-1]["content"])
+
         elif model_type == "openai":
             response, speed = ChatBot.send_message_to_model_openai(self.model_name, prompt_raw)
             content = response["choices"][0]["message"]["content"]
