@@ -26,6 +26,7 @@ from api import settings
 from context import Context
 from modules.govee import run_command
 from modules.music import play_music
+from modules.weather import get_weather_info
 from util import get_model_info, sort_models
 
 warnings.filterwarnings("ignore", message=".*The 'nopython' keyword.*")
@@ -282,7 +283,7 @@ class ChatBot():
 
     def get_request_type(self, model_type, message):
         prompt = """
-        I want you to put this instruction into one of three categories. If the instruction is to play some music, the category is "music". If the instruction is to control lights, the category is "lights". For everything else, the category is "other". Give me the category in JSON format with the field name "category". Do not format the JSON by including newlines. Give only the JSON and no additional characters, text, or comments. Here is the instruction:
+        I want you to put this instruction into one of multiple categories. If the instruction is to play some music, the category is "music". If the instruction is to control lights, the category is "lights". If the instruction is asking about the weather or the moon's phase, the category is "weather". For everything else, the category is "other". Give me the category in JSON format with the field name "category". Do not format the JSON by including newlines. Give only the JSON and no additional characters, text, or comments. Here is the instruction:
         """
         prompt = prompt + message
 

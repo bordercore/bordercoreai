@@ -18,3 +18,5 @@ govee_api_key = ""
 
 music_api_host = ""
 music_uri = ""
+
+weather_api_key = ""
