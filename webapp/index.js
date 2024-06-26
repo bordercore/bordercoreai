@@ -51,7 +51,6 @@ const app = createApp({
         let id = 1;
         const error = ref("");
         const audioSpeed = ref(session.audio_speed || 1);
-        const isPlaying = ref(false);
         const model = ref({});
         const modelList = ref([]);
         const musicInfo = ref(null);
@@ -79,7 +78,9 @@ const app = createApp({
         const sliderSpeed = ref(null);
         const sliderTemperature = ref(null);
 
-        useEvent("click", handleAudioPlayerClick, {id: "media-play-button"});
+        useEvent("ended", handleAudioEnded, {id: "player"});
+        useEvent("pause", handleAudioPlayerPause, {id: "player"});
+        useEvent("play", handleAudioPlayerPlay, {id: "player"});
 
         const filteredChatHistory = computed(() => {
             return chatHistory.value.filter((x) => x.role !== "system");
@@ -406,25 +407,26 @@ const app = createApp({
             }
         }
 
-        function handleAudioPlayerClick(event) {
-            isPlaying.value = !isPlaying.value;
-            let src = null;
-            if (isPlaying.value) {
-                src = "/static/img/equaliser-animated-green.gif";
-            } else {
-                src = "/static/img/equaliser-animated-green-frozen.gif";
-            }
+        function handleAudioPlayerPlay(event) {
+            const src = "/static/img/equaliser-animated-green.gif";
+            document.getElementById("isPlaying").src = src;
+        };
 
+        function handleAudioPlayerPause(event) {
+            const src = "/static/img/equaliser-animated-green-frozen.gif";
             document.getElementById("isPlaying").src = src;
         };
 
         function playSong() {
-            isPlaying.value = true;
             let el = document.getElementById("audioPlayer");
             el.classList.replace("d-none", "d-flex");
             el = document.getElementById("player");
             el.src = settings.music_uri + musicInfo.value.uuid;
             el.play();
+        };
+
+        function handleAudioEnded() {
+            musicInfo.value = null;
         };
 
         function getRagFileSize() {
