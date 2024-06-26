@@ -26,6 +26,9 @@ app.config["SESSION_TYPE"] = "filesystem"
 
 Session(app)  # Initialize session management
 
+# Load the Whisper STT model
+whisper_model = whisper.load_model("small")
+
 
 @app.before_request
 def before_request_func():
@@ -106,8 +109,7 @@ def rag_chat():
 def speech2text():
 
     audio = request.files["audio"].read()
-    model = whisper.load_model("small")
-    result = model.transcribe(load_audio(audio))
+    result = whisper_model.transcribe(load_audio(audio))
 
     return jsonify(
         {
