@@ -8,3 +8,4 @@ node_modules/
 *.wasm
 api/settings.py
 chromdb/
+voices/
