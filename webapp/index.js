@@ -54,6 +54,7 @@ const app = createApp({
         const model = ref({});
         const modelList = ref([]);
         const musicInfo = ref(null);
+        const currentSong = ref({});
         const notice = ref("");
         const prompt = ref("");
         const ragFileUploaded = ref(false);
@@ -84,6 +85,10 @@ const app = createApp({
 
         const filteredChatHistory = computed(() => {
             return chatHistory.value.filter((x) => x.role !== "system");
+        });
+
+        const songIndex = computed(() => {
+            return musicInfo.value.findIndex((x) => x === currentSong.value);
         });
 
         const chatHandlers = {sendMessageToChatbotRag, sendMessageToChatbot};
@@ -292,8 +297,8 @@ const app = createApp({
                 },
                 (response) => {
                     if (response.data?.music_info?.length > 0) {
-                        musicInfo.value = response.data.music_info[0];
-                        playSong();
+                        musicInfo.value = response.data.music_info;
+                        playSong(musicInfo.value[0]);
                     }
                     addMessage("assistant", response.data.content);
                     console.log(`Speed: ${response.data.speed} t/s`);
@@ -417,16 +422,22 @@ const app = createApp({
             document.getElementById("isPlaying").src = src;
         };
 
-        function playSong() {
+        function playSong(song) {
             let el = document.getElementById("audioPlayer");
             el.classList.replace("d-none", "d-flex");
             el = document.getElementById("player");
-            el.src = settings.music_uri + musicInfo.value.uuid;
+            // Play the first song
+            currentSong.value = song;
+            el.src = settings.music_uri + song.uuid;
             el.play();
         };
 
         function handleAudioEnded() {
-            musicInfo.value = null;
+            if (songIndex.value < musicInfo.value.length) {
+                playSong(musicInfo.value[songIndex.value + 1]);
+            } else {
+                musicInfo.value = null;
+            }
         };
 
         function getRagFileSize() {
@@ -473,6 +484,7 @@ const app = createApp({
 
         return {
             chatHistory,
+            currentSong,
             error,
             filteredChatHistory,
             handleChangeModel,
@@ -498,6 +510,7 @@ const app = createApp({
             showMenu,
             sliderSpeed,
             sliderTemperature,
+            songIndex,
             speak,
             temperature,
             ttsHost,
