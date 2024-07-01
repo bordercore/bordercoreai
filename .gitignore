@@ -9,3 +9,4 @@ node_modules/
 api/settings.py
 chromdb/
 voices/
+calendar_credentials.json

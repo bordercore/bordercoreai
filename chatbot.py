@@ -24,6 +24,7 @@ from requests.exceptions import ConnectionError
 
 from api import settings
 from context import Context
+from modules.calendar import get_schedule
 from modules.govee import run_command
 from modules.music import play_music
 from modules.weather import get_weather_info
@@ -261,6 +262,8 @@ class ChatBot():
             return play_music(self.model_name, prompt)
         elif request_type["category"] == "weather":
             return get_weather_info(self.model_name, prompt)
+        elif request_type["category"] == "calendar":
+            return get_schedule(self.model_name, prompt)
         else:
             return self.send_message_to_model(prompt)
 
