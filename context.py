@@ -2,8 +2,8 @@ class Context():
 
     context_limit = 4096
 
-    def __init__(self):
-        self.context = []
+    def __init__(self, context=[]):
+        self.context = context
 
     def add(self, role, message):
         self.context.append(

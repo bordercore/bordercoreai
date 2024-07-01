@@ -1,6 +1,7 @@
 import base64
 import io
 import json
+import traceback
 import warnings
 import wave
 from pathlib import Path
@@ -9,7 +10,7 @@ import ffmpeg
 import numpy as np
 import piper
 import sounddevice  # Adding this eliminates an annoying warning
-from chatbot import ChatBot, Context
+from chatbot import ChatBot
 from flask import Flask, jsonify, render_template, request, session
 from flask_session import Session
 
@@ -178,9 +179,7 @@ def chat():
     session["audio_speed"] = audio_speed
     session["temperature"] = temperature
 
-    context = Context()
     chatbot = ChatBot(
-        context,
         model_name=model_name,
         assistant=False,
         debug=False,
@@ -193,8 +192,9 @@ def chat():
         play_music=play_music
     )
     try:
-        response = chatbot.handle_message(message)
+        return chatbot.handle_message(message[-1]["content"])
     except Exception as e:
+        traceback.print_exc()
         response = {"content": f"Error: {e}", "speed": None}
 
     audio = None

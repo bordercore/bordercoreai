@@ -82,8 +82,8 @@ class ChatBot():
     ASSISTANT_NAME = "Luna"
     TEMPERATURE = 0.7
 
-    def __init__(self, context, model_name=None, **args):
-        self.context = context
+    def __init__(self, model_name=None, **args):
+        self.context = Context()
         self.args = args
         self.model_name = model_name
         if "temperature" in self.args:
@@ -251,70 +251,57 @@ class ChatBot():
 
         self.context.add("assistant", assistant_message)
 
-    def handle_message(self, prompt_raw):
+    def handle_message(self, prompt):
 
-        model_type = ChatBot.get_model_type(self.model_name)
-
-        request_type = self.get_request_type(model_type, prompt_raw[-1]["content"])
+        request_type = self.get_request_type(prompt)
 
         if request_type["category"] == "lights":
-            return run_command(model_type, self.model_name, prompt_raw[-1]["content"])
+            return run_command(self.model_name, prompt)
         elif request_type["category"] == "music":
-            return play_music(model_type, self.model_name, prompt_raw[-1]["content"])
+            return play_music(self.model_name, prompt)
         elif request_type["category"] == "weather":
-            return get_weather_info(model_type, self.model_name, prompt_raw[-1]["content"])
-
-        elif model_type == "openai":
-            response, speed = ChatBot.send_message_to_model_openai(self.model_name, prompt_raw)
-            content = response["choices"][0]["message"]["content"]
+            return get_weather_info(self.model_name, prompt)
         else:
-            self.handle_prompt(prompt_raw)
-            request = self.get_chatbot_params()
-            response = requests.post(URI_CHAT, json=request)
-            content = response.json()["choices"][0]["message"]["content"].strip()
-            speed = response.json()["choices"][0]["message"]["speed"]
+            return self.send_message_to_model(prompt)
 
-            if response.status_code == 200:
-                self.context.add("assistant", content)
-            else:
-                content = f"Error: {response}"
-
-        return {"content": content, "speed": speed}
-
-    def get_request_type(self, model_type, message):
+    def get_request_type(self, message):
         prompt = """
-        I want you to put this instruction into one of multiple categories. If the instruction is to play some music, the category is "music". If the instruction is to control lights, the category is "lights". If the instruction is asking about the weather or the moon's phase, the category is "weather". For everything else, the category is "other". Give me the category in JSON format with the field name "category". Do not format the JSON by including newlines. Give only the JSON and no additional characters, text, or comments. Here is the instruction:
+        I want you to put this instruction into one of multiple categories. If the instruction is to play some music, the category is "music". If the instruction is to control lights, the category is "lights". If the instruction is asking about the weather or the moon's phase, the category is "weather". If the instruction is asking about today's calendar, or is something like 'What's happening today' or 'What is my schedule', the category is "calendar". For everything else, the category is "other". Give me the category in JSON format with the field name "category". Do not format the JSON by including newlines. Give only the JSON and no additional characters, text, or comments. Here is the instruction:
         """
         prompt = prompt + message
 
-        from chatbot import ChatBot
         args = {"temperature": 0.1}
-        payload, speed = ChatBot.send_message_to_model(self.model_name, model_type, prompt, args)
-        print(f"{payload=}")
-        return json.loads(payload["choices"][0]["message"]["content"])
+        response = self.send_message_to_model(prompt, args)
+        print(f"{response=}")
+        return json.loads(response["content"])
 
-    @staticmethod
-    def send_message_to_model(model_name, model_type, prompt, args={}):
+    def send_message_to_model(self, prompt, args={}):
         messages = [{"role": "user", "content": prompt}]
+        model_type = ChatBot.get_model_type(self.model_name)
         if model_type == "openai":
-            payload, speed = ChatBot.send_message_to_model_openai(model_name, messages, args)
+            return self.send_message_to_model_openai(messages, args)
         else:
-            payload, speed = ChatBot.send_message_to_model_local_llm(messages, args)
-        return payload, speed
+            return self.send_message_to_model_local_llm(messages, args)
 
-    @staticmethod
-    def send_message_to_model_openai(model_name, messages, args={}):
+    def send_message_to_model_openai(self, messages, args={}):
         start = time.time()
         response = openai.ChatCompletion.create(
-            model=model_name,
+            model=self.model_name,
             messages=messages,
             **args
         )
         speed = int(response["usage"]["completion_tokens"] / (time.time() - start))
-        return response, speed
+        return {
+            "content": response["choices"][0]["message"]["content"],
+            "speed": speed
+        }
 
-    @staticmethod
-    def send_message_to_model_local_llm(messages, args):
+    def send_message_to_model_local_llm(self, messages, args):
+        # params = self.get_chatbot_params()
+        # request = {
+        #     **params,
+        #     **args
+        # }
         request = {
             "mode": "instruct",
             "messages": messages,
@@ -325,7 +312,10 @@ class ChatBot():
         if response.status_code != 200:
             raise Exception(f"Error from local LLM: {response}")
         speed = payload["choices"][0]["message"]["speed"]
-        return payload, speed
+        return {
+            "content": payload["choices"][0]["message"]["content"],
+            "speed": speed
+        }
 
     @staticmethod
     def get_model_type(model_name):
@@ -378,6 +368,7 @@ class DiscordBot(discord.Client, ChatBot):
 
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
+        ChatBot.__init__(self, **kwargs)
 
     def get_message_content(self, message):
         return re.sub(r"<@\d+> ", "", message)
@@ -394,7 +385,7 @@ class DiscordBot(discord.Client, ChatBot):
             # Remove the message ID from the start of the message first
             async with message.channel.typing():
                 response = self.send_message_to_model(re.sub(r"<@\d+> ", "", message.content))
-            await message.channel.send(response)
+            await message.channel.send(response["content"])
 
 
 class FloydBot(DiscordBot):
@@ -449,22 +440,18 @@ if __name__ == "__main__":
     speak = args.speak
     voice = args.voice
 
-    context = Context()
-
     if mode == "interactive":
-        chatbot = ChatBot(context, assistant=args.assistant, debug=args.debug, chat_mode=chat_mode, voice=voice, speak=speak)
+        chatbot = ChatBot(assistant=args.assistant, debug=args.debug, chat_mode=chat_mode, voice=voice, speak=speak)
         chatbot.interactive()
     elif mode == "chatgpt":
         intents = discord.Intents.default()
         intents.message_content = True
         client = ChatGPTDiscordBot(intents=intents)
-        client.context = context
         client.args = {"debug": args.debug, "chat_mode": chat_mode}
         client.run(DISCORD_TOKEN_CHAD)
     elif mode == "floyd":
         intents = discord.Intents.default()
         intents.message_content = True
         client = FloydBot(intents=intents)
-        client.context = context
         client.args = {"debug": args.debug, "chat_mode": chat_mode}
         client.run(DISCORD_TOKEN_FLOYD)

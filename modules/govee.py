@@ -3,9 +3,8 @@
 import argparse
 
 import requests
-from requests.exceptions import HTTPError
-
 from api import settings
+from requests.exceptions import HTTPError
 
 URL_BASE = "https://developer-api.govee.com/v1"
 headers = {
@@ -97,7 +96,7 @@ def control_device(payload):
         print(response.json()["message"])
 
 
-def run_command(model_type, model_name, command, device_list=None):
+def run_command(model_name, command, device_list=None):
 
     if not device_list:
         device_list = get_devices()
@@ -108,19 +107,18 @@ def run_command(model_type, model_name, command, device_list=None):
     args = {"temperature": 0.1}
 
     from chatbot import ChatBot
-    payload, speed = ChatBot.send_message_to_model(
-        model_name,
-        model_type,
+    chatbot = ChatBot(model_name)
+    response = chatbot.send_message_to_model(
         f"{build_prompt(device_list)}\n{command}",
         args
     )
 
-    content = balance_braces(payload["choices"][0]["message"]["content"])
+    content = balance_braces(response["content"])
     control_device(content)
 
     return {
         "content": "Done",
-        "speed": speed
+        "speed": response["speed"]
     }
 
 
