@@ -170,8 +170,6 @@ def chat():
     speak = request.form.get("speak", "false")
     audio_speed = float(request.form.get("audio_speed", 1.0))  # Playback speed
     temperature = float(request.form.get("temperature", 0.7))
-    control_lights = request.form.get("control_lights", False)
-    play_music = request.form.get("play_music", False)
     tts = request.form.get("tts", None)
 
     session.permanent = True
@@ -188,8 +186,6 @@ def chat():
         speak=False,
         temperature=temperature,
         new_conversation=True,
-        control_lights=control_lights,
-        play_music=play_music
     )
     try:
         return chatbot.handle_message(message[-1]["content"])
