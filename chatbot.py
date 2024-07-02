@@ -159,9 +159,6 @@ class ChatBot():
             else:
                 user_input = input(f"\n{MAGENTA}You{END} ")
 
-            if self.args["assistant"]:
-                print("Processing...")
-
             try:
                 response = self.send_message_to_model(user_input)
                 print(f"\n{MAGENTA}AI{CYAN} {response['content']}")
@@ -171,19 +168,13 @@ class ChatBot():
             except ConnectionError:
                 print("Error: API refusing connections.")
 
-    def get_chatbot_params(self):
+    def get_llm_params(self):
 
-        # Note: the selected defaults change from time to time.
         return {
-            "messages": self.context.get(),
-            "mode": self.args["chat_mode"],
+            "mode": self.args.get("chat_mode", "chat"),
             "max_tokens_second": 0,
             "auto_max_new_tokens": True,
             "new_conversation": self.args.get("new_conversation", False),
-
-            # Generation params. If "preset" is set to different than "None", the values
-            # in presets/preset-name.yaml are used instead of the individual numbers.
-            "preset": "None",
             "do_sample": True,
             "temperature": self.TEMPERATURE,
             "top_p": 0.1,
@@ -197,7 +188,6 @@ class ChatBot():
             "top_k": 40,
             "min_length": 0,
             "no_repeat_ngram_size": 0,
-
             "num_beams": 1,
             "penalty_alpha": 0,
             "length_penalty": 1,
@@ -207,7 +197,6 @@ class ChatBot():
             "mirostat_eta": 0.1,
             "guidance_scale": 1,
             "negative_prompt": "",
-
             "seed": -1,
             "add_bos_token": True,
             "truncation_length": 2048,
@@ -290,7 +279,7 @@ class ChatBot():
         else:
             return self.send_message_to_model_local_llm(messages, args)
 
-    def send_message_to_model_openai(self, messages, args={}):
+    def send_message_to_model_openai(self, messages, args):
         start = time.time()
         response = openai.ChatCompletion.create(
             model=self.model_name,
@@ -304,14 +293,11 @@ class ChatBot():
         }
 
     def send_message_to_model_local_llm(self, messages, args):
-        # params = self.get_chatbot_params()
-        # request = {
-        #     **params,
-        #     **args
-        # }
+        params = self.get_llm_params()
         request = {
             "mode": "instruct",
             "messages": messages,
+            **params,
             **args
         }
 
@@ -435,7 +421,7 @@ if __name__ == "__main__":
 
     parser = argparse.ArgumentParser(description="")
     parser.add_argument("-a", "--assistant", help="Assistant mode", action="store_true")
-    parser.add_argument("-c", "--chat-mode", choices=["instruct", "chat"], default="chat", help="The chat mode: intruct or chat")
+    parser.add_argument("-c", "--chat-mode", choices=["instruct", "chat"], default="instruct", help="The chat mode: intruct or chat")
     parser.add_argument("-d", "--debug", help="Debug mode", action="store_true")
     parser.add_argument("-m", "--mode", choices=["chatgpt", "floyd", "interactive"], default="interactive", help="The mode: interactive, floyd on discord, chad on discord")
     parser.add_argument("-s", "--speak", help="Voice output", action="store_true")
