@@ -4,6 +4,7 @@ import argparse
 
 import requests
 from api import settings
+from http_constants.status import HttpStatus
 from requests.exceptions import HTTPError
 
 URL_BASE = "https://developer-api.govee.com/v1"
@@ -92,7 +93,7 @@ def control_device(payload):
 
     response = requests.put(url, headers=headers, data=payload)
 
-    if response.status_code != 200:
+    if response.status_code != HttpStatus.OK:
         print(response.json()["message"])
 
 
@@ -101,7 +102,7 @@ def run_command(model_name, command, device_list=None):
     if not device_list:
         device_list = get_devices()
 
-    if "status" in device_list and device_list["status"] != 200:
+    if "status" in device_list and device_list["status"] != HttpStatus.OK:
         raise HTTPError(f"Error getting device list from Govee: {device_list['message']}")
 
     args = {"temperature": 0.1}

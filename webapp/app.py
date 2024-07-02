@@ -189,9 +189,9 @@ def chat():
     )
     try:
         return chatbot.handle_message(message[-1]["content"])
-    except Exception as e:
+    except Exception as error:
         traceback.print_exc()
-        response = {"content": f"Error: {e}", "speed": None}
+        response = {"content": str(error), "speed": None}
 
     audio = None
     if tts != "alltalk":

@@ -18,6 +18,7 @@ import pysbd
 import requests
 import sounddevice  # Adding this eliminates an annoying warning
 import sseclient
+from http_constants.status import HttpStatus
 from pydub import AudioSegment
 from pydub.playback import play
 from requests.exceptions import ConnectionError
@@ -122,7 +123,7 @@ class ChatBot():
         output_file = "output.wav"
         url = f"http://{host}/api/tts-generate-streaming?text={text}&voice={voice}&language=en&output_file={output_file}"
         response = requests.get(url, stream=True)
-        if response.status_code == 200:
+        if response.status_code == HttpStatus.OK:
             p = pyaudio.PyAudio()
             stream = p.open(format=8, channels=1, rate=24000, output=True)
             for chunk in response.iter_content(chunk_size=1024):
@@ -313,10 +314,11 @@ class ChatBot():
             "messages": messages,
             **args
         }
+
         response = requests.post(URI_CHAT, json=request)
+        if response.status_code != HttpStatus.OK:
+            raise Exception(f"Error from local LLM: {str(HttpStatus(response.status_code))}")
         payload = response.json()
-        if response.status_code != 200:
-            raise Exception(f"Error from local LLM: {response}")
         speed = payload["choices"][0]["message"]["speed"]
         return {
             "content": payload["choices"][0]["message"]["content"],
