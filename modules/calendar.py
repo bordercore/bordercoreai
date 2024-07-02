@@ -59,7 +59,9 @@ def get_schedule(model_name, command):
         One event is called {event['summary']} and starts on {start_pretty}
         """
 
-    print(prompt)
+    if settings.debug:
+        print(prompt)
+
     args = {"temperature": 0.1}
 
     from chatbot import ChatBot

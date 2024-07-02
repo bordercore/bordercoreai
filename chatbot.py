@@ -275,7 +275,10 @@ class ChatBot():
 
         args = {"temperature": 0.1}
         response = self.send_message_to_model(prompt, args)
-        print(f"{response=}")
+
+        if settings.debug:
+            print(f"{response=}")
+
         return json.loads(response["content"])
 
     def send_message_to_model(self, prompt, args={}):

@@ -6,6 +6,7 @@ model_dir = "../../models"
 temperature = 0.7
 model = None
 tokenizer = None
+debug = False
 
 discord_channel_id = ""
 

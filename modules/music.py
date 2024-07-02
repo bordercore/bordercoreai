@@ -34,7 +34,10 @@ Here is the instruction:
     }
     query_string = urllib.parse.urlencode(json.loads(response["content"]))
     music_info = requests.get(f"{URI_MUSIC}?{query_string}", headers=headers).json()
-    print(music_info)
+
+    if settings.debug:
+        print(music_info)
+
     if not music_info:
         content = "Sorry, no music found that matches."
     elif "album" in response["content"]:
