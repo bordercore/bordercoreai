@@ -16,8 +16,8 @@ from flask_session import Session
 
 warnings.filterwarnings("ignore", message=".*The 'nopython' keyword.*")
 
-import whisper
 from api import settings
+from audio import Audio
 from rag import RAG
 
 app = Flask(__name__)
@@ -26,9 +26,6 @@ app.secret_key = settings.flask_secret_key
 app.config["SESSION_TYPE"] = "filesystem"
 
 Session(app)  # Initialize session management
-
-# Load the Whisper STT model
-whisper_model = whisper.load_model("small")
 
 
 @app.before_request
@@ -52,7 +49,8 @@ def rag():
 
     return render_template(
         "rag.html",
-        session=dict(session)
+        session=dict(session),
+        settings=dict(music_uri=settings.music_uri)
     )
 
 
@@ -78,11 +76,10 @@ def rag_chat():
     message = request.form["message"]
     speak = request.form.get("speak", "false")
     audio_speed = float(request.form.get("audio_speed", 1.0))
+    temperature = float(request.form.get("temperature", 0.7))
     tts = request.form.get("tts", None)
 
-    session.permanent = True
-    session["speak"] = speak.lower() == "true"  # Convert "true" to True, for example
-    session["audio_speed"] = audio_speed
+    store_params_in_session(speak, audio_speed, temperature)
 
     chromdb = Path(__file__).resolve().parent.parent / "chromdb"
     rag = RAG(chromdb=str(chromdb), use_openai=True)
@@ -106,15 +103,67 @@ def rag_chat():
     return jsonify(response)
 
 
-@app.route("/speech2text", methods=["POST"])
-def speech2text():
+@app.route("/audio")
+def audio():
 
-    audio = request.files["audio"].read()
-    result = whisper_model.transcribe(load_audio(audio))
+    return render_template(
+        "audio.html",
+        session=dict(session),
+        settings=dict(music_uri=settings.music_uri)
+    )
+
+
+@app.route("/audio/upload", methods=["POST"])
+def audio_upload():
+    audio_data = request.files["file"].read()
+    audio = Audio()
+    text = audio.transcribe(audio_data=audio_data)
 
     return jsonify(
         {
-            "input": result["text"]
+            "text": text
+        }
+    )
+
+
+@app.route("/audio/chat", methods=["POST"])
+def audio_chat():
+
+    message = request.form["message"]
+    transcript = request.form["transcript"]
+    model_name = request.form["model"]
+    speak = request.form.get("speak", "false")
+    audio_speed = float(request.form.get("audio_speed", 1.0))
+    temperature = float(request.form.get("temperature", 0.7))
+    tts = request.form.get("tts", None)
+
+    store_params_in_session(speak, audio_speed, temperature)
+
+    audio = Audio()
+    response = audio.query_transcription(model_name, message, transcript)
+
+    audio_data = None
+    if tts != "alltalk":
+        audio_data = generate_audio(response["content"], audio_speed)
+
+    return jsonify(
+        {
+            **response,
+            "audio": audio_data
+        }
+    )
+
+
+@app.route("/speech2text", methods=["POST"])
+def speech2text():
+
+    audio_data = request.files["audio"].read()
+    audio = Audio()
+    result = audio.transcribe(audio_data=load_audio(audio_data))
+
+    return jsonify(
+        {
+            "input": result
         }
     )
 
@@ -172,10 +221,7 @@ def chat():
     temperature = float(request.form.get("temperature", 0.7))
     tts = request.form.get("tts", None)
 
-    session.permanent = True
-    session["speak"] = speak.lower() == "true"  # Convert "true" to True, for example
-    session["audio_speed"] = audio_speed
-    session["temperature"] = temperature
+    store_params_in_session(speak, audio_speed, temperature)
 
     chatbot = ChatBot(
         model_name=model_name,
@@ -269,3 +315,11 @@ def load_audio(file: (str, bytes), sr: int = 16000):
         raise RuntimeError(f"Failed to load audio: {e.stderr.decode()}") from e
 
     return np.frombuffer(out, np.int16).flatten().astype(np.float32) / 32768.0
+
+
+def store_params_in_session(speak, audio_speed, temperature):
+
+    session.permanent = True
+    session["speak"] = speak.lower() == "true"  # Convert "true" to True, for example
+    session["audio_speed"] = audio_speed
+    session["temperature"] = temperature

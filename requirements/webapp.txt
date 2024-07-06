@@ -1,3 +1,4 @@
+accelerate==0.31.0
 chromadb==0.5.0
 discord==2.3.1
 ffmpeg-python==0.2.0

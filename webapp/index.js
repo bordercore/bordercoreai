@@ -50,6 +50,9 @@ const app = createApp({
         );
         let id = 1;
         const error = ref("");
+        const audioFileSize = ref(null);
+        let audioFileTranscript = ref(null);
+        const audioFileUploaded = ref(false);
         const audioSpeed = ref(session.audio_speed || 1);
         const model = ref({});
         const modelList = ref([]);
@@ -91,7 +94,7 @@ const app = createApp({
             return musicInfo.value.findIndex((x) => x === currentSong.value);
         });
 
-        const chatHandlers = {sendMessageToChatbotRag, sendMessageToChatbot};
+        const chatHandlers = {handleSendMessageAudio, sendMessageToChatbotRag, sendMessageToChatbot};
 
         function addMessage(role, message) {
             id++;
@@ -176,6 +179,31 @@ const app = createApp({
                 });
         };
 
+        function handleFileUploadAudio(event) {
+            const modal = new Modal("#modalProcessing");
+            modal.show();
+
+            const formData = new FormData();
+            const fileData = event.target.files[0];
+            if (!fileData) {
+                return;
+            }
+            formData.append("file", fileData);
+            axios.post(
+                "audio/upload",
+                formData,
+                {
+                    headers: {
+                        "Content-Type": "multipart/form-data",
+                    },
+                }).then((response) => {
+                    modal.hide();
+                    audioFileUploaded.value = true;
+                    audioFileTranscript.value = response.data.text;
+                    audioFileSize.value = audioFileTranscript.value.length;
+                });
+        };
+
         function handleNewChat(event) {
             chatHistory.value.length = 1;
         };
@@ -200,6 +228,32 @@ const app = createApp({
                     addMessage("assistant", response.data.response);
                     notice.value = "";
                     doTTS(response.data.response);
+                },
+                "",
+            );
+        };
+
+        function handleSendMessageAudio() {
+            const message = prompt.value;
+            addMessage("user", message);
+            prompt.value = "";
+            doPost(
+                "/audio/chat",
+                {
+                    "message": message,
+                    "transcript": audioFileTranscript.value,
+                    "model": model.value,
+                    "sha1sum": sha1sum.value,
+                    "audio_speed": audioSpeed.value,
+                    "speak": speak.value,
+                    "tts": tts,
+                    "temperature": temperature.value,
+                },
+                (response) => {
+                    addMessage("assistant", response.data.content);
+                    console.log(`Speed: ${response.data.speed} t/s`);
+                    notice.value = "";
+                    doTTS(response.data.content);
                 },
                 "",
             );
@@ -440,6 +494,10 @@ const app = createApp({
             }
         };
 
+        function getAudioFileSize() {
+            return formatBytes(audioFileSize.value);
+        };
+
         function getRagFileSize() {
             return formatBytes(ragFileSize.value);
         };
@@ -483,18 +541,23 @@ const app = createApp({
         });
 
         return {
+            audioFileTranscript,
+            audioFileUploaded,
             chatHistory,
             currentSong,
             error,
             filteredChatHistory,
             handleChangeModel,
             handleFileUpload,
+            handleFileUploadAudio,
             handleListen,
             handleListenVAD,
             handleNewChat,
             handleRegenerate,
             handleSendMessage,
+            handleSendMessageAudio,
             handleSendMessageRag,
+            getAudioFileSize,
             getRagFileSize,
             getListenButtonValue,
             getMarkdown,
