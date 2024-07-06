@@ -5,8 +5,8 @@ import "bootstrap";
 import "bootstrap/dist/css/bootstrap.min.css";
 import {library} from "@fortawesome/fontawesome-svg-core";
 import {FontAwesomeIcon} from "@fortawesome/vue-fontawesome";
-import {faFileAlt, faPlus, faRotateLeft} from "@fortawesome/free-solid-svg-icons";
-library.add(faFileAlt, faPlus, faRotateLeft);
+import {faCheck, faCopy, faFileAlt, faPlus, faRotateLeft} from "@fortawesome/free-solid-svg-icons";
+library.add(faCheck, faCopy, faFileAlt, faPlus, faRotateLeft);
 import "media-chrome";
 import {Modal} from "bootstrap";
 import Oruga from "@oruga-ui/oruga-next";
@@ -54,6 +54,7 @@ const app = createApp({
         let audioFileTranscript = ref(null);
         const audioFileUploaded = ref(false);
         const audioSpeed = ref(session.audio_speed || 1);
+        const icon = ref("copy");
         const model = ref({});
         const modelList = ref([]);
         const musicInfo = ref(null);
@@ -257,6 +258,17 @@ const app = createApp({
                 },
                 "",
             );
+        };
+
+        function handleCopyText(event) {
+            if (navigator.clipboard) {
+                navigator.clipboard.writeText(audioFileTranscript.value);
+
+                icon.value = "check";
+                setTimeout(() => {
+                    icon.value = "copy";
+                }, 2000);
+            }
         };
 
         function handleRegenerate(event) {
@@ -548,6 +560,7 @@ const app = createApp({
             error,
             filteredChatHistory,
             handleChangeModel,
+            handleCopyText,
             handleFileUpload,
             handleFileUploadAudio,
             handleListen,
@@ -557,6 +570,7 @@ const app = createApp({
             handleSendMessage,
             handleSendMessageAudio,
             handleSendMessageRag,
+            icon,
             getAudioFileSize,
             getRagFileSize,
             getListenButtonValue,

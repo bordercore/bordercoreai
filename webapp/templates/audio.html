@@ -22,7 +22,10 @@ Audio
             <div class="ms-2" v-html="getAudioFileSize()"></div>
         </div>
     </div>
-    <div v-if="audioFileTranscript" id="transcript">
+    <div v-if="audioFileTranscript" id="transcript" class="position-relative">
+        <div id="copyIcon" class="hover-target d-none" @click="handleCopyText">
+            <font-awesome-icon :icon="icon" class="fa-lg ms-3" />
+        </div>
         [[ audioFileTranscript ]]
     </div>
 {% endblock %}

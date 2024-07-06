@@ -244,6 +244,27 @@ media-volume-range {
   padding: 0.5rem;
   border-radius: 0.40rem;
   background-color: #222;
+
+  &:hover {
+    .hover-target {
+      display: flex !important;
+    }
+  }
+}
+
+#copyIcon {
+  position: absolute;
+  top: 0.5rem;
+  right: 0.5rem;
+
+  svg {
+    color: #7a7a7a;
+  }
+
+  &:hover {
+    filter: drop-shadow(0.12rem 0.12rem 0.62rem #666) drop-shadow(-0.12rem -0.12rem 0.62rem #666);
+    opacity: 1;
+  }
 }
 
 /* Style the scrollbars */
