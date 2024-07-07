@@ -267,6 +267,27 @@ media-volume-range {
   }
 }
 
+.file-input-wrapper {
+  position: relative;
+  overflow: hidden;
+  display: inline-block;
+  padding: 0.25rem;
+
+  &:hover {
+    background-color: #392b2b;
+    border-radius: 0.40rem;
+  }
+}
+
+/* Hide the default file-input widget */
+.file-input {
+  font-size: 100px;
+  position: absolute;
+  left: 0;
+  top: 0;
+  opacity: 0;
+}
+
 /* Style the scrollbars */
 
 ::-webkit-scrollbar {

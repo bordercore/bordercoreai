@@ -5,8 +5,8 @@ import "bootstrap";
 import "bootstrap/dist/css/bootstrap.min.css";
 import {library} from "@fortawesome/fontawesome-svg-core";
 import {FontAwesomeIcon} from "@fortawesome/vue-fontawesome";
-import {faCheck, faCopy, faFileAlt, faPlus, faRotateLeft} from "@fortawesome/free-solid-svg-icons";
-library.add(faCheck, faCopy, faFileAlt, faPlus, faRotateLeft);
+import {faCheck, faCopy, faFileAlt, faPaperclip, faPlus, faRotateLeft} from "@fortawesome/free-solid-svg-icons";
+library.add(faCheck, faCopy, faFileAlt, faPaperclip, faPlus, faRotateLeft);
 import "media-chrome";
 import {Modal} from "bootstrap";
 import Oruga from "@oruga-ui/oruga-next";
@@ -50,6 +50,7 @@ const app = createApp({
         );
         let id = 1;
         const error = ref("");
+        const audioFilename = ref(null);
         const audioFileSize = ref(null);
         let audioFileTranscript = ref(null);
         const audioFileUploaded = ref(false);
@@ -202,6 +203,7 @@ const app = createApp({
                     audioFileUploaded.value = true;
                     audioFileTranscript.value = response.data.text;
                     audioFileSize.value = audioFileTranscript.value.length;
+                    audioFilename.value = event.target.files[0].name;
                 });
         };
 
@@ -553,6 +555,7 @@ const app = createApp({
         });
 
         return {
+            audioFilename,
             audioFileTranscript,
             audioFileUploaded,
             chatHistory,
