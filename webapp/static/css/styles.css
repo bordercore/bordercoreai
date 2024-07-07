@@ -288,6 +288,30 @@ media-volume-range {
   opacity: 0;
 }
 
+/* Navbar */
+.navbar-nav {
+  .nav-item {
+    .nav-link {
+      background-color: #101541 !important;
+    }
+  }
+
+  .nav-item.active .nav-link {
+    color: #fff !important;
+    font-weight: bold !important;
+  }
+
+  .nav-item:first-child .nav-link {
+    border-top-left-radius: 0.75rem !important;
+    border-bottom-left-radius: 0.75rem !important;
+  }
+
+  .nav-item:last-child .nav-link {
+    border-top-right-radius: 0.75rem !important;
+    border-bottom-right-radius: 0.75rem !important;
+  }
+}
+
 /* Style the scrollbars */
 
 ::-webkit-scrollbar {

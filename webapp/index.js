@@ -28,11 +28,15 @@ const EventBus = {
 };
 window.EventBus = EventBus;
 
+import Nav from "./vue/Nav.vue";
+window.MyNav = Nav;
+
 const app = createApp({
     name: "ChatBot",
     delimiters: ["[[", "]]"],
     components: {
         FontAwesomeIcon,
+        MyNav,
         Slider,
     },
     setup() {
