@@ -220,12 +220,16 @@ background: linear-gradient(90deg, rgba(2,25,48,1) 0%, rgba(90,90,172,1) 93%);
 media-controller {
   background-color: #021930;
   border-radius: 0.40rem;
-  width: 50%;
+  width: 40rem;
 }
 
 .media-control-bar {
   background-color: #021930;
   flex-flow: wrap;
+}
+
+media-play-button, media-time-display, media-time-range, media-mute-button, media-volume-range {
+  background-color: #021930;
 }
 
 @media screen and (max-width: 1200px) {
