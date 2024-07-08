@@ -11,12 +11,17 @@
 {% block chat_handler %}sendMessageToChatbotRag{% endblock %}
 
 {% block content %}
-    <div class="d-flex mb-3">
-        <input type="file" class="form-control w-50" @change="handleFileUpload" />
+    <div class="d-flex align-items-center mb-3">
+        <div class="file-input-wrapper">
+            <font-awesome-icon icon="paperclip" class="fa-lg text-primary ms-3 me-1"></font-awesome-icon> Add content
+            <input type="file" class="file-input" @change="handleFileUpload">
+        </div>
         <div v-if="ragFileUploaded" class="d-flex align-items-center">
             <div>
                 <font-awesome-icon icon="file-alt" class="fa-lg text-primary ms-3" />
             </div>
+            <div class="file-name ms-2">[[ uploadedFilename ]]</div>
+            <div class="ms-2">•</div>
             <div class="ms-2" v-html="getRagFileSize()"></div>
         </div>
     </div>

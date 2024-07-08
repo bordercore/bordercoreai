@@ -54,7 +54,7 @@ const app = createApp({
         );
         let id = 1;
         const error = ref("");
-        const audioFilename = ref(null);
+        const uploadedFilename = ref(null);
         const audioFileSize = ref(null);
         let audioFileTranscript = ref(null);
         const audioFileUploaded = ref(false);
@@ -181,7 +181,13 @@ const app = createApp({
                 }).then((response) => {
                     ragFileUploaded.value = true;
                     sha1sum.value = response.data.sha1sum;
-                    modal.hide();
+                    uploadedFilename.value = event.target.files[0].name;
+                    // Wait a tiny amount before closing the modal. If the file upload happens
+                    //  really fast, then "hide" could be called before the modal is created
+                    window.setTimeout(() => {
+                        const modal = Modal.getInstance(document.getElementById("modalProcessing"));
+                        modal.hide();
+                    }, 500);
                 });
         };
 
@@ -203,11 +209,11 @@ const app = createApp({
                         "Content-Type": "multipart/form-data",
                     },
                 }).then((response) => {
-                    modal.hide();
                     audioFileUploaded.value = true;
                     audioFileTranscript.value = response.data.text;
                     audioFileSize.value = audioFileTranscript.value.length;
-                    audioFilename.value = event.target.files[0].name;
+                    uploadedFilename.value = event.target.files[0].name;
+                    modal.hide();
                 });
         };
 
@@ -559,7 +565,7 @@ const app = createApp({
         });
 
         return {
-            audioFilename,
+            uploadedFilename,
             audioFileTranscript,
             audioFileUploaded,
             chatHistory,
