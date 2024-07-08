@@ -10,6 +10,7 @@ import urllib.parse
 import warnings
 import wave
 
+import anthropic
 import discord
 import openai
 import piper
@@ -276,6 +277,8 @@ class ChatBot():
         model_type = ChatBot.get_model_type(self.model_name)
         if model_type == "openai":
             return self.send_message_to_model_openai(messages, args)
+        elif model_type == "anthropic":
+            return self.send_message_to_model_anthropic(messages, args)
         else:
             return self.send_message_to_model_local_llm(messages, args)
 
@@ -289,6 +292,36 @@ class ChatBot():
         speed = int(response["usage"]["completion_tokens"] / (time.time() - start))
         return {
             "content": response["choices"][0]["message"]["content"],
+            "speed": speed
+        }
+
+    def send_message_to_model_anthropic(self, messages, args):
+        start = time.time()
+
+        # Anthropic will reject messages with extraneous attributes
+        [x.pop("id", None) for x in messages]
+
+        # Anthropic requires any system messages to be provided
+        #  as a separate parameter and not be present in the
+        #  list of user messages.
+        system = []
+        if messages[0]["role"] == "system":
+            system = messages[0]["content"]
+            messages.pop(0)
+
+        client = anthropic.Anthropic(
+            api_key=settings.anthropic_api_key
+        )
+        response = client.messages.create(
+            model=self.model_name,
+            max_tokens=1024,
+            messages=messages,
+            system=system,
+            **args
+        )
+        speed = int(response.usage.output_tokens / (time.time() - start))
+        return {
+            "content": response.content[0].text,
             "speed": speed
         }
 
@@ -330,7 +363,7 @@ class ChatBot():
         model_names = response.json()["model_names"]
 
         # Add proprietary models
-        model_names.extend(["gpt-4o", "gpt-4-turbo"])
+        model_names.extend(["gpt-4o", "gpt-4-turbo", "claude-3-5-sonnet-20240620"])
 
         model_list = ChatBot.get_personal_model_names(model_names)
 

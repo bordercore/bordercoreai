@@ -271,7 +271,7 @@ def load():
     model = request.form["model"]
     type = ChatBot.get_model_type(model)
 
-    if type == "openai":
+    if type == "openai" or type == "anthropic":
         info = {"status": "OK"}
     else:
         info = ChatBot.load_model(model)

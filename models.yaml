@@ -15,6 +15,9 @@ gpt-4o:
 gpt-4-turbo:
   name: ChatGPT-4 Turbo
   type: openai
+claude-3-5-sonnet-20240620:
+  name: Claude 3.5 Sonnet
+  type: anthropic
 microsoft_Phi-3-mini-128k-instruct:
   name: Phi 3 mini 128k instruct
 solidrust_dolphin-2.8-mistral-7b-v02-AWQ:

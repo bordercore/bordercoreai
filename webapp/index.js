@@ -133,7 +133,7 @@ const app = createApp({
         function handleChangeModel(event) {
             const modelType = getModelType(event.srcElement.value);
             let modal = null;
-            if (modelType !== "openai") {
+            if (modelType !== "openai" && modelType !== "anthropic") {
                 modal = new Modal("#modalProcessing");
                 modal.show();
             }
@@ -143,7 +143,7 @@ const app = createApp({
                     "model": event.srcElement.value,
                 },
                 (response) => {
-                    if (modelType !== "openai") {
+                    if (modelType !== "openai" && modelType !== "anthropic") {
                         setTimeout(function() {
                             modal.hide();
                         }, 500);
@@ -151,7 +151,7 @@ const app = createApp({
                 },
                 "",
                 () => {
-                    if (modelType !== "openai") {
+                    if (modelType !== "openai" && modelType !== "anthropic") {
                         setTimeout(function() {
                             modal.hide();
                         }, 500);

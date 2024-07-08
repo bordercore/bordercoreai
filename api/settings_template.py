@@ -13,8 +13,8 @@ discord_channel_id = ""
 tts_host = ""
 tts_voice = "voice.wav"
 
+anthropic_api_key = ""
 openai_api_key = ""
-
 govee_api_key = ""
 
 music_api_host = ""
