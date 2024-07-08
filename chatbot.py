@@ -274,10 +274,10 @@ class ChatBot():
 
     def send_message_to_model(self, prompt, args={}):
         messages = [{"role": "user", "content": prompt}]
-        model_type = ChatBot.get_model_type(self.model_name)
-        if model_type == "openai":
+        model_vendor = ChatBot.get_model_attribute(self.model_name, "vendor")
+        if model_vendor == "openai":
             return self.send_message_to_model_openai(messages, args)
-        elif model_type == "anthropic":
+        elif model_vendor == "anthropic":
             return self.send_message_to_model_anthropic(messages, args)
         else:
             return self.send_message_to_model_local_llm(messages, args)
@@ -345,11 +345,11 @@ class ChatBot():
         }
 
     @staticmethod
-    def get_model_type(model_name):
+    def get_model_attribute(model_name, attribute):
         if model_name and \
            model_name in model_info and \
-           "type" in model_info[model_name]:
-            return model_info[model_name]["type"]
+           attribute in model_info[model_name]:
+            return model_info[model_name][attribute]
 
     @staticmethod
     def get_model_info():
@@ -362,8 +362,14 @@ class ChatBot():
 
         model_names = response.json()["model_names"]
 
-        # Add proprietary models
-        model_names.extend(["gpt-4o", "gpt-4-turbo", "claude-3-5-sonnet-20240620"])
+        # Add API-based models
+        model_names.extend(
+            [
+                k
+                for k, v
+                in model_info.items()
+                if "type" in v and v["type"] == "api"]
+        )
 
         model_list = ChatBot.get_personal_model_names(model_names)
 
