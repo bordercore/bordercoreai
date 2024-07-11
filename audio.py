@@ -56,7 +56,6 @@ class Audio():
         )
 
         args = {
-            "batch_size": 8,
             "return_timestamps": True
         }
         if filename:
@@ -65,13 +64,38 @@ class Audio():
             result = pipe(audio_data, **args)
 
         if timestamps:
+            fixed_timestamps = self.fix_timestamps(result["chunks"])
             output_filename = f"{Path(filename).stem}_chunks.txt"
             with Path(output_filename).open("w") as file:
-                file.write(str(result["chunks"]))
+                file.write(str(fixed_timestamps))
 
         print(f"Time: {time.time() - start}")
 
         return result["text"]
+
+    def fix_timestamps(self, timestamps):
+        """
+        Adjust a list of timestamps to create a continuous sequence.
+        This method processes a list of timestamp dictionaries, adjusting the start
+        and end times to ensure a continuous sequence.
+        """
+        fixed_timestamps = []
+        offset = 0
+
+        for i, x in enumerate(timestamps):
+            if x["timestamp"][0] == 0 and i != 0:
+                offset += timestamps[i - 1]["timestamp"][1]
+            fixed_timestamps.append(
+                {
+                    "text": x["text"],
+                    "timestamp": [
+                        round(x["timestamp"][0] + offset, 1),
+                        round(x["timestamp"][1] + offset, 1)
+                    ]
+                }
+            )
+
+        return fixed_timestamps
 
     def query_transcription(self, model_name, message, transcript):
 
