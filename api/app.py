@@ -1,11 +1,9 @@
 import gc
 import os
-import time
 
 import torch
 from flask import Flask, jsonify, request
 from inference import Inference
-from transformers import GenerationConfig
 from util import get_tokenizer
 
 from api import settings
