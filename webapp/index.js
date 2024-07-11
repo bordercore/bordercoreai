@@ -57,7 +57,7 @@ const app = createApp({
         const uploadedFilename = ref(null);
         const audioFileSize = ref(null);
         let audioFileTranscript = ref(null);
-        const audioFileUploaded = ref(false);
+        const audioIsPlayingOrPaused = ref(false);
         const audioSpeed = ref(session.audio_speed || 1);
         const icon = ref("copy");
         const model = ref({});
@@ -209,11 +209,16 @@ const app = createApp({
                         "Content-Type": "multipart/form-data",
                     },
                 }).then((response) => {
-                    audioFileUploaded.value = true;
                     audioFileTranscript.value = response.data.text;
                     audioFileSize.value = audioFileTranscript.value.length;
                     uploadedFilename.value = event.target.files[0].name;
                     modal.hide();
+                    // Load the audio into the player
+                    let el = document.getElementById("audioPlayer");
+                    el.classList.replace("d-none", "d-flex");
+                    el = document.getElementById("player");
+                    const audioURL = URL.createObjectURL(fileData);
+                    el.src = audioURL;
                 });
         };
 
@@ -491,8 +496,14 @@ const app = createApp({
         }
 
         function handleAudioPlayerPlay(event) {
-            const src = "/static/img/equaliser-animated-green.gif";
-            document.getElementById("isPlaying").src = src;
+            if (audioIsPlayingOrPaused.value) {
+                // If this is already set, then we're probably playing
+                //  from a paused state, so change the animated icon.
+                const src = "/static/img/equaliser-animated-green.gif";
+                document.getElementById("isPlaying").src = src;
+            } else {
+                audioIsPlayingOrPaused.value = true;
+            }
         };
 
         function handleAudioPlayerPause(event) {
@@ -565,9 +576,8 @@ const app = createApp({
         });
 
         return {
-            uploadedFilename,
             audioFileTranscript,
-            audioFileUploaded,
+            audioIsPlayingOrPaused,
             chatHistory,
             currentSong,
             error,
@@ -604,6 +614,7 @@ const app = createApp({
             speak,
             temperature,
             ttsHost,
+            uploadedFilename,
         };
     },
 });

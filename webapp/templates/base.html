@@ -95,11 +95,16 @@
             </div>
             <div id="audioPlayer" class="d-none">
                 <div id="audioPlayerInfo" class="position-relative d-flex align-items-center justify-content-center w-100">
-                    <div v-if="musicInfo">
-                        <img id="isPlaying" src="{{ url_for('static', filename='img/equaliser-animated-green.gif') }}" class="mb-1 me-2"  width="20" height="20" />
-                        Playing <span class="text-info">[[ currentSong.title ]]</span> by <span class="text-info">[[ currentSong.artist ]]</span>
-                        <div class="position-absolute" style="right: 10px; top: 10px">
-                            <span class="fw-bold">[[ songIndex + 1 ]]</span> / <span class="fw-bold">[[ musicInfo.length ]]</span>
+                    <div v-if="audioIsPlayingOrPaused" class="d-flex">
+                        <img id="isPlaying" src="{{ url_for('static', filename='img/equaliser-animated-green.gif') }}" class="mb-1 me-2" width="20" height="20" />
+                        <div v-if="musicInfo">
+                            Playing <span class="text-info">[[ currentSong.title ]]</span> by <span class="text-info">[[ currentSong.artist ]]</span>
+                            <div id="songIndex">
+                                <span class="fw-bold">[[ songIndex + 1 ]]</span> / <span class="fw-bold">[[ musicInfo.length ]]</span>
+                            </div>
+                        </div>
+                        <div v-else>
+                            Playing [[ uploadedFilename ]]
                         </div>
                     </div>
                 </div>

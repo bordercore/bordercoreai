@@ -5,7 +5,7 @@
 {% endblock %}
 
 {% block input %}
-<input v-model="prompt" id="prompt" class="form-control w-75" type="text" placeholder="Prompt" @keydown.enter.prevent="handleSendMessageAudio" :disabled="! audioFileUploaded" />
+    <input v-model="prompt" id="prompt" class="form-control w-75" type="text" placeholder="Prompt" @keydown.enter.prevent="handleSendMessageAudio" :disabled="! audioFileTranscript" />
 {% endblock %}
 
 {% block chat_handler %}sendMessageToChatbotRag{% endblock %}
@@ -16,7 +16,7 @@
             <font-awesome-icon icon="paperclip" class="fa-lg text-primary ms-3 me-1"></font-awesome-icon> Add audio file
             <input type="file" class="file-input" @change="handleFileUploadAudio">
         </div>
-        <div v-if="audioFileUploaded" class="d-flex align-items-center">
+        <div v-if="audioFileTranscript" class="d-flex align-items-center">
             <div>
                 <font-awesome-icon icon="file-alt" class="fa-lg text-primary ms-3"></font-awesome-icon>
             </div>
@@ -25,10 +25,12 @@
             <div class="ms-2" v-html="getAudioFileSize()"></div>
         </div>
     </div>
-    <div v-if="audioFileTranscript" id="transcript" class="position-relative">
-        <div id="copyIcon" class="hover-target d-none" @click="handleCopyText">
-            <font-awesome-icon :icon="icon" class="fa-lg ms-3" />
+    <div class="transcript-container">
+        <div v-if="audioFileTranscript" id="transcript" class="position-relative">
+            <div id="copyIcon" class="hover-target d-none" @click="handleCopyText">
+                <font-awesome-icon :icon="icon" class="fa-lg ms-3" />
+            </div>
+            [[ audioFileTranscript ]]
         </div>
-        [[ audioFileTranscript ]]
     </div>
 {% endblock %}
