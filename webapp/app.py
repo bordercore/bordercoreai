@@ -234,7 +234,7 @@ def chat():
         new_conversation=True,
     )
     try:
-        return chatbot.handle_message(message[-1]["content"])
+        return chatbot.handle_message(message)
     except Exception as error:
         traceback.print_exc()
         response = {"content": str(error), "speed": None}

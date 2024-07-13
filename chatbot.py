@@ -206,19 +206,8 @@ class ChatBot():
             "stopping_strings": []
         }
 
-    def handle_prompt(self, prompt_raw):
-        # If we're passing in a list, assume this is the complete
-        # chat history and replace it with the new
-        if type(prompt_raw) is list:
-            self.context.set(prompt_raw)
-        else:
-            if prompt_raw.strip() == "info":
-                return ChatBot.get_model_info()
-
-            self.context.add("user", prompt_raw)
-
     def send_message_to_model_stream(self, prompt_raw):
-        self.handle_prompt(prompt_raw)
+        self.context.add(prompt_raw)
 
         data = {
             "mode": "instruct",
@@ -244,17 +233,16 @@ class ChatBot():
         self.context.add("assistant", assistant_message)
 
     def handle_message(self, prompt):
-
-        request_type = self.get_request_type(prompt)
+        request_type = self.get_request_type(prompt[-1]["content"])
 
         if request_type["category"] == "lights":
-            return run_command(self.model_name, prompt)
+            return run_command(self.model_name, prompt[-1]["content"])
         elif request_type["category"] == "music":
-            return play_music(self.model_name, prompt)
+            return play_music(self.model_name, prompt[-1]["content"])
         elif request_type["category"] == "weather":
-            return get_weather_info(self.model_name, prompt)
+            return get_weather_info(self.model_name, prompt[-1]["content"])
         elif request_type["category"] == "calendar":
-            return get_schedule(self.model_name, prompt)
+            return get_schedule(self.model_name, prompt[-1]["content"])
         else:
             return self.send_message_to_model(prompt)
 
@@ -265,22 +253,23 @@ class ChatBot():
         prompt = prompt + message
 
         args = {"temperature": 0.1}
-        response = self.send_message_to_model(prompt, args)
+        response = self.send_message_to_model(prompt, args, prune=False)
 
         if settings.debug:
             print(f"{response=}")
 
         return json.loads(response["content"])
 
-    def send_message_to_model(self, prompt, args={}):
-        messages = [{"role": "user", "content": prompt}]
+    def send_message_to_model(self, messages, args={}, prune=True):
+        if type(messages) is not list:
+            messages = [{"role": "user", "content": messages}]
         model_vendor = ChatBot.get_model_attribute(self.model_name, "vendor")
         if model_vendor == "openai":
             return self.send_message_to_model_openai(messages, args)
         elif model_vendor == "anthropic":
             return self.send_message_to_model_anthropic(messages, args)
         else:
-            return self.send_message_to_model_local_llm(messages, args)
+            return self.send_message_to_model_local_llm(messages, args, prune)
 
     def send_message_to_model_openai(self, messages, args):
         start = time.time()
@@ -325,11 +314,12 @@ class ChatBot():
             "speed": speed
         }
 
-    def send_message_to_model_local_llm(self, messages, args):
+    def send_message_to_model_local_llm(self, messages, args, prune):
+        self.context.add(messages, prune)
         params = self.get_llm_params()
         request = {
             "mode": "instruct",
-            "messages": messages,
+            "messages": self.context.get(),
             **params,
             **args
         }

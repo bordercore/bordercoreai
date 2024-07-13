@@ -2,32 +2,38 @@ class Context():
 
     context_limit = 4096
 
-    def __init__(self, context=[]):
+    def __init__(self, context=None):
+        if context is None:
+            context = []
         self.context = context
 
-    def add(self, role, message):
-        self.context.append(
-            {
-                "role": role,
-                "content": message
-            }
-        )
-        self.prune()
+    def add(self, message, prune):
+        # If we're passing in a list, assume this is the complete
+        # chat history and replace it with the new
+        if type(message) is list:
+            self.context = message
+        else:
+            self.context.append(
+                {
+                    "role": "user",
+                    "content": message
+                }
+            )
+        if prune:
+            self.prune()
 
     def get(self):
         return self.context
 
-    def set(self, context):
-        self.context = context
-
     def size(self):
-        return len(self.get())
+        return sum([len(x["role"]) + len(x["content"]) for x in self.context])
 
     def clear(self):
         self.context = []
 
     def prune(self):
-        for message in list(self.context):
-            if self.size() < self.context_limit:
-                break
-            self.context.pop(0)
+        # Remove messages from the context, starting at the beginning,
+        #  until we're under the context limit.
+        # Don't remove the first message, the system message.
+        while self.size() > self.context_limit and len(self.context) > 1:
+            self.context.pop(1)
