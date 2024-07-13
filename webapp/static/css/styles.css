@@ -20,7 +20,7 @@ body {
 
 .transcript-container {
   position: relative;
-  height: 50vh;
+  max-height: 50vh;
   overflow-y: auto;
 }
 
