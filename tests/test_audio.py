@@ -1,20 +1,24 @@
+import pytest
+
 from ..audio import Audio
 
 
-def test_empty_list():
-    audio = Audio()
+@pytest.fixture()
+def audio():
+    yield Audio()
+
+
+def test_empty_list(audio):
     assert audio.fix_timestamps([]) == []
 
 
-def test_single_timestamp():
-    audio = Audio()
+def test_single_timestamp(audio):
     input = [{"text": "Hello", "timestamp": [0, 1.5]}]
     expected = [{"text": "Hello", "timestamp": [0, 1.5]}]
     assert audio.fix_timestamps(input) == expected
 
 
-def test_continuous_timestamps():
-    audio = Audio()
+def test_continuous_timestamps(audio):
     input = [
         {"text": "Hello", "timestamp": [0, 1.5]},
         {"text": "world", "timestamp": [1.5, 2.5]},
@@ -28,8 +32,7 @@ def test_continuous_timestamps():
     audio.fix_timestamps(input), expected
 
 
-def test_discontinuous_timestamps():
-    audio = Audio()
+def test_discontinuous_timestamps(audio):
     input = [
         {"text": "Hello", "timestamp": [0, 1.5]},
         {"text": "world", "timestamp": [0, 1.0]},
@@ -43,8 +46,7 @@ def test_discontinuous_timestamps():
     audio.fix_timestamps(input), expected
 
 
-def test_mixed_timestamps():
-    audio = Audio()
+def test_mixed_timestamps(audio):
     input = [
         {"text": "Hello", "timestamp": [0, 1.5]},
         {"text": "beautiful", "timestamp": [0, 1.0]},
@@ -60,8 +62,7 @@ def test_mixed_timestamps():
     audio.fix_timestamps(input), expected
 
 
-def test_rounding():
-    audio = Audio()
+def test_rounding(audio):
     input = [
         {"text": "Hello", "timestamp": [0, 1.33]},
         {"text": "world", "timestamp": [0, 1.67]}
