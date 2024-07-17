@@ -54,7 +54,8 @@ def get_schedule(model_name, command):
     """
 
     for event in events["items"]:
-        start_pretty = dateutil.parser.parse(event["start"]["dateTime"]).strftime("%a %I:%M%p")
+        date_key = "dateTime" if "dateTime" in event["start"] else "date"
+        start_pretty = dateutil.parser.parse(event["start"][date_key]).strftime("%a %I:%M%p")
         prompt = prompt + f"""
         One event is called {event['summary']} and starts on {start_pretty}
         """
