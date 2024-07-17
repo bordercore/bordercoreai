@@ -72,6 +72,7 @@ const app = createApp({
         const showMenu = ref(false);
         const speak = ref(session.speak !== undefined ? session.speak : true);
         const temperature = ref(session.temperature || 0.7);
+        const waiting = ref(false);
 
         const tts = "alltalk";
         const ttsHost = ref(session.tts_host);
@@ -359,6 +360,9 @@ const app = createApp({
         }
 
         async function sendMessageToChatbot(message, regenerate=false) {
+            setTimeout(function() {
+                waiting.value = true;
+            }, 500);
             // If we're regenerating the response, remove the last response from
             //   chatHistory and resubmit everything else to the AI.
             if (regenerate) {
@@ -379,6 +383,7 @@ const app = createApp({
                     "temperature": temperature.value,
                 },
                 (response) => {
+                    waiting.value = false;
                     if (response.data?.music_info?.length > 0) {
                         musicInfo.value = response.data.music_info;
                         playSong(musicInfo.value[0]);
@@ -615,6 +620,7 @@ const app = createApp({
             temperature,
             ttsHost,
             uploadedFilename,
+            waiting,
         };
     },
 });

@@ -47,15 +47,20 @@
                     </form>
                     {% block content %}{% endblock %}
                     <div class="message-container">
-                        <div v-for="message in filteredChatHistory" :key="message.id" :class="'chatbot-' + message.role" class="d-flex px-3 mb-2">
-                            <div v-if="message.role === 'user'" class="role fw-bold me-2" v-cloak>
-                                You
+                        <transition-group enter-active-class="animate__animated animate__fadeIn">
+                            <div v-for="message in filteredChatHistory" :key="message.id" :class="'chatbot-' + message.role" class="d-flex px-3 mt-2">
+                                <div v-if="message.role === 'user'" class="role fw-bold me-2" v-cloak>
+                                    You
+                                </div>
+                                <div v-else class="role fw-bold me-2" v-cloak>
+                                    AI
+                                </div>
+                                <div v-html="getMarkdown(message.content)">
+                                </div>
                             </div>
-                            <div v-else class="role fw-bold me-2" v-cloak>
-                                AI
-                            </div>
-                            <div v-html="getMarkdown(message.content)">
-                            </div>
+                        </transition-group>
+                        <div v-show="waiting" class="ms-3 text-info" enter-active-class="animate__animated animate__fadeIn">
+                            <img src="/static/img/wave-loader.gif" height="60" width="80" />
                         </div>
                     </div>
                 </div>
