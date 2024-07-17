@@ -20,6 +20,8 @@ from api import settings
 from audio import Audio
 from rag import RAG
 
+NUM_STARS = 10
+
 app = Flask(__name__)
 app.debug = True
 app.secret_key = settings.flask_secret_key
@@ -40,7 +42,8 @@ def main():
     return render_template(
         "index.html",
         session=dict(session),
-        settings=dict(music_uri=settings.music_uri)
+        settings=dict(music_uri=settings.music_uri),
+        num_stars=NUM_STARS
     )
 
 
@@ -50,7 +53,8 @@ def rag():
     return render_template(
         "rag.html",
         session=dict(session),
-        settings=dict(music_uri=settings.music_uri)
+        settings=dict(music_uri=settings.music_uri),
+        num_stars=NUM_STARS
     )
 
 
@@ -109,7 +113,8 @@ def audio():
     return render_template(
         "audio.html",
         session=dict(session),
-        settings=dict(music_uri=settings.music_uri)
+        settings=dict(music_uri=settings.music_uri),
+        num_stars=NUM_STARS
     )
 
 
@@ -213,7 +218,6 @@ def map_speech_rate_value(input_value):
 
 @app.route("/chat", methods=["POST"])
 def chat():
-
     message = json.loads(request.form["message"])
     model_name = request.form["model"]
     speak = request.form.get("speak", "false")

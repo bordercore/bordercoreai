@@ -7,6 +7,7 @@ module.exports = (env, argv) => {
 
     config = {
         entry: {
+            "static/css/styles": ["./static/css/styles.scss"],
             "static/js/javascript": "./index.js",
         },
         mode: "development",
@@ -34,6 +35,16 @@ module.exports = (env, argv) => {
         module: {
             rules: [
                 {
+                    test: /\.scss$/i,
+                    use: [
+                        MiniCssExtractPlugin.loader,
+                        // Translates CSS into CommonJS
+                        "css-loader",
+                        // Compiles Sass to CSS
+                        "sass-loader",
+                    ],
+                },
+                {
                     test: /\.css$/,
                     use: [
                         "style-loader",
@@ -45,7 +56,14 @@ module.exports = (env, argv) => {
                         },
                     ],
                 },
-               {
+                {
+                    test: /\.(png|jpe?g|gif)$/i,
+                    type: "asset/resource",
+                    generator: {
+                        filename: "static/img/[name][ext]"
+                    }
+                },
+                {
                    test: /\.vue$/,
                    loader: "vue-loader",
                 },

@@ -9,11 +9,16 @@
         <script src="https://cdn.jsdelivr.net/npm/@ricky0123/vad-web@0.0.7/dist/bundle.min.js"></script>
     </head>
     <body class="m-3">
+        <div class="animation-container">
+        {% for _ in range(num_range) %}
+            <div class="c"></div>
+        {% endfor %}
+        </div>
         <div id="vue-app">
-            <div id="top-header" class="d-flex align-items-start" __style="height: 170px">
-                <img src="{{ url_for('static', filename='img/logo.png') }}" width="864" height="170" />
+            <div id="top-header" class="d-flex align-items-start">
+                <img src="{{ url_for('static', filename='img/logo-new.png') }}" width="864" height="170" id="logo" />
                 <div id="canvas-container" class="ms-5"></div>
-                <div id="top-right" class="d-flex flex-column flex-grow-1" ___style="height: 170px">
+                <div id="top-right" class="d-flex flex-column flex-grow-1">
                     <div class="d-flex justify-content-end">
                         <button class="hamburger" @click="showMenu = !showMenu">
                             <div class="hamburger__line"></div>
@@ -26,7 +31,7 @@
                     </div>
                 </div>
             </div>
-            <hr />
+            <hr id="top-divider" />
             <div class="chatbot-container">
                 <div>
                     <form>
@@ -130,7 +135,7 @@
                     </media-control-bar>
                 </media-controller>
             </div>
-            <Transition name="fade">
+            <Transition name="fadein">
                 <div id="menu" v-show="showMenu" class="p-3" v-cloak>
                     <h4 class="text-info">
                         Preferences

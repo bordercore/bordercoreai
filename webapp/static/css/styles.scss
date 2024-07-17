@@ -1,3 +1,5 @@
+@import "shooting-stars";
+
 :root {
   --bs-body-bg: #000 !important;
   --bs-body-color: #fff !important;
@@ -7,9 +9,14 @@ body {
   background-color: var(--bs-body-bg);
 }
 
+#logo {
+  z-index: 10;
+}
+
 #canvas-container {
   height: 100%;
   width: 50%;
+  z-index: 10;
 }
 
 .message-container {
@@ -24,6 +31,12 @@ body {
   overflow-y: auto;
 }
 
+#top-divider {
+  color: #706f7e;
+  border-top: 4px solid;
+  opacity: 0.75;
+}
+
 #top-header, #top-right {
   height: 170px;
 }
@@ -33,6 +46,7 @@ body {
   border: transparent;
   cursor: pointer;
   padding: 0;
+  z-index: 10;
 }
 
 .hamburger__line {
@@ -119,11 +133,11 @@ body {
   display: none;
 }
 
-.fade-enter-active, .fade-leave-active {
+.fadein-enter-active, .fadein-leave-active {
   transition: opacity 1.0s ease;
 }
 
-.fade-enter-from, .fade-leave-to {
+.fadein-enter-from, .fadein-leave-to {
   opacity: 0;
 }
 

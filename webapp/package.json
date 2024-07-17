@@ -18,6 +18,8 @@
     "markdown-it": "^12.3.2",
     "media-chrome": "^3.2.3",
     "onnxruntime-web": "^1.16.1",
+    "sass": "^1.77.8",
+    "sass-loader": "^14.2.1",
     "tiny-emitter": "^2.1.0",
     "vue": "^3.2.45"
   },
