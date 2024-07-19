@@ -86,6 +86,12 @@ body {
   background-color: #0d0926;
 }
 
+.button-small {
+  --bs-btn-padding-y: .25rem !important;
+  --bs-btn-padding-x: .5rem !important;
+  --bs-btn-font-size: .75rem !important;
+}
+
 .chatbot-container {
   display: grid;
   grid-template-columns: 4fr 2fr;

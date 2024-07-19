@@ -5,8 +5,8 @@ import "bootstrap";
 import "bootstrap/dist/css/bootstrap.min.css";
 import {library} from "@fortawesome/fontawesome-svg-core";
 import {FontAwesomeIcon} from "@fortawesome/vue-fontawesome";
-import {faCheck, faCopy, faFileAlt, faPaperclip, faPlus, faRotateLeft} from "@fortawesome/free-solid-svg-icons";
-library.add(faCheck, faCopy, faFileAlt, faPaperclip, faPlus, faRotateLeft);
+import {faCheck, faCopy, faFileAlt, faPaperclip, faPaste, faPlus, faRotateLeft} from "@fortawesome/free-solid-svg-icons";
+library.add(faCheck, faCopy, faFileAlt, faPaperclip, faPaste, faPlus, faRotateLeft);
 import "media-chrome";
 import {Modal} from "bootstrap";
 import Oruga from "@oruga-ui/oruga-next";
@@ -59,6 +59,7 @@ const app = createApp({
         let audioFileTranscript = ref(null);
         const audioIsPlayingOrPaused = ref(false);
         const audioSpeed = ref(session.audio_speed || 1);
+        const clipboard = ref(null);
         const icon = ref("copy");
         const model = ref({});
         const modelList = ref([]);
@@ -92,6 +93,7 @@ const app = createApp({
         useEvent("ended", handleAudioEnded, {id: "player"});
         useEvent("pause", handleAudioPlayerPause, {id: "player"});
         useEvent("play", handleAudioPlayerPlay, {id: "player"});
+        useEvent("paste", handlePaste, {});
 
         const filteredChatHistory = computed(() => {
             return chatHistory.value.filter((x) => x.role !== "system");
@@ -102,6 +104,21 @@ const app = createApp({
         });
 
         const chatHandlers = {handleSendMessageAudio, sendMessageToChatbotRag, sendMessageToChatbot};
+
+        function addClipboardToMessages() {
+            if (!clipboard.value) {
+                return chatHistory.value;
+            }
+            // Deep copy
+            const copiedArray = JSON.parse(JSON.stringify(chatHistory.value));
+
+            copiedArray.forEach((element) => {
+                if (element.id === clipboard.value.id) {
+                    element.content += ": " + clipboard.value.content;
+                }
+            });
+            return copiedArray;
+        };
 
         function addMessage(role, message) {
             id++;
@@ -159,6 +176,20 @@ const app = createApp({
                     }
                 },
             );
+        };
+
+        function handleClipboardClick(event) {
+            const modal = new Modal("#modalClipboard");
+            modal.show();
+        };
+
+        function handleDeleteClipboard(event) {
+            const modal = Modal.getInstance(document.getElementById("modalClipboard"));
+            modal.hide();
+            setTimeout(function() {
+                // Adding a pause avoids a minor layout shift
+                clipboard.value = null;
+            }, 500);
         };
 
         function handleFileUpload(event) {
@@ -225,6 +256,7 @@ const app = createApp({
 
         function handleNewChat(event) {
             chatHistory.value.length = 1;
+            clipboard.value = null;
         };
 
         function handleSendMessageRag(event) {
@@ -370,12 +402,12 @@ const app = createApp({
             } else {
                 addMessage("user", message);
             }
+            const messages = addClipboardToMessages();
             prompt.value = "";
-            notice.value = "Waiting for the AI";
             doPost(
                 "/chat",
                 {
-                    "message": JSON.stringify(chatHistory.value),
+                    "message": JSON.stringify(messages),
                     "model": model.value,
                     "audio_speed": audioSpeed.value,
                     "speak": speak.value,
@@ -516,6 +548,17 @@ const app = createApp({
             document.getElementById("isPlaying").src = src;
         };
 
+        function handlePaste(event) {
+            event.preventDefault();
+            let paste = (event.clipboardData || window.clipboardData).getData("text");
+
+            if (paste.length > 200) {
+                clipboard.value = {"content": paste, "id": id + 1}
+            } else {
+                prompt.value += paste;
+            }
+        };
+
         function playSong(song) {
             let el = document.getElementById("audioPlayer");
             el.classList.replace("d-none", "d-flex");
@@ -584,11 +627,14 @@ const app = createApp({
             audioFileTranscript,
             audioIsPlayingOrPaused,
             chatHistory,
+            clipboard,
             currentSong,
             error,
             filteredChatHistory,
             handleChangeModel,
+            handleClipboardClick,
             handleCopyText,
+            handleDeleteClipboard,
             handleFileUpload,
             handleFileUploadAudio,
             handleListen,

@@ -10,7 +10,7 @@
     </head>
     <body class="m-3">
         <div class="animation-container">
-        {% for _ in range(num_range) %}
+        {% for _ in range(num_stars) %}
             <div class="c"></div>
         {% endfor %}
         </div>
@@ -43,6 +43,11 @@
                             <div v-if="chatHistory.length > 2" class="icon text-primary ms-3" @click="handleNewChat" data-bs-toggle="tooltip" data-placement="bottom" title="New Chat">
                                 <font-awesome-icon icon="plus" />
                             </div>
+                            <transition enter-active-class="animate__animated animate__bounceIn" leave-active-class="animate__animated animate__bounceOut">
+                                <div v-if="clipboard" class="icon text-info ms-3" @click="handleClipboardClick" data-bs-toggle="tooltip" data-placement="bottom" title="Clipboard">
+                                    <font-awesome-icon icon="paste" class="fa-2x" />
+                                </div>
+                            </transition>
                         </div>
                     </form>
                     {% block content %}{% endblock %}
@@ -197,6 +202,24 @@
                             <span class="visually-hidden">Loading...</span>
                         </div>
                     </h4>
+                </div>
+            </div>
+            <div id="modalClipboard" class="modal fade" tabindex="-1" role="dialog" aria-labelledby="mySmallModalLabel" aria-hidden="true">
+                <div class="modal-dialog modal-lg modal-dialog-centered" role="document">
+                    <h6 class="modal-content p-3 d-flex flex-row justify-content-center">
+                        <div class="d-flex flex-column">
+                            <h5 class="text-info">
+                                Pasted content
+                            </h5>
+                            <div>
+                                [[ clipboard?.content ]]
+                            </div>
+                            <div>
+                                <button type="button" class="btn btn-primary button-small mt-3" data-bs-dismiss="modal">Close</button>
+                                <button type="button" class="btn btn-warning button-small ms-3 mt-3" @click="handleDeleteClipboard">Delete</button>
+                            </div>
+                        </div>
+                    </h6>
                 </div>
             </div>
         </div>
