@@ -13,6 +13,10 @@ gpt-4o:
   name: ChatGPT-4o
   type: api
   vendor: openai
+gpt-4o-mini:
+  name: GPT-4o mini
+  type: api
+  vendor: openai
 gpt-4-turbo:
   name: ChatGPT-4 Turbo
   type: api
