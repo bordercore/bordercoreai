@@ -10,3 +10,4 @@ api/settings.py
 chromdb/
 voices/
 calendar_credentials.json
+local/
