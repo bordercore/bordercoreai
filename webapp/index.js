@@ -278,7 +278,7 @@ const app = createApp({
                 (response) => {
                     addMessage("assistant", response.data.response);
                     notice.value = "";
-                    doTTS(response.data.response);
+                    doTTS(response.data);
                 },
                 "",
             );
@@ -304,7 +304,7 @@ const app = createApp({
                     addMessage("assistant", response.data.content);
                     console.log(`Speed: ${response.data.speed} t/s`);
                     notice.value = "";
-                    doTTS(response.data.content);
+                    doTTS(response.data);
                 },
                 "",
             );
@@ -422,8 +422,7 @@ const app = createApp({
                     }
                     addMessage("assistant", response.data.content);
                     console.log(`Speed: ${response.data.speed} t/s`);
-                    notice.value = "";
-                    doTTS(response.data.content);
+                    doTTS(response.data);
                 },
                 "",
             );
@@ -513,7 +512,7 @@ const app = createApp({
             myvad.start();
         };
 
-        function doTTS(text) {
+        function doTTS(response) {
             if (!speak.value) {
                 return;
             }
@@ -521,14 +520,14 @@ const app = createApp({
             if (tts === "alltalk") {
                 const voice = session.tts_voice;
                 const outputFile = "stream_output.wav";
-                const streamingUrl = `http://${ttsHost.value}/api/tts-generate-streaming?text=${text}&voice=${voice}&language=en&output_file=${outputFile}`;
+                const streamingUrl = `http://${ttsHost.value}/api/tts-generate-streaming?text=${response.content}&voice=${voice}&language=en&output_file=${outputFile}`;
                 audioElement.src = streamingUrl;
                 audioMotion.gradient = "steelblue";
                 audioMotion.volume = 1;
                 audioElement.playbackRate = audioSpeed.value;
                 audioElement.play();
-            } else if (response.data.audio) {
-                playWav(response.data.audio);
+            } else if (response.audio) {
+                playWav(response.audio);
             }
         }
 
