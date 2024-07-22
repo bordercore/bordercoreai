@@ -1,4 +1,4 @@
-from ..modules.govee import balance_braces
+from modules.govee import balance_braces
 
 
 def test_balance_braces():

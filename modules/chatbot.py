@@ -19,18 +19,18 @@ import pysbd
 import requests
 import sounddevice  # Adding this eliminates an annoying warning
 import sseclient
+from api import settings
 from http_constants.status import HttpStatus
 from pydub import AudioSegment
 from pydub.playback import play
 from requests.exceptions import ConnectionError
 
-from api import settings
-from context import Context
 from modules.calendar import get_schedule
+from modules.context import Context
 from modules.govee import run_command
 from modules.music import play_music
+from modules.util import get_model_info, sort_models
 from modules.weather import get_weather_info
-from util import get_model_info, sort_models
 
 warnings.filterwarnings("ignore", message=".*The 'nopython' keyword.*")
 

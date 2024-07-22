@@ -107,7 +107,7 @@ def run_command(model_name, command, device_list=None):
 
     args = {"temperature": 0.1}
 
-    from chatbot import ChatBot
+    from modules.chatbot import ChatBot
     chatbot = ChatBot(model_name)
     response = chatbot.send_message_to_model(
         f"{build_prompt(device_list)}\n{command}",

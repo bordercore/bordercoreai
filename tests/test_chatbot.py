@@ -1,4 +1,4 @@
-from ..chatbot import ChatBot, Context
+from modules.chatbot import ChatBot, Context
 
 
 def test_sanitize_string():

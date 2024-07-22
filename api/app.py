@@ -3,8 +3,8 @@ import os
 
 import torch
 from flask import Flask, jsonify, request
-from inference import Inference
-from util import get_tokenizer
+from modules.inference import Inference
+from modules.util import get_tokenizer
 
 from api import settings
 

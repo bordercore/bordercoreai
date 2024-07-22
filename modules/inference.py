@@ -9,8 +9,8 @@ from awq import AutoAWQForCausalLM
 from transformers import (AutoModelForCausalLM, BitsAndBytesConfig,
                           TextStreamer, pipeline)
 
-from context import Context
-from util import get_model_info, get_tokenizer
+from modules.context import Context
+from modules.util import get_model_info, get_tokenizer
 
 device = "cuda:0" if torch.cuda.is_available() else "cpu"
 

@@ -1,6 +1,5 @@
 import pytest
-
-from ..audio import Audio
+from modules.audio import Audio
 
 
 @pytest.fixture()

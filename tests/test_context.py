@@ -1,6 +1,5 @@
 import pytest
-
-from ..context import Context
+from modules.context import Context
 
 
 @pytest.fixture()

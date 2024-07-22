@@ -9,7 +9,7 @@ import openai
 import PyPDF2
 from nltk.tokenize import sent_tokenize
 
-from embeddings import len_safe_get_embedding
+from modules.embeddings import len_safe_get_embedding
 
 CYAN = "\033[36m"
 WHITE = "\033[37m"

@@ -24,7 +24,7 @@ def get_tokenizer(model_path):
 # Load the model config file
 def get_model_info():
 
-    models_file_path = Path(__file__).resolve().parent / Path("models.yaml")
+    models_file_path = Path(__file__).resolve().parent.parent / Path("models.yaml")
     with open(models_file_path, "r") as file:
         model_info = yaml.safe_load(file)
 

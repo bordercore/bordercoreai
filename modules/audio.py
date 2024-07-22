@@ -103,7 +103,7 @@ class Audio():
     Answer the following question based ONLY on the following text. Do not use any other source of information. The question is '{message}'. The text is '{transcript}'
     """
 
-        from chatbot import ChatBot
+        from modules.chatbot import ChatBot
         chatbot = ChatBot(model_name)
         response = chatbot.send_message_to_model(prompt)
 

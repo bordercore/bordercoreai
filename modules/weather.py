@@ -24,7 +24,7 @@ def get_weather_info(model_name, command):
     """
     args = {"temperature": 0.1}
 
-    from chatbot import ChatBot
+    from modules.chatbot import ChatBot
     chatbot = ChatBot(model_name)
     response = chatbot.send_message_to_model(prompt, args)
 

@@ -10,15 +10,15 @@ import ffmpeg
 import numpy as np
 import piper
 import sounddevice  # Adding this eliminates an annoying warning
-from chatbot import ChatBot
 from flask import Flask, jsonify, render_template, request, session
 from flask_session import Session
+from modules.chatbot import ChatBot
 
 warnings.filterwarnings("ignore", message=".*The 'nopython' keyword.*")
 
 from api import settings
-from audio import Audio
-from rag import RAG
+from modules.audio import Audio
+from modules.rag import RAG
 
 NUM_STARS = 10
 

@@ -1,4 +1,4 @@
-from ..util import sort_models
+from modules.util import sort_models
 
 
 def test_sort_models():
