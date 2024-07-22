@@ -2,7 +2,7 @@
 
 ---
 
-Bordercore AI is a web-based chat UI supporting multiple open-weight LLMs, Text to Speech (TTS) and Speech to Text (STT). Discord bots are also supported.
+Bordercore AI is a web-based AI chatbot and voice assistant supporting multiple open-weight and commercial LLMs, Text to Speech (TTS), Speech to Text (STT), audio transcription and RAG (Retrieval Augmented Generation). Discord bots are also supported.
 
 ![Screenshot](/screenshot.png)
 
@@ -15,6 +15,14 @@ Two TTS engines are supported: [AllTalk TTS](https://github.com/erew123/alltalk_
 ## Speech to Text (STT)
 
 [Whisper MIC](https://github.com/mallorbc/whisper_mic) is used for STT, which is based on OpenAI's [Whisper](https://github.com/openai/whisper).
+
+## RAG (Retrieval Augmented Generation)
+
+Chat with your uploaded documents.
+
+## Audio Transcription
+
+Upload audio files to convert them to text, then ask questions based on the generated transcription.
 
 ## Discord Bot Support
 
@@ -82,12 +90,16 @@ Edit `models.yaml` to add configuration options for your models. Here is an exam
 NousResearch_Nous-Hermes-2-Mistral-7B-DPO:
   name: Nous Research Hermes 2 Mistral 7B DPO
   template: chatml
-  type: mistral
+gpt-4o:
+  name: ChatGPT-4o
+  type: api
+  vendor: openai
 ```
 
-The **name** is an alias used in the UI.
-The **template** is which chat template type used by the model (eg ChatML, Alpaca, Llama2, etc).
-The **type** is used to parse the response from the model.
+The **name** is a human-friendly alias used in the UI.
+The **template** is the chat template type used by the model (eg ChatML, Alpaca, Llama2, etc).
+The **type** specifies an API-based (as opposed to local) model.
+The **vendor** specifies the vendor for commercial models. Can be set to *openai* or *anthropic*.
 
 To run:
 
