@@ -264,6 +264,9 @@ const app = createApp({
         };
 
         function sendMessageToChatbotRag(message) {
+            setTimeout(function() {
+                waiting.value = true;
+            }, 500);
             addMessage("user", message);
             prompt.value = "";
             doPost(
@@ -276,6 +279,7 @@ const app = createApp({
                     "tts": tts,
                 },
                 (response) => {
+                    waiting.value = false;
                     addMessage("assistant", response.data.response);
                     notice.value = "";
                     doTTS(response.data);
@@ -285,6 +289,9 @@ const app = createApp({
         };
 
         function handleSendMessageAudio() {
+            setTimeout(function() {
+                waiting.value = true;
+            }, 500);
             const message = prompt.value;
             addMessage("user", message);
             prompt.value = "";
@@ -301,6 +308,7 @@ const app = createApp({
                     "temperature": temperature.value,
                 },
                 (response) => {
+                    waiting.value = false;
                     addMessage("assistant", response.data.content);
                     console.log(`Speed: ${response.data.speed} t/s`);
                     notice.value = "";
