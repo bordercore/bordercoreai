@@ -173,6 +173,14 @@ def speech2text():
     )
 
 
+# Register any optional Flask Blueprints
+try:
+    from .local.optional import optional_bp
+    app.register_blueprint(optional_bp)
+except ModuleNotFoundError:
+    pass
+
+
 def generate_audio(message, audio_speed):
 
     audio_speed = map_speech_rate_value(audio_speed)

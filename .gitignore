@@ -1,5 +1,6 @@
 flask_session/
-webapp/static/js/javascript.js
+webapp/static/js/javascript.bundle.js
+webapp/static/js/optional.chunk.js
 */static/css/styles.css
 webapp/vad.worklet.bundle.min.js
 *.onnx

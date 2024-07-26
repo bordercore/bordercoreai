@@ -56,7 +56,7 @@ const app = createApp({
         const error = ref("");
         const uploadedFilename = ref(null);
         const audioFileSize = ref(null);
-        let audioFileTranscript = ref(null);
+        const audioFileTranscript = ref(null);
         const audioIsPlayingOrPaused = ref(false);
         const audioSpeed = ref(session.audio_speed || 1);
         const clipboard = ref(null);
@@ -557,16 +557,21 @@ const app = createApp({
 
         function handlePaste(event) {
             event.preventDefault();
-            let paste = (event.clipboardData || window.clipboardData).getData("text");
+            const paste = (event.clipboardData || window.clipboardData).getData("text");
 
             if (paste.length > 200) {
-                clipboard.value = {"content": paste, "id": id + 1}
+                clipboard.value = {"content": paste, "id": id + 1};
             } else {
                 prompt.value += paste;
             }
         };
 
-        function playSong(song) {
+        async function loadOptionalModule(uuid) {
+            return await import(/* webpackChunkName: "optional" */ "@optional-module");
+            module.run(uuid);
+        }
+
+        async function playSong(song) {
             let el = document.getElementById("audioPlayer");
             el.classList.replace("d-none", "d-flex");
             el = document.getElementById("player");
@@ -574,6 +579,9 @@ const app = createApp({
             currentSong.value = song;
             el.src = settings.music_uri + song.uuid;
             el.play();
+
+            const myModule = await loadOptionalModule(song.uuid);
+            myModule.run(song.uuid);
         };
 
         function handleAudioEnded() {

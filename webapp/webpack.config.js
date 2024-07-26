@@ -2,6 +2,7 @@ const MiniCssExtractPlugin = require("mini-css-extract-plugin");
 const path = require("path");
 const webpack = require("webpack");
 const {VueLoaderPlugin} = require("vue-loader");
+const fs = require("fs");
 
 module.exports = (env, argv) => {
 
@@ -13,16 +14,30 @@ module.exports = (env, argv) => {
         mode: "development",
         output: {
             path: path.resolve(__dirname, "."),
+            filename: "[name].bundle.js",
+            chunkFilename: "./static/js/[name].chunk.js",
         },
         resolve: {
             alias: {
                 vue$: "vue/dist/vue.esm-bundler.js",
+                "@optional-module": path.resolve(__dirname, "./local/optional.js"),
             },
         },
         plugins: [
             new MiniCssExtractPlugin({
                 filename: "[name].css",
             }),
+
+            // If optional.js doesn't exist, use fallback.js instead
+            new webpack.NormalModuleReplacementPlugin(
+                /@optional-module/,
+                (resource) => {
+                    const modulePath = path.resolve(__dirname,  "./local/optional.js");
+                    if (!fs.existsSync(modulePath)) {
+                        resource.request = path.resolve(__dirname, "fallback.js");
+                    }
+                }
+            ),
 
             new VueLoaderPlugin(),
 

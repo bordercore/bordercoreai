@@ -224,6 +224,6 @@
         </div>
         <script id="session" type="application/json">{{ session|tojson|safe }}</script>
         <script id="settings" type="application/json">{{ settings|tojson|safe }}</script>
-        <script src="{{ url_for('static', filename='js/javascript.js') }}"></script>
+        <script src="{{ url_for('static', filename='js/javascript.bundle.js') }}"></script>
     </body>
 </html>
