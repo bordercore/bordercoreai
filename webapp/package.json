@@ -21,7 +21,8 @@
     "sass": "^1.77.8",
     "sass-loader": "^14.2.1",
     "tiny-emitter": "^2.1.0",
-    "vue": "^3.2.45"
+    "vue": "^3.2.45",
+    "webpack-remove-empty-scripts": "^1.0.4"
   },
   "devDependencies": {
     "css-loader": "^6.8.1",

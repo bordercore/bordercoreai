@@ -1,4 +1,5 @@
 const MiniCssExtractPlugin = require("mini-css-extract-plugin");
+const RemoveEmptyScriptsPlugin = require("webpack-remove-empty-scripts");
 const path = require("path");
 const webpack = require("webpack");
 const {VueLoaderPlugin} = require("vue-loader");
@@ -38,6 +39,9 @@ module.exports = (env, argv) => {
                     }
                 }
             ),
+
+            // Remove the boilerplate JS files from chunks of CSS only entries
+            new RemoveEmptyScriptsPlugin(),
 
             new VueLoaderPlugin(),
 
