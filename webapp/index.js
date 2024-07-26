@@ -585,7 +585,7 @@ const app = createApp({
         };
 
         function handleAudioEnded() {
-            if (songIndex.value < musicInfo.value.length) {
+            if (songIndex.value < musicInfo.value.length - 1) {
                 playSong(musicInfo.value[songIndex.value + 1]);
             } else {
                 musicInfo.value = null;
