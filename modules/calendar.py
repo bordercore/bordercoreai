@@ -50,7 +50,7 @@ def get_schedule(model_name, command):
                                    timeMax=datetimetostr(timeMax)).execute()
 
     prompt = f"""
-    I will give you a series of events on my personal calendar. I want you to answer a question about my calendar based on those events. For reference assume today is {datetime.now().strftime("%A")}. The question is the following: {command}. Answer that question based on the following list of calendar events.
+    I will give you a series of events on my personal calendar. I want you to answer a question about my calendar based on those events. For reference assume today is {datetime.now().strftime("%A")}. The question is the following: {command}. Answer that question based on the following list of calendar events. If there are no events on my calendar, say some variation of the following: 'Your calendar is clear today'.
     """
 
     for event in events["items"]:
