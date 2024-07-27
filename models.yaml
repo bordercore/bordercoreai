@@ -1,3 +1,5 @@
+hugging-quants_Meta-Llama-3.1-8B-Instruct-AWQ-INT4:
+  name: Llama 3.1 8B Instruct AWQ
 hermes-pro-llama3-awq:
   name: Nous Research Hermes 2 LLama3 8B AWQ
   add_bos_token: true
