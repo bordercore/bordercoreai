@@ -3,6 +3,7 @@
 :root {
   --bs-body-bg: #000 !important;
   --bs-body-color: #fff !important;
+  --bs-code-color: #bfa3d7 !important;
 }
 
 body {
@@ -23,6 +24,18 @@ body {
   position: relative;
   height: 75vh;
   overflow-y: auto;
+
+  /* format code */
+  pre {
+    background-color: #020d1d;
+    padding: 1rem;
+    border: 1px solid #697098;
+    border-radius: 0.3rem;
+  }
+
+  strong {
+    color: #73adff;
+  }
 }
 
 .transcript-container {
