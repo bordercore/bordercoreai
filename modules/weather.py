@@ -19,8 +19,13 @@ def get_weather_info(model_name, command):
     The moon phase is {weather_info['forecast']['forecastday'][0]['astro']['moon_phase']}.
     """
 
+    if len(weather_info["alerts"]["alert"]) > 0:
+        weather_description += f"""
+        There is a weather alert: {weather_info['alerts']['alert'][0]['event']}. The description for this alert is {weather_info['alerts']['alert'][0]['desc']}. It expires on {weather_info['alerts']['alert'][0]['expires']}
+        """
+
     prompt = f"""
-    I will give you a series of statements that describes either the current weather, or the weather forecast. I want you to answer a weather question based on those statements and nothing else. In particular, if the question is a general query about the weather, say 'Currently it's 79 degrees with mostly sunny skies'. But instead of that particular weather statement substitute the actual weather conditions based on the statements. The weather question is the following: {command}. Answer that question based on the following series of statements about the weather: {weather_description}.
+    I will give you a series of statements that describes either the current weather, or the weather forecast. I want you to answer a weather question based on those statements and nothing else. In particular, if the question is a general query about the weather, give me a concise summary of the weather. If there is a weather alert, tell me what kind of weather alert it is, its description, and when it expires, in a date and time with the format like January 1, 2023 at 3pm. Put the weather alert information in a separate paragraph. If there is no weather alert information present then don't mentio weather alerts. The weather question is the following: {command}. Answer that question based on the following series of statements about the weather: {weather_description}.
     """
     args = {"temperature": 0.1}
 
