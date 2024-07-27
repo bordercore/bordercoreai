@@ -243,12 +243,27 @@ class ChatBot():
             return get_weather_info(self.model_name, prompt[-1]["content"])
         elif request_type["category"] == "calendar":
             return get_schedule(self.model_name, prompt[-1]["content"])
+        elif request_type["category"] == "summary":
+            return self.get_summary()
         else:
             return self.send_message_to_model(prompt)
 
+    def get_summary(self):
+        response = get_weather_info(self.model_name, "What's the weather today?")
+        content = response["content"]
+        speed = response["speed"]
+
+        response = get_schedule(self.model_name, "What's on my calendar today?")
+        content += "\n\n" + response["content"]
+
+        return {
+            "content": content,
+            "speed": int((speed + response["speed"]) / 2)
+        }
+
     def get_request_type(self, message):
         prompt = """
-        I want you to put this instruction into one of multiple categories. If the instruction is to play some music, the category is "music". If the instruction is to control lights, the category is "lights". If the instruction is asking about the weather or the moon's phase, the category is "weather". If the instruction is asking about today's calendar, or is something like 'What's happening today' or 'What is my schedule', the category is "calendar". For everything else, the category is "other". Give me the category in JSON format with the field name "category". Do not format the JSON by including newlines. Give only the JSON and no additional characters, text, or comments. Here is the instruction:
+        I want you to put this instruction into one of multiple categories. If the instruction is to play some music, the category is "music". If the instruction is to control lights, the category is "lights". If the instruction is asking about the weather or the moon's phase, the category is "weather". If the instruction is asking about today's calendar, or is something like 'What's happening today' or 'What is my schedule', the category is "calendar". If the instruction is asking about today's agenda or summary, the category is "summary". For everything else, the category is "other". Give me the category in JSON format with the field name "category". Do not format the JSON by including newlines. Give only the JSON and no additional characters, text, or comments. Here is the instruction:
         """
         prompt = prompt + message
 
