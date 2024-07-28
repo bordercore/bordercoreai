@@ -1,12 +1,12 @@
-import {doGet, doPost, encodeWAV} from "./util.js";
+import {doGet, doPost, encodeWAV, animateCSS} from "./util.js";
 
 import axios from "axios";
 import "bootstrap";
 import "bootstrap/dist/css/bootstrap.min.css";
 import {library} from "@fortawesome/fontawesome-svg-core";
 import {FontAwesomeIcon} from "@fortawesome/vue-fontawesome";
-import {faCheck, faCopy, faFileAlt, faPaperclip, faPaste, faPlus, faRotateLeft} from "@fortawesome/free-solid-svg-icons";
-library.add(faCheck, faCopy, faFileAlt, faPaperclip, faPaste, faPlus, faRotateLeft);
+import {faBackward, faCheck, faCopy, faFileAlt, faForward, faPaperclip, faPaste, faPlus, faRotateLeft} from "@fortawesome/free-solid-svg-icons";
+library.add(faBackward, faCheck, faCopy, faFileAlt, faForward, faPaperclip, faPaste, faPlus, faRotateLeft);
 import "media-chrome";
 import {Modal} from "bootstrap";
 import Oruga from "@oruga-ui/oruga-next";
@@ -253,6 +253,24 @@ const app = createApp({
                     el.src = audioURL;
                 });
         };
+
+        function handleSongBackward(event) {
+            if (songIndex.value > 0) {
+                nextTick(() => {
+                    animateCSS(event.currentTarget, "heartBeat");
+                });
+                playSong(musicInfo.value[songIndex.value - 1]);
+            }
+        }
+
+        function handleSongForward(event) {
+            if (songIndex.value < musicInfo.value.length - 1) {
+                nextTick(() => {
+                    animateCSS(event.currentTarget, "heartBeat");
+                });
+                playSong(musicInfo.value[songIndex.value + 1]);
+            }
+        }
 
         function handleNewChat(event) {
             chatHistory.value.length = 1;
@@ -652,6 +670,8 @@ const app = createApp({
             handleDeleteClipboard,
             handleFileUpload,
             handleFileUploadAudio,
+            handleSongBackward,
+            handleSongForward,
             handleListen,
             handleListenVAD,
             handleNewChat,

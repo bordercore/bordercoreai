@@ -89,6 +89,12 @@ body {
   }
 }
 
+.glow {
+  &:hover {
+    filter: drop-shadow(0.12rem 0.12rem 0.62rem #6af6d1) drop-shadow(-0.12rem -0.12rem 0.62rem #6af6d1);
+  }
+}
+
 #menu {
   position: absolute;
   top: 5rem;
