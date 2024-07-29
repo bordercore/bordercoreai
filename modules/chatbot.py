@@ -398,8 +398,11 @@ class ChatBot():
 
     @staticmethod
     def load_model(model):
-        response = requests.post(URI_MODEL_LOAD, json={"model_name": model})
-        return response.json()
+        current_model = ChatBot.get_model_info()
+        if current_model == model:
+            return {"status": "OK"}
+        else:
+            return requests.post(URI_MODEL_LOAD, json={"model_name": model}).json()
 
 
 class DiscordBot(discord.Client, ChatBot):
