@@ -29,8 +29,6 @@ claude-3-5-sonnet-20240620:
   vendor: anthropic
 microsoft_Phi-3-mini-128k-instruct:
   name: Phi 3 mini 128k instruct
-solidrust_dolphin-2.8-mistral-7b-v02-AWQ:
-  template: chatml
 TheBloke_CodeLlama-7B-Instruct-AWQ:
   name: CodeLlama 7B Instruct AWQ
 TheBloke_CodeLlama-13B-Instruct-AWQ:
@@ -39,7 +37,3 @@ TheBloke_Karen_theEditor_13B-AWQ:
   name: Karen 13B
 TheBloke_WizardLM-13B-V1-0-Uncensored-SuperHOT-8K-GPTQ:
   name: Floyd -- WizardLM 13B
-TheBloke_dolphin-2.1-mistral-7B-AWQ:
-  name: Daisy -- Mistral 7B
-TheBloke_dolphin-2.2.1-mistral-7B-AWQ:
-  name: Dolphin 2.2 -- Mistral 7B
