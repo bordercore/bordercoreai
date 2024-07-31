@@ -100,6 +100,7 @@ The **name** is a human-friendly alias used in the UI.
 The **template** is the chat template type used by the model (eg ChatML, Alpaca, Llama2, etc).
 The **type** specifies an API-based (as opposed to local) model.
 The **vendor** specifies the vendor for commercial models. Can be set to *openai* or *anthropic*.
+Set **quantize: true** to automatically quantize models to 4bits using the bitsandbytes library.
 
 To run:
 

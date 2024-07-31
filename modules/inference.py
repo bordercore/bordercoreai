@@ -35,7 +35,6 @@ class Inference:
     temperature_default = 0.7
     top_p = 0.95
     top_k = 40
-    models_config_path = "models.yaml"
 
     def __init__(self, model_dir, model_name, temperature=None, quantize=False, stream=False, debug=False):
         self.model_name = model_name
@@ -105,7 +104,7 @@ class Inference:
             return default
 
     def get_quantization_config(self):
-        if self.quantize:
+        if self.quantize or self.model_info[self.model_name].get("quantize", None):
             return BitsAndBytesConfig(
                 load_in_4bit=True,
                 bnb_4bit_compute_dtype=torch.bfloat16,
@@ -115,7 +114,6 @@ class Inference:
             return None
 
     def load_model(self):
-
         model_config = self.get_model_config()
         args = {
             "device_map": {"": 0},
@@ -129,7 +127,7 @@ class Inference:
             self.model = AutoAWQForCausalLM.from_quantized(
                 self.model_path,
                 **args,
-                fuse_layers=True,
+                fuse_layers=self.get_config_option("fuse_layers", True),
                 safetensors=True,
                 max_new_tokens=4096,
                 batch_size=1,
