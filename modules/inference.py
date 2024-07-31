@@ -5,7 +5,12 @@ import time
 
 import torch
 import transformers
-from awq import AutoAWQForCausalLM
+
+try:
+    from awq import AutoAWQForCausalLM
+except ModuleNotFoundError:
+    # Useful during testing the webapp, which does not have the awq package
+    pass
 from transformers import (AutoModelForCausalLM, BitsAndBytesConfig,
                           TextStreamer, pipeline)
 
@@ -92,6 +97,12 @@ class Inference:
         with open(config_file, "r") as file:
             config = json.load(file)
         return config
+
+    def get_config_option(self, name, default=None):
+        if name in self.model_info[self.model_name]:
+            return self.model_info[self.model_name][name]
+        else:
+            return default
 
     def get_quantization_config(self):
         if self.quantize:
