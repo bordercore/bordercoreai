@@ -30,18 +30,18 @@ Discord bots can be backed by either OpenAI's ChatGPT or an open source LLM.
 
 Set your server's channel ID in `settings.discord_channel_id`.
 
-Set the environment variables `DISCORD_TOKEN_CHAD` (for a ChatGPT bot) and `DISCORD_TOKEN_FLOYD` (for an open source LLM).
+Set the environment variable `DISCORD_TOKEN`.
 
-To run the Floyd bot:
+To run the local LLM bot:
 
 ```bash
-python3 chatbot.py -m floyd
+python3 -m modules.chatbot -m localllm
 ```
 
 To run the ChatGPT bot:
 
 ```bash
-python3 chatbot.py -m chad
+python3 -m modules.chatbot -m chatgpt
 ```
 
 
@@ -113,7 +113,7 @@ python -m api
 You can interact with the API via a command-line option:
 
 ```bash
-python3 ./chatbot.py -m interactive
+python3 -m modules.chatbot -m interactive
 ```
 
 Options:

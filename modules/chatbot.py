@@ -47,8 +47,7 @@ URI_MODEL_INFO = f"{HOST}/v1/internal/model/info"
 URI_MODEL_LIST = f"{HOST}/v1/internal/model/list"
 URI_MODEL_LOAD = f"{HOST}/v1/internal/model/load"
 
-DISCORD_TOKEN_CHAD = os.environ.get("DISCORD_TOKEN_CHAD")
-DISCORD_TOKEN_FLOYD = os.environ.get("DISCORD_TOKEN_FLOYD")
+DISCORD_TOKEN = os.environ.get("DISCORD_TOKEN")
 DISCORD_CHANNEL_ID = settings.discord_channel_id
 
 MODE = "chat"
@@ -71,13 +70,6 @@ null_handler = logging.NullHandler()
 logger.addHandler(null_handler)
 
 model_info = get_model_info()
-
-if not DISCORD_TOKEN_CHAD:
-    print("Error: DISCORD_TOKEN_CHAD not found.")
-    sys.exit(1)
-if not DISCORD_TOKEN_FLOYD:
-    print("Error: DISCORD_TOKEN_FLOYD not found.")
-    sys.exit(1)
 
 
 class ChatBot():
@@ -408,6 +400,10 @@ class ChatBot():
 class DiscordBot(discord.Client, ChatBot):
 
     def __init__(self, **kwargs):
+        if not DISCORD_TOKEN:
+            print("Error: DISCORD_TOKEN not found.")
+            sys.exit(1)
+
         super().__init__(**kwargs)
         ChatBot.__init__(self, **kwargs)
 
@@ -422,17 +418,16 @@ class DiscordBot(discord.Client, ChatBot):
         if message.author == client.user:
             return
 
-        if self.discord_bot_name in [x.name for x in message.mentions]:
+        if self.user.name in [x.name for x in message.mentions]:
             # Remove the message ID from the start of the message first
             async with message.channel.typing():
                 response = self.send_message_to_model(re.sub(r"<@\d+> ", "", message.content))
             await message.channel.send(response["content"])
 
 
-class FloydBot(DiscordBot):
+class LocalLLMDiscordBot(DiscordBot):
 
     def __init__(self, **kwargs):
-        self.discord_bot_name = "FloydBot"
         super().__init__(**kwargs)
 
     async def on_message(self, message):
@@ -449,12 +444,11 @@ class FloydBot(DiscordBot):
 class ChatGPTDiscordBot(DiscordBot):
 
     def __init__(self, **kwargs):
-        self.discord_bot_name = "ChadBot"
         super().__init__(**kwargs)
 
     def send_message_to_model(self, prompt):
         response = openai.ChatCompletion.create(
-            model="gpt-3.5-turbo",
+            model="gpt-4o-mini",
             messages=[
                 {"role": "system", "content": "You are a helpful assistant."},
                 {"role": "user", "content": prompt},
@@ -470,7 +464,7 @@ if __name__ == "__main__":
     parser.add_argument("-a", "--assistant", help="Assistant mode", action="store_true")
     parser.add_argument("-c", "--chat-mode", choices=["instruct", "chat"], default="instruct", help="The chat mode: intruct or chat")
     parser.add_argument("-d", "--debug", help="Debug mode", action="store_true")
-    parser.add_argument("-m", "--mode", choices=["chatgpt", "floyd", "interactive"], default="interactive", help="The mode: interactive, floyd on discord, chad on discord")
+    parser.add_argument("-m", "--mode", choices=["chatgpt", "localllm", "interactive"], default="interactive", help="The mode: interactive, localllm on discord, chatgpt on discord")
     parser.add_argument("-s", "--speak", help="Voice output", action="store_true")
     parser.add_argument("-v", "--voice", help="Voice input", action="store_true")
     args = parser.parse_args()
@@ -489,10 +483,10 @@ if __name__ == "__main__":
         intents.message_content = True
         client = ChatGPTDiscordBot(intents=intents)
         client.args = {"debug": args.debug, "chat_mode": chat_mode}
-        client.run(DISCORD_TOKEN_CHAD)
-    elif mode == "floyd":
+        client.run(DISCORD_TOKEN)
+    elif mode == "localllm":
         intents = discord.Intents.default()
         intents.message_content = True
-        client = FloydBot(intents=intents)
+        client = LocalLLMDiscordBot(intents=intents)
         client.args = {"debug": args.debug, "chat_mode": chat_mode}
-        client.run(DISCORD_TOKEN_FLOYD)
+        client.run(DISCORD_TOKEN)
