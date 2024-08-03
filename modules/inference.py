@@ -191,9 +191,9 @@ class Inference:
 
         while True:
             user_input = input(f"\n{COLOR_GREEN}User{COLOR_RESET}: ")
-            context.add("user", user_input)
+            context.add(user_input, True)
             response, num_tokens, speed = self.generate(context.get())
-            context.add("assistant", response)
+            context.add(response, True, role="assistant")
 
             if not self.stream:
                 print(f"\n{COLOR_BLUE}Assistant{COLOR_RESET}: " + response)
