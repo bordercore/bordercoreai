@@ -238,7 +238,8 @@ class ChatBot():
         elif request_type["category"] == "summary":
             return self.get_summary()
         else:
-            return self.send_message_to_model(prompt)
+            self.context.clear()
+            return self.send_message_to_model(prompt, replace_context=True)
 
     def get_summary(self):
         response = get_weather_info(self.model_name, "What's the weather today?")
@@ -267,16 +268,21 @@ class ChatBot():
 
         return json.loads(response["content"])
 
-    def send_message_to_model(self, messages, args={}, prune=True):
+    def send_message_to_model(self, messages, args={}, prune=True, replace_context=False):
         if type(messages) is not list:
             messages = [{"role": "user", "content": messages}]
+        self.context.add(messages, prune, replace_context)
+
         model_vendor = ChatBot.get_model_attribute(self.model_name, "vendor")
         if model_vendor == "openai":
-            return self.send_message_to_model_openai(messages, args)
+            response = self.send_message_to_model_openai(messages, args)
         elif model_vendor == "anthropic":
-            return self.send_message_to_model_anthropic(messages, args)
+            response = self.send_message_to_model_anthropic(messages, args)
         else:
-            return self.send_message_to_model_local_llm(messages, args, prune)
+            response = self.send_message_to_model_local_llm(messages, args, prune)
+
+        self.context.add(response["content"], True, role="assistant")
+        return response
 
     def send_message_to_model_openai(self, messages, args):
         start = time.time()
@@ -322,7 +328,6 @@ class ChatBot():
         }
 
     def send_message_to_model_local_llm(self, messages, args, prune):
-        self.context.add(messages, prune)
         params = self.get_llm_params()
         request = {
             "mode": "instruct",

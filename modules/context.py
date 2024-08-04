@@ -7,11 +7,14 @@ class Context():
             context = []
         self.context = context
 
-    def add(self, message, prune, role="user"):
+    def add(self, message, prune, role="user", replace_context=False):
         # If we're passing in a list, assume this is the complete
         # chat history and replace it with the new
         if type(message) is list:
-            self.context = message
+            if replace_context:
+                self.context = message
+            else:
+                self.context.extend(message)
         else:
             self.context.append(
                 {

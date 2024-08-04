@@ -3,8 +3,14 @@ from modules.context import Context
 
 
 @pytest.fixture()
-def context():
-    yield Context([{"role": "system", "content": "System message"}])
+def system_message():
+    yield [{"role": "system", "content": "System message"}]
+
+
+@pytest.fixture()
+def context(system_message):
+    system_message_copy = list(system_message)
+    yield Context(system_message_copy)
 
 
 def test_context_initialization():
@@ -13,26 +19,26 @@ def test_context_initialization():
     assert context.context_limit == 4096
 
 
-def test_add_single_message(context):
+def test_add_single_message(context, system_message):
     context.add("Hello", prune=False)
-    assert context.context == [
-        {"role": "system", "content": "System message"},
+    assert context.context == system_message + [
         {"role": "user", "content": "Hello"}
     ]
 
 
-def test_add_list_of_messages(context):
+def test_add_list_of_messages(context, system_message):
     messages = [
         {"role": "user", "content": "Hello"},
         {"role": "assistant", "content": "Hi there!"}
     ]
     context.add(messages, prune=False)
-    assert context.context == messages
+    assert context.context == system_message + messages
 
 
-def test_get_context(context):
-    context.add([{"role": "user", "content": "Test"}], prune=False)
-    assert context.get() == [{"role": "user", "content": "Test"}]
+def test_get_context(context, system_message):
+    messages = [{"role": "user", "content": "Test"}]
+    context.add(messages, prune=False)
+    assert context.get() == system_message + messages
 
 
 def test_size_calculation(context):
