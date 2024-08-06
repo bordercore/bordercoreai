@@ -2,7 +2,6 @@ import argparse
 import json
 import logging
 import os
-import re
 import string
 import sys
 import time
@@ -11,7 +10,6 @@ import warnings
 import wave
 
 import anthropic
-import discord
 import openai
 import piper
 import pyaudio
@@ -46,11 +44,6 @@ URI_CHAT = f"{HOST}/v1/chat/completions"
 URI_MODEL_INFO = f"{HOST}/v1/internal/model/info"
 URI_MODEL_LIST = f"{HOST}/v1/internal/model/list"
 URI_MODEL_LOAD = f"{HOST}/v1/internal/model/load"
-
-DISCORD_TOKEN = os.environ.get("DISCORD_TOKEN")
-DISCORD_CHANNEL_ID = settings.discord_channel_id
-
-MODE = "chat"
 
 CYAN = "\033[36m"
 WHITE = "\033[37m"
@@ -399,67 +392,6 @@ class ChatBot():
             return requests.post(URI_MODEL_LOAD, json={"model_name": model}).json()
 
 
-class DiscordBot(discord.Client, ChatBot):
-
-    def __init__(self, **kwargs):
-        if not DISCORD_TOKEN:
-            print("Error: DISCORD_TOKEN not found.")
-            sys.exit(1)
-
-        super().__init__(**kwargs)
-        ChatBot.__init__(self, **kwargs)
-
-    def get_message_content(self, message):
-        return re.sub(r"<@\d+> ", "", message)
-
-    async def on_ready(self):
-        print(f"{self.user} has connected to Discord!")
-
-    async def on_message(self, message):
-
-        if message.author == client.user:
-            return
-
-        if self.user.name in [x.name for x in message.mentions]:
-            # Remove the message ID from the start of the message first
-            async with message.channel.typing():
-                response = self.send_message_to_model(re.sub(r"<@\d+> ", "", message.content))
-            await message.channel.send(response["content"])
-
-
-class LocalLLMDiscordBot(DiscordBot):
-
-    def __init__(self, **kwargs):
-        super().__init__(**kwargs)
-
-    async def on_message(self, message):
-        content = self.get_message_content(message.content)
-        if content == "info":
-            await message.channel.send("Model: " + ChatBot.get_model_info())
-        elif content == "reset":
-            await message.channel.send("Deleting current context...")
-            self.context.clear()
-        else:
-            await super().on_message(message)
-
-
-class ChatGPTDiscordBot(DiscordBot):
-
-    def __init__(self, **kwargs):
-        super().__init__(**kwargs)
-
-    def send_message_to_model(self, prompt):
-        response = openai.ChatCompletion.create(
-            model="gpt-4o-mini",
-            messages=[
-                {"role": "system", "content": "You are a helpful assistant."},
-                {"role": "user", "content": prompt},
-            ]
-        )
-
-        return response["choices"][0]["message"]["content"]
-
-
 if __name__ == "__main__":
 
     parser = argparse.ArgumentParser(description="")
@@ -479,14 +411,10 @@ if __name__ == "__main__":
         chatbot = ChatBot(assistant=args.assistant, debug=args.debug, voice=voice, speak=speak)
         chatbot.interactive()
     elif mode == "chatgpt":
-        intents = discord.Intents.default()
-        intents.message_content = True
-        client = ChatGPTDiscordBot(intents=intents)
-        client.args = {"debug": args.debug}
-        client.run(DISCORD_TOKEN)
+        from modules.discord_bot import DiscordBot
+        client = DiscordBot(model_name="gpt-4o-mini")
+        client.run_bot()
     elif mode == "localllm":
-        intents = discord.Intents.default()
-        intents.message_content = True
-        client = LocalLLMDiscordBot(intents=intents)
-        client.args = {"debug": args.debug}
-        client.run(DISCORD_TOKEN)
+        from modules.discord_bot import DiscordBot
+        client = DiscordBot()
+        client.run_bot()
