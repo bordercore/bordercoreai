@@ -16,7 +16,9 @@ def get_tokenizer(model_path):
 
     # Add tokens <|im_start|> and <|im_end|>; the latter is special eos token
     # self.tokenizer.add_tokens(["<|im_start|>"])
-    # self.tokenizer.add_special_tokens(dict(eos_token="<|im_end|>"))
+
+    # Required for the unsloth_gemma-2-2b-it-bnb-4bit model
+    tokenizer.add_special_tokens(dict(eos_token="<end_of_turn>"))
 
     return tokenizer
 

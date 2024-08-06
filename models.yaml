@@ -1,16 +1,12 @@
 hugging-quants_Meta-Llama-3.1-8B-Instruct-AWQ-INT4:
   name: Llama 3.1 8B Instruct AWQ
+mistralai_Mistral-Nemo-Instruct-2407:
+  name: Mistral Nemo Instruct 2407
 hermes-pro-llama3-awq:
   name: Nous Research Hermes 2 LLama3 8B AWQ
   add_bos_token: true
-llama3-instruct-awq:
-  template: llama3
-  name: LLama3 Instruct AWQ
-Mistral-7B-Instruct-v0.2:
-  template: llama2
-NousResearch_Nous-Hermes-2-Mistral-7B-DPO:
-  name: Nous Research Hermes 2 Mistral 7B DPO
-  template: chatml
+unsloth_gemma-2-2b-it-bnb-4bit:
+  name: Google Gemma2 9b BNB 4bit
 gpt-4o:
   name: ChatGPT-4o
   type: api
@@ -27,6 +23,14 @@ claude-3-5-sonnet-20240620:
   name: Claude 3.5 Sonnet
   type: api
   vendor: anthropic
+llama3-instruct-awq:
+  template: llama3
+  name: LLama3 Instruct AWQ
+Mistral-7B-Instruct-v0.2:
+  template: llama2
+NousResearch_Nous-Hermes-2-Mistral-7B-DPO:
+  name: Nous Research Hermes 2 Mistral 7B DPO
+  template: chatml
 microsoft_Phi-3-mini-128k-instruct:
   name: Phi 3 mini 128k instruct
 TheBloke_CodeLlama-7B-Instruct-AWQ:
