@@ -162,12 +162,9 @@ class ChatBot():
                 print("Error: API refusing connections.")
 
     def get_llm_params(self):
-
         return {
-            "mode": self.args.get("chat_mode", "chat"),
             "max_tokens_second": 0,
             "auto_max_new_tokens": True,
-            "new_conversation": self.args.get("new_conversation", False),
             "do_sample": True,
             "temperature": self.TEMPERATURE,
             "top_p": 0.1,
@@ -467,7 +464,6 @@ if __name__ == "__main__":
 
     parser = argparse.ArgumentParser(description="")
     parser.add_argument("-a", "--assistant", help="Assistant mode", action="store_true")
-    parser.add_argument("-c", "--chat-mode", choices=["instruct", "chat"], default="instruct", help="The chat mode: intruct or chat")
     parser.add_argument("-d", "--debug", help="Debug mode", action="store_true")
     parser.add_argument("-m", "--mode", choices=["chatgpt", "localllm", "interactive"], default="interactive", help="The mode: interactive, localllm on discord, chatgpt on discord")
     parser.add_argument("-s", "--speak", help="Voice output", action="store_true")
@@ -476,22 +472,21 @@ if __name__ == "__main__":
 
     assistant = args.assistant
     mode = args.mode
-    chat_mode = args.chat_mode
     speak = args.speak
     voice = args.voice
 
     if mode == "interactive":
-        chatbot = ChatBot(assistant=args.assistant, debug=args.debug, chat_mode=chat_mode, voice=voice, speak=speak)
+        chatbot = ChatBot(assistant=args.assistant, debug=args.debug, voice=voice, speak=speak)
         chatbot.interactive()
     elif mode == "chatgpt":
         intents = discord.Intents.default()
         intents.message_content = True
         client = ChatGPTDiscordBot(intents=intents)
-        client.args = {"debug": args.debug, "chat_mode": chat_mode}
+        client.args = {"debug": args.debug}
         client.run(DISCORD_TOKEN)
     elif mode == "localllm":
         intents = discord.Intents.default()
         intents.message_content = True
         client = LocalLLMDiscordBot(intents=intents)
-        client.args = {"debug": args.debug, "chat_mode": chat_mode}
+        client.args = {"debug": args.debug}
         client.run(DISCORD_TOKEN)

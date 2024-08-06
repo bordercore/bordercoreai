@@ -239,11 +239,9 @@ def chat():
         model_name=model_name,
         assistant=False,
         debug=False,
-        chat_mode="instruct",
         voice=False,
         speak=False,
         temperature=temperature,
-        new_conversation=True,
     )
     try:
         response = chatbot.handle_message(message)
