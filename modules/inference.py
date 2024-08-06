@@ -81,7 +81,6 @@ class Inference:
                     if message["role"] == "system":
                         next
                     elif message["role"] == "user":
-                        # template += f"<s>[INST]{message['content']}[/INST]"
                         template += f"[INST]{message['content']}[/INST]"
                     elif message["role"] == "assistant":
                         template += f"{message['content']}</s>"
@@ -143,15 +142,13 @@ class Inference:
     def generate(self, messages):
         prompt_template = self.get_prompt_template(self.tokenizer, messages)
 
-        if self.model_info[self.model_name].get("add_bos_token", None):
+        if self.get_config_option("add_bos_token"):
             prompt_template = f"<|begin_of_text|>{prompt_template}"
 
         terminators = [
             self.tokenizer.eos_token_id,
             self.tokenizer.convert_tokens_to_ids("<|eot_id|>")  # LLama3
         ]
-
-        streamer = TextStreamer(self.tokenizer, skip_prompt=True, skip_special_tokens=True)
 
         args = {
             "model": self.model,
@@ -164,7 +161,7 @@ class Inference:
             "eos_token_id": terminators
         }
         if self.stream:
-            args["streamer"] = streamer
+            args["streamer"] = TextStreamer(self.tokenizer, skip_prompt=True, skip_special_tokens=True)
             print(f"\n{COLOR_BLUE}Assistant{COLOR_RESET}: ", end="")
 
         start = time.time()
