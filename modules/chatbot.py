@@ -154,40 +154,6 @@ class ChatBot():
             except ConnectionError:
                 print("Error: API refusing connections.")
 
-    def get_llm_params(self):
-        return {
-            "max_tokens_second": 0,
-            "auto_max_new_tokens": True,
-            "do_sample": True,
-            "temperature": self.TEMPERATURE,
-            "top_p": 0.1,
-            "typical_p": 1,
-            "epsilon_cutoff": 0,  # In units of 1e-4
-            "eta_cutoff": 0,  # In units of 1e-4
-            "tfs": 1,
-            "top_a": 0,
-            "repetition_penalty": 1.18,
-            "repetition_penalty_range": 0,
-            "top_k": 40,
-            "min_length": 0,
-            "no_repeat_ngram_size": 0,
-            "num_beams": 1,
-            "penalty_alpha": 0,
-            "length_penalty": 1,
-            "early_stopping": False,
-            "mirostat_mode": 0,
-            "mirostat_tau": 5,
-            "mirostat_eta": 0.1,
-            "guidance_scale": 1,
-            "negative_prompt": "",
-            "seed": -1,
-            "add_bos_token": True,
-            "truncation_length": 2048,
-            "ban_eos_token": False,
-            "skip_special_tokens": True,
-            "stopping_strings": []
-        }
-
     def send_message_to_model_stream(self, prompt_raw):
         self.context.add(prompt_raw)
 
@@ -265,20 +231,20 @@ class ChatBot():
 
         model_vendor = ChatBot.get_model_attribute(self.model_name, "vendor")
         if model_vendor == "openai":
-            response = self.send_message_to_model_openai(messages, args)
+            response = self.send_message_to_model_openai(args)
         elif model_vendor == "anthropic":
-            response = self.send_message_to_model_anthropic(messages, args)
+            response = self.send_message_to_model_anthropic(args)
         else:
-            response = self.send_message_to_model_local_llm(messages, args, prune)
+            response = self.send_message_to_model_local_llm(args)
 
         self.context.add(response["content"], True, role="assistant")
         return response
 
-    def send_message_to_model_openai(self, messages, args):
+    def send_message_to_model_openai(self, args):
         start = time.time()
         response = openai.ChatCompletion.create(
             model=self.model_name,
-            messages=messages,
+            messages=self.context.get(),
             **args
         )
         speed = int(response["usage"]["completion_tokens"] / (time.time() - start))
@@ -287,8 +253,10 @@ class ChatBot():
             "speed": speed
         }
 
-    def send_message_to_model_anthropic(self, messages, args):
+    def send_message_to_model_anthropic(self, args):
         start = time.time()
+
+        messages = self.context.get()
 
         # Anthropic will reject messages with extraneous attributes
         [x.pop("id", None) for x in messages]
@@ -317,12 +285,10 @@ class ChatBot():
             "speed": speed
         }
 
-    def send_message_to_model_local_llm(self, messages, args, prune):
-        params = self.get_llm_params()
+    def send_message_to_model_local_llm(self, args):
         request = {
             "mode": "instruct",
             "messages": self.context.get(),
-            **params,
             **args
         }
 
