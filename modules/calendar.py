@@ -55,7 +55,7 @@ def get_schedule(model_name, command):
 
     for event in events["items"]:
         date_key = "dateTime" if "dateTime" in event["start"] else "date"
-        start_pretty = dateutil.parser.parse(event["start"][date_key]).strftime("%a %I:%M%p")
+        start_pretty = dateutil.parser.parse(event["start"][date_key]).strftime("%A %I:%M%p")
         prompt = prompt + f"""
         One event is called {event['summary']} and starts on {start_pretty}
         """
@@ -68,8 +68,4 @@ def get_schedule(model_name, command):
     from modules.chatbot import ChatBot
     chatbot = ChatBot(model_name)
     response = chatbot.send_message_to_model(prompt, args)
-
-    return {
-        "content": response["content"],
-        "speed": response["speed"]
-    }
+    return ChatBot.get_streaming_message(response)

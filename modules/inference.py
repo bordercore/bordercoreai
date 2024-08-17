@@ -1,7 +1,7 @@
 import argparse
 import json
 import os
-import time
+from threading import Thread
 
 import torch
 import transformers
@@ -12,7 +12,7 @@ except ModuleNotFoundError:
     # Useful during testing the webapp, which does not have the awq package
     pass
 from transformers import (AutoModelForCausalLM, BitsAndBytesConfig,
-                          TextStreamer, pipeline)
+                          TextIteratorStreamer, pipeline)
 
 from modules.context import Context
 from modules.util import get_model_info, get_tokenizer
@@ -36,7 +36,7 @@ class Inference:
     top_p = 0.95
     top_k = 40
 
-    def __init__(self, model_dir, model_name, temperature=None, quantize=False, stream=False, debug=False):
+    def __init__(self, model_dir, model_name, temperature=None, quantize=False, stream=False, interactive=False, debug=False):
         self.model_name = model_name
         self.model_path = f"{model_dir}/{model_name}"
         self.quantize = quantize
@@ -44,6 +44,7 @@ class Inference:
         self.temperature = temperature or self.temperature_default
         self.tokenizer = get_tokenizer(self.model_path)
         self.stream = stream
+        self.interactive = interactive
         self.debug = debug
 
     def get_template_type(self):
@@ -139,7 +140,17 @@ class Inference:
             )
         self.tokenizer = get_tokenizer(self.model_path)
 
+    def generate_tokens(self, streamer):
+        response = ""
+        for x in streamer:
+            response += x
+            if self.interactive:
+                print(x, end="", flush=True)
+            else:
+                yield x
+
     def generate(self, messages):
+
         prompt_template = self.get_prompt_template(self.tokenizer, messages)
 
         if self.get_config_option("add_bos_token"):
@@ -158,42 +169,69 @@ class Inference:
             "temperature": self.temperature,
             "top_p": self.top_p,
             "top_k": self.top_k,
-            "eos_token_id": terminators
+            "eos_token_id": terminators,
         }
         if self.stream:
-            args["streamer"] = TextStreamer(self.tokenizer, skip_prompt=True, skip_special_tokens=True)
-            print(f"\n{COLOR_BLUE}Assistant{COLOR_RESET}: ", end="")
+            if self.interactive:
+                print(f"\n{COLOR_BLUE}Assistant{COLOR_RESET}: ", end="")
 
-        start = time.time()
+            streamer = TextIteratorStreamer(
+                self.tokenizer,
+                skip_prompt=True,
+                skip_special_tokens=True
+            )
+            generator = pipeline("text-generation", streamer=streamer, **args)
 
-        generator = pipeline("text-generation", **args)
-        generation_output = generator(prompt_template, return_full_text=False)
-        response = generation_output[0]["generated_text"]
+            generation_kwargs = dict(
+                max_new_tokens=self.max_new_tokens,
+                return_full_text=False
+            )
+            thread = Thread(
+                target=generator,
+                args=(prompt_template,),
+                kwargs=generation_kwargs
+            )
+            thread.start()
 
-        num_tokens = len(response)
-        speed = int(num_tokens / (time.time() - start))
+            response = ""
+            for x in streamer:
+                response += x
+                if self.interactive:
+                    print(x, end="", flush=True)
+                else:
+                    yield x
+            thread.join()
 
-        if self.debug:
-            print("\n" + response)
+            if self.interactive:
+                print()
 
-        return response, num_tokens, speed
+        else:
+            generator = pipeline("text-generation", **args)
+            generation_output = generator(prompt_template, return_full_text=False)
+            response = generation_output[0]["generated_text"]
+            print(f"\n{COLOR_BLUE}Assistant{COLOR_RESET}: " + response)
+
+            if self.debug:
+                print("\n" + response)
+
+        if self.interactive:
+            self.context.add(response, True, role="assistant")
 
     def run(self):
 
         print(f"Using model {self.model_name}.\n")
 
         self.load_model()
-
-        context = Context()
+        self.context = Context()
 
         while True:
             user_input = input(f"\n{COLOR_GREEN}User{COLOR_RESET}: ")
-            context.add(user_input, True)
-            response, num_tokens, speed = self.generate(context.get())
-            context.add(response, True, role="assistant")
-
-            if not self.stream:
-                print(f"\n{COLOR_BLUE}Assistant{COLOR_RESET}: " + response)
+            self.context.add(user_input, True)
+            generate_tokens = self.generate(self.context.get())
+            try:
+                next(generate_tokens)
+            except StopIteration:
+                pass
 
 
 if __name__ == "__main__":
@@ -235,6 +273,7 @@ if __name__ == "__main__":
         model_dir=dir,
         model_name=model_name,
         quantize=quantize,
-        stream=stream
+        stream=stream,
+        interactive=True
     )
     inference.run()

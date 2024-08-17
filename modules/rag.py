@@ -9,6 +9,7 @@ import openai
 import PyPDF2
 from nltk.tokenize import sent_tokenize
 
+from modules.chatbot import ChatBot
 from modules.embeddings import len_safe_get_embedding
 
 CYAN = "\033[36m"
@@ -134,10 +135,12 @@ class RAG():
             messages=[
                 {"role": "system", "content": "You are a helpful assistant."},
                 {"role": "user", "content": prompt},
-            ]
+            ],
+            stream=True
         )
-
-        return response["choices"][0]["message"]["content"]
+        for chunk in response:
+            content = chunk["choices"][0]["delta"].get("content", "")
+            yield content
 
     def query_document(self, query):
         args = {
@@ -151,7 +154,7 @@ class RAG():
 
         results = self.collection.query(**args)
 
-        return self.get_response(query, results["documents"])
+        return ChatBot.get_streaming_message(self.get_response(query, results["documents"]))
 
     def run(self, force_index=False):
 

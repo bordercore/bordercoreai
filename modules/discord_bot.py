@@ -2,10 +2,9 @@ import os
 import re
 import sys
 
+import discord
 import openai
 from api import settings
-
-import discord
 
 from .chatbot import ChatBot
 
@@ -51,7 +50,7 @@ class DiscordBot(discord.Client, ChatBot):
             # Remove the message ID from the start of the message first
             async with message.channel.typing():
                 response = self.send_message_to_model(re.sub(r"<@\d+> ", "", message.content))
-            await message.channel.send(response["content"])
+            await message.channel.send(ChatBot.get_streaming_message(response))
 
     def run_bot(self):
         self.run(DISCORD_TOKEN)

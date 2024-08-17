@@ -8,7 +8,7 @@
 <input v-model="prompt" id="prompt" class="form-control w-75" type="text" placeholder="Prompt" @keydown.enter.prevent="handleSendMessageRag" :disabled="! ragFileUploaded" />
 {% endblock %}
 
-{% block chat_handler %}sendMessageToChatbotRag{% endblock %}
+{% block chat_handler %}handleSendMessageRag{% endblock %}
 
 {% block content %}
     <div class="d-flex align-items-center mb-3">

@@ -101,19 +101,8 @@ def main(id=None):
         model_dir=settings.model_dir,
         model_name=settings.model_name,
         temperature=get_temperature(payload),
-        debug=True
+        debug=True,
+        stream=True
     )
     inference.model = settings.model
-    response, num_tokens, speed = inference.generate(payload["messages"])
-
-    return jsonify(
-        choices=[
-            {
-                "message": {
-                    "content": response,
-                    "speed": speed,
-                    "num_tokens": num_tokens
-                }
-            }
-        ], status="OK"
-    )
+    return inference.generate(payload["messages"])

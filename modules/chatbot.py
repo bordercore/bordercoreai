@@ -1,26 +1,19 @@
 import argparse
 import json
 import logging
-import os
 import string
 import sys
-import time
 import urllib.parse
 import warnings
-import wave
 
 import anthropic
 import openai
-import piper
 import pyaudio
 import pysbd
 import requests
 import sounddevice  # Adding this eliminates an annoying warning
-import sseclient
 from api import settings
 from http_constants.status import HttpStatus
-from pydub import AudioSegment
-from pydub.playback import play
 from requests.exceptions import ConnectionError
 
 from modules.calendar import get_schedule
@@ -50,6 +43,8 @@ WHITE = "\033[37m"
 MAGENTA = "\033[35m"
 RED = "\033[91m"
 END = "\033[0m"
+
+CONTROL_VALUE = "9574724975"
 
 openai.api_key = settings.openai_api_key
 
@@ -83,27 +78,12 @@ class ChatBot():
             input_string = input_string[:-1]
         return input_string.strip()
 
-    def speak(self, message):
-        voice = piper.PiperVoice.load(model_path="en_US-amy-medium.onnx", config_path="en_US-amy-medium.onnx.json")
-
-        filename = "message.wav"
-        with open(filename, "wb") as f:
-            with wave.Wave_write(f) as wav:
-                voice.synthesize(message, wav)
-
-        # Play back the audio at a slighter faster speed
-        audio = AudioSegment.from_file(filename, format="wav")
-        faster_audio = audio.speedup(playback_speed=1.2)
-        play(faster_audio)
-
-        os.remove(filename)
-
     def get_wake_word(self):
         return f"{self.ASSISTANT_NAME}".lower()
 
-    def play_response(self, response):
+    def speak(self, text):
 
-        text = urllib.parse.quote(response)
+        text = urllib.parse.quote(text)
         host = settings.tts_host
         voice = settings.tts_voice
         output_file = "output.wav"
@@ -143,86 +123,37 @@ class ChatBot():
                         sys.exit(0)
                 print(f"\b\b\b\b\b\b\b\b\b\b\b\b{user_input}")
             else:
-                user_input = input(f"\n{MAGENTA}You{END} ")
+                user_input = input(f"\n{MAGENTA}You:{END} ")
 
             try:
                 response = self.send_message_to_model(user_input)
-                print(f"\n{MAGENTA}AI{CYAN} {response['content']}")
+                print(f"\n{MAGENTA}AI{CYAN} ", end="")
+                content = ""
+                for x in response:
+                    content += x
+                    print(x, end="", flush=True)
+                print()
                 if self.args["speak"]:
-                    self.play_response(response["content"])
+                    self.speak(content)
 
             except ConnectionError:
                 print("Error: API refusing connections.")
 
-    def send_message_to_model_stream(self, prompt_raw):
-        self.context.add(prompt_raw)
-
-        data = {
-            "mode": "instruct",
-            "stream": True,
-            "messages": self.context.get()
-        }
-
-        headers = {
-            "Content-Type": "application/json"
-        }
-
-        stream_response = requests.post(URI_CHAT, headers=headers, json=data, verify=False, stream=True)
-        client = sseclient.SSEClient(stream_response)
-
-        assistant_message = ""
-        print(f"\n{MAGENTA}AI{CYAN} ", end="")
-        for event in client.events():
-            payload = json.loads(event.data)
-            chunk = payload["choices"][0]["message"]["content"]
-            assistant_message += chunk
-            print(chunk, end="")
-
-        self.context.add("assistant", assistant_message)
-
-    def handle_message(self, prompt):
-        request_type = self.get_request_type(prompt[-1]["content"])
+    def handle_message(self, messages):
+        request_type = self.get_request_type(messages[-1]["content"])
 
         if request_type["category"] == "lights":
-            return run_command(self.model_name, prompt[-1]["content"])
+            return run_command(self.model_name, messages[-1]["content"])
         elif request_type["category"] == "music":
-            return play_music(self.model_name, prompt[-1]["content"])
+            return play_music(self.model_name, messages[-1]["content"])
         elif request_type["category"] == "weather":
-            return get_weather_info(self.model_name, prompt[-1]["content"])
+            return get_weather_info(self.model_name, messages[-1]["content"])
         elif request_type["category"] == "calendar":
-            return get_schedule(self.model_name, prompt[-1]["content"])
+            return get_schedule(self.model_name, messages[-1]["content"])
         elif request_type["category"] == "summary":
             return self.get_summary()
         else:
-            self.context.clear()
-            return self.send_message_to_model(prompt, replace_context=True)
-
-    def get_summary(self):
-        response = get_weather_info(self.model_name, "What's the weather today?")
-        content = response["content"]
-        speed = response["speed"]
-
-        response = get_schedule(self.model_name, "What's on my calendar today?")
-        content += "\n\n" + response["content"]
-
-        return {
-            "content": content,
-            "speed": int((speed + response["speed"]) / 2)
-        }
-
-    def get_request_type(self, message):
-        prompt = """
-        I want you to put this instruction into one of multiple categories. If the instruction is to play some music, the category is "music". If the instruction is to control lights, the category is "lights". If the instruction is asking about the weather or the moon's phase, the category is "weather". If the instruction is asking about today's calendar, or is something like 'What's happening today' or 'What is my schedule', the category is "calendar". If the instruction is asking about today's agenda or summary, the category is "summary". For everything else, the category is "other". Give me the category in JSON format with the field name "category". Do not format the JSON by including newlines. Give only the JSON and no additional characters, text, or comments. Here is the instruction:
-        """
-        prompt = prompt + message
-
-        args = {"temperature": 0.1}
-        response = self.send_message_to_model(prompt, args, prune=False)
-
-        if settings.debug:
-            print(f"{response=}")
-
-        return json.loads(response["content"])
+            return self.send_message_to_model(messages, replace_context=True)
 
     def send_message_to_model(self, messages, args={}, prune=True, replace_context=False):
         if type(messages) is not list:
@@ -237,25 +168,20 @@ class ChatBot():
         else:
             response = self.send_message_to_model_local_llm(args)
 
-        self.context.add(response["content"], True, role="assistant")
         return response
 
     def send_message_to_model_openai(self, args):
-        start = time.time()
         response = openai.ChatCompletion.create(
             model=self.model_name,
             messages=self.context.get(),
+            stream=True,
             **args
         )
-        speed = int(response["usage"]["completion_tokens"] / (time.time() - start))
-        return {
-            "content": response["choices"][0]["message"]["content"],
-            "speed": speed
-        }
+        for chunk in response:
+            content = chunk["choices"][0]["delta"].get("content", "")
+            yield content
 
     def send_message_to_model_anthropic(self, args):
-        start = time.time()
-
         messages = self.context.get()
 
         # Anthropic will reject messages with extraneous attributes
@@ -264,6 +190,7 @@ class ChatBot():
         # Anthropic requires any system messages to be provided
         #  as a separate parameter and not be present in the
         #  list of user messages.
+
         system = []
         if messages[0]["role"] == "system":
             system = messages[0]["content"]
@@ -277,13 +204,12 @@ class ChatBot():
             max_tokens=1024,
             messages=messages,
             system=system,
+            stream=True,
             **args
         )
-        speed = int(response.usage.output_tokens / (time.time() - start))
-        return {
-            "content": response.content[0].text,
-            "speed": speed
-        }
+        for chunk in response:
+            if chunk.type == "content_block_delta":
+                yield chunk.delta.text
 
     def send_message_to_model_local_llm(self, args):
         request = {
@@ -292,15 +218,42 @@ class ChatBot():
             **args
         }
 
-        response = requests.post(URI_CHAT, json=request)
-        if response.status_code != HttpStatus.OK:
-            raise Exception(f"Error from local LLM: {str(HttpStatus(response.status_code))}")
-        payload = response.json()
-        speed = payload["choices"][0]["message"]["speed"]
-        return {
-            "content": payload["choices"][0]["message"]["content"],
-            "speed": speed
-        }
+        response = requests.post(URI_CHAT, json=request, stream=True)
+        for chunk in response.iter_content(chunk_size=1024):
+            if chunk:  # Filter out keep-alive new chunks
+                yield chunk.decode("utf-8")
+
+    def get_summary(self):
+        response = get_weather_info(self.model_name, "What's the weather today?")
+        weather_content = ChatBot.get_streaming_message(response)
+
+        response = get_schedule(self.model_name, "What's on my calendar today?")
+        calendar_content = ChatBot.get_streaming_message(response)
+
+        return f"{weather_content}\n\n{calendar_content}"
+
+    def get_request_type(self, message):
+        prompt = """
+        I want you to put this instruction into one of multiple categories. If the instruction is to play some music, the category is "music". If the instruction is to control lights, the category is "lights". If the instruction is asking about the weather or the moon's phase, the category is "weather". If the instruction is asking about today's calendar, or is something like 'What's happening today' or 'What is my schedule', the category is "calendar". If the instruction is asking about today's agenda or summary, or something like 'What's my update?', the category is "summary". For everything else, the category is "other". Give me the category in JSON format with the field name "category". Do not format the JSON by including newlines. Give only the JSON and no additional characters, text, or comments. Here is the instruction:
+        """
+        prompt += message
+
+        args = {"temperature": 0.1}
+        chatbot = ChatBot(self.model_name)
+        response = chatbot.send_message_to_model(prompt, args)
+        content = ChatBot.get_streaming_message(response)
+
+        if settings.debug:
+            print(f"{content=}")
+
+        return json.loads(content)
+
+    @staticmethod
+    def get_streaming_message(streamer):
+        response = ""
+        for x in streamer:
+            response += x
+        return response
 
     @staticmethod
     def get_model_attribute(model_name, attribute):

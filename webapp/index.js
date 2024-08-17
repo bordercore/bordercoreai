@@ -42,6 +42,7 @@ const app = createApp({
     setup() {
         const session = JSON.parse(document.getElementById("session").textContent);
         const settings = JSON.parse(document.getElementById("settings").textContent);
+        const controlValue = document.getElementById("controlValue").textContent;
 
         const chatHistory = ref(
             [
@@ -75,7 +76,6 @@ const app = createApp({
         const temperature = ref(session.temperature || 0.7);
         const waiting = ref(false);
 
-        const tts = "alltalk";
         const ttsHost = ref(session.tts_host);
         const audioElement = new Audio();
         audioElement.crossOrigin = "anonymous";
@@ -103,7 +103,7 @@ const app = createApp({
             return musicInfo.value.findIndex((x) => x === currentSong.value);
         });
 
-        const chatHandlers = {handleSendMessageAudio, sendMessageToChatbotRag, sendMessageToChatbot};
+        const chatHandlers = {handleSendMessageAudio, handleSendMessageRag, sendMessageToChatbot};
 
         function addClipboardToMessages() {
             if (!clipboard.value) {
@@ -278,62 +278,17 @@ const app = createApp({
         };
 
         function handleSendMessageRag(event) {
-            sendMessageToChatbotRag(prompt.value);
-        };
-
-        function sendMessageToChatbotRag(message) {
-            setTimeout(function() {
-                waiting.value = true;
-            }, 500);
-            addMessage("user", message);
-            prompt.value = "";
-            doPost(
-                "/rag/chat",
-                {
-                    "message": message,
-                    "sha1sum": sha1sum.value,
-                    "audio_speed": audioSpeed.value,
-                    "speak": speak.value,
-                    "tts": tts,
-                },
-                (response) => {
-                    waiting.value = false;
-                    addMessage("assistant", response.data.response);
-                    notice.value = "";
-                    doTTS(response.data);
-                },
-                "",
-            );
+            const args = {
+                "sha1sum": sha1sum.value,
+            };
+            sendMessageToChatbot("/rag/chat", prompt.value, args);
         };
 
         function handleSendMessageAudio() {
-            setTimeout(function() {
-                waiting.value = true;
-            }, 500);
-            const message = prompt.value;
-            addMessage("user", message);
-            prompt.value = "";
-            doPost(
-                "/audio/chat",
-                {
-                    "message": message,
-                    "transcript": audioFileTranscript.value,
-                    "model": model.value,
-                    "sha1sum": sha1sum.value,
-                    "audio_speed": audioSpeed.value,
-                    "speak": speak.value,
-                    "tts": tts,
-                    "temperature": temperature.value,
-                },
-                (response) => {
-                    waiting.value = false;
-                    addMessage("assistant", response.data.content);
-                    console.log(`Speed: ${response.data.speed} t/s`);
-                    notice.value = "";
-                    doTTS(response.data);
-                },
-                "",
-            );
+            const args = {
+                "transcript": audioFileTranscript.value,
+            };
+            sendMessageToChatbot("/audio/chat", prompt.value, args);
         };
 
         function handleCopyText(event) {
@@ -348,11 +303,11 @@ const app = createApp({
         };
 
         function handleRegenerate(event) {
-            sendMessageToChatbot(prompt.value, true);
+            sendMessageToChatbot("/chat", prompt.value, {}, true);
         };
 
-        function handleSendMessage(event) {
-            sendMessageToChatbot(prompt.value);
+        function handleSendMessage(event, endpoint="/chat") {
+            sendMessageToChatbot(endpoint, prompt.value);
         };
 
         function getModelInfo() {
@@ -396,28 +351,7 @@ const app = createApp({
             audioMotion.volume = 0;
         };
 
-        async function playWav(base64String) {
-            // Convert Base64 string to ArrayBuffer
-            const byteString = atob(base64String);
-            const arrayBuffer = new ArrayBuffer(byteString.length);
-            const uint8Array = new Uint8Array(arrayBuffer);
-            for (let i = 0; i < byteString.length; i++) {
-                uint8Array[i] = byteString.charCodeAt(i);
-            }
-
-            audioMotion.gradient = "steelblue";
-
-            // Decode and play the audio, with visualization
-            audioMotion.audioCtx.decodeAudioData(arrayBuffer, (audioBuffer) => {
-                const source = audioMotion.audioCtx.createBufferSource();
-                audioMotion.connectInput(source);
-                source.buffer = audioBuffer;
-                source.connect(audioMotion.audioCtx.destination);
-                source.start();
-            });
-        }
-
-        async function sendMessageToChatbot(message, regenerate=false) {
+        async function sendMessageToChatbot(endpoint, message, args={}, regenerate=false) {
             setTimeout(function() {
                 waiting.value = true;
             }, 500);
@@ -430,28 +364,96 @@ const app = createApp({
             }
             const messages = addClipboardToMessages();
             prompt.value = "";
-            doPost(
-                "/chat",
-                {
-                    "message": JSON.stringify(messages),
-                    "model": model.value,
-                    "audio_speed": audioSpeed.value,
-                    "speak": speak.value,
-                    "tts": tts,
-                    "temperature": temperature.value,
+
+            const payload = {
+                "message": JSON.stringify(messages),
+                "model": model.value,
+                "audio_speed": audioSpeed.value,
+                "speak": speak.value,
+                "temperature": temperature.value,
+                ...args
+            };
+
+            const formData = new FormData();
+            for (const key in payload) {
+                if (payload.hasOwnProperty(key)) {
+                    formData.append(key, payload[key]);
+                }
+            }
+
+            let start = null;
+            let buffer = "";
+            fetch(endpoint, {
+                method: "POST",
+                headers: {
+                    "Responsetype": "stream",
                 },
-                (response) => {
-                    waiting.value = false;
-                    if (response.data?.music_info?.length > 0) {
-                        musicInfo.value = response.data.music_info;
-                        playSong(musicInfo.value[0]);
+                body: formData,
+            })
+                .then((response) => {
+                    if (!response.ok) {
+                        throw new Error("Network response was not ok");
                     }
-                    addMessage("assistant", response.data.content);
-                    console.log(`Speed: ${response.data.speed} t/s`);
-                    doTTS(response.data);
-                },
-                "",
-            );
+
+                    const reader = response.body.getReader();
+                    const decoder = new TextDecoder("utf-8");
+
+                    // Create an empty message. We'll fill it in as data streams in.
+                    addMessage("assistant", "");
+                    return new ReadableStream({
+                        start(controller) {
+                            function push() {
+                                reader.read().then(({done, value}) => {
+                                    if (done) {
+                                        controller.close();
+                                        return;
+                                    }
+                                    waiting.value = false;
+                                    const content = decoder.decode(value, {stream: true});
+
+                                    // If the response begins with the magic control value, we know
+                                    //  this is JSON and not a message to display to the user. So
+                                    //  Add to an accumulating buffer. If the buffer already exist,
+                                    //  the same situation applies.
+                                    if (content.slice(0, controlValue.length) === controlValue || buffer) {
+                                        buffer += content;
+                                    } else {
+                                        chatHistory.value[chatHistory.value.length - 1].content += content;
+                                    }
+
+                                    controller.enqueue(value);
+                                    push();
+                                })
+                                    .catch((error) => {
+                                        console.error(error);
+                                        controller.error(error);
+                                    });
+                            }
+                            push();
+                        },
+                    });
+                })
+                .then((stream) => {
+                    start = Date.now();
+                    return new Response(stream).text();
+                })
+                .then((result) => {
+                    const elapsed = Date.now() - start;
+                    const wordCount = result.trim().split(/\s+/).length;
+                    const speed = Math.round(wordCount / (elapsed / 1000));
+                    console.log(`Speed: ${speed} t/s`);
+                    if (buffer) {
+                        const jsonObject = JSON.parse(buffer.slice(controlValue.length));
+                        if (jsonObject?.music_info?.length > 0) {
+                            musicInfo.value = jsonObject.music_info;
+                            playSong(musicInfo.value[0]);
+                        }
+                    }
+                    doTTS(result);
+                })
+                .catch((error) => {
+                    console.error("Error:", error);
+                });
         };
 
         async function handleListen(chatHandler) {
@@ -527,7 +529,7 @@ const app = createApp({
                                 "Content-Type": "multipart/form-data",
                             },
                         }).then((response) => {
-                            sendMessageToChatbot(response.data.input);
+                            sendMessageToChatbot("/chat", response.data.input);
                             // Delete the current audio in case we want to start a new recording later
                             audioChunks = [];
                         });
@@ -543,18 +545,14 @@ const app = createApp({
                 return;
             }
 
-            if (tts === "alltalk") {
-                const voice = session.tts_voice;
-                const outputFile = "stream_output.wav";
-                const streamingUrl = `http://${ttsHost.value}/api/tts-generate-streaming?text=${response.content}&voice=${voice}&language=en&output_file=${outputFile}`;
-                audioElement.src = streamingUrl;
-                audioMotion.gradient = "steelblue";
-                audioMotion.volume = 1;
-                audioElement.playbackRate = audioSpeed.value;
-                audioElement.play();
-            } else if (response.audio) {
-                playWav(response.audio);
-            }
+            const voice = session.tts_voice;
+            const outputFile = "stream_output.wav";
+            const streamingUrl = `http://${ttsHost.value}/api/tts-generate-streaming?text=${response}&voice=${voice}&language=en&output_file=${outputFile}`;
+            audioElement.src = streamingUrl;
+            audioMotion.gradient = "steelblue";
+            audioMotion.volume = 1;
+            audioElement.playbackRate = audioSpeed.value;
+            audioElement.play();
         }
 
         function handleAudioPlayerPlay(event) {
@@ -590,6 +588,7 @@ const app = createApp({
         }
 
         async function playSong(song) {
+            chatHistory.value[chatHistory.value.length - 1].content = `Playing **${song.title}** by **${song.artist}**`;
             let el = document.getElementById("audioPlayer");
             el.classList.replace("d-none", "d-flex");
             el = document.getElementById("player");

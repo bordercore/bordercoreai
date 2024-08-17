@@ -97,20 +97,17 @@ class Audio():
 
         return fixed_timestamps
 
-    def query_transcription(self, model_name, message, transcript):
+    def query_transcription(self, model_name, messages, transcript):
 
+        content = messages[-1]["content"]
         prompt = f"""
-    Answer the following question based ONLY on the following text. Do not use any other source of information. The question is '{message}'. The text is '{transcript}'
+    Answer the following question based ONLY on the following text. Do not use any other source of information. The question is '{content}'. The text is '{transcript}'
     """
 
         from modules.chatbot import ChatBot
         chatbot = ChatBot(model_name)
-        response = chatbot.send_message_to_model(prompt)
-
-        return {
-            "content": response["content"],
-            "speed": response["speed"]
-        }
+        response = chatbot.send_message_to_model(prompt, {})
+        return ChatBot.get_streaming_message(response)
 
 
 if __name__ == "__main__":

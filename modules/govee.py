@@ -113,14 +113,11 @@ def run_command(model_name, command, device_list=None):
         f"{build_prompt(device_list)}\n{command}",
         args
     )
-
-    content = balance_braces(response["content"])
+    content = ChatBot.get_streaming_message(response)
+    content = balance_braces(content)
     control_device(content)
 
-    return {
-        "content": "Done",
-        "speed": response["speed"]
-    }
+    return "Done"
 
 
 if __name__ == "__main__":

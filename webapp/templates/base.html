@@ -52,18 +52,16 @@
                     </form>
                     {% block content %}{% endblock %}
                     <div class="message-container">
-                        <transition-group enter-active-class="animate__animated animate__fadeIn">
-                            <div v-for="message in filteredChatHistory" :key="message.id" :class="'chatbot-' + message.role" class="d-flex px-3 mt-2">
-                                <div v-if="message.role === 'user'" class="role fw-bold me-2" v-cloak>
-                                    You
-                                </div>
-                                <div v-else class="role fw-bold me-2" v-cloak>
-                                    AI
-                                </div>
-                                <div v-html="getMarkdown(message.content)">
-                                </div>
+                        <div v-for="message in filteredChatHistory" :key="message.id" :class="'chatbot-' + message.role" class="d-flex px-3 mt-2">
+                            <div v-if="message.role === 'user'" class="role fw-bold me-2" v-cloak>
+                                You
                             </div>
-                        </transition-group>
+                            <div v-else class="role fw-bold me-2" v-cloak>
+                                AI
+                            </div>
+                            <div v-html="getMarkdown(message.content)">
+                            </div>
+                        </div>
                         <div v-show="waiting" class="spinner-border ms-3 text-info" enter-active-class="animate__animated animate__fadeIn" role="status">
                         </div>
                     </div>
@@ -230,6 +228,7 @@
         </div>
         <script id="session" type="application/json">{{ session|tojson|safe }}</script>
         <script id="settings" type="application/json">{{ settings|tojson|safe }}</script>
+        <div id="controlValue" class="d-none">{{ control_value }}</div>
         <script src="{{ url_for('static', filename='js/javascript.bundle.js') }}"></script>
     </body>
 </html>
