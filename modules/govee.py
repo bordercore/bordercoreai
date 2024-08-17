@@ -97,7 +97,7 @@ def control_device(payload):
         print(response.json()["message"])
 
 
-def run_command(model_name, command, device_list=None):
+def control_lights(model_name, command, device_list=None):
 
     if not device_list:
         device_list = get_devices()
@@ -138,4 +138,4 @@ if __name__ == "__main__":
     print("Devices available: " + ", ".join([x["deviceName"] for x in device_list["data"]["devices"]]))
     while True:
         command = input(f"{MAGENTA}Command:{END} ")
-        run_command(model, command, device_list=device_list)
+        control_lights(model, command, device_list=device_list)

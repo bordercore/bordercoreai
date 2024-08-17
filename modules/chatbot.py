@@ -18,7 +18,7 @@ from requests.exceptions import ConnectionError
 
 from modules.calendar import get_schedule
 from modules.context import Context
-from modules.govee import run_command
+from modules.govee import control_lights
 from modules.music import play_music
 from modules.util import get_model_info, sort_models
 from modules.weather import get_weather_info
@@ -143,7 +143,7 @@ class ChatBot():
         request_type = self.get_request_type(messages[-1]["content"])
 
         if request_type["category"] == "lights":
-            return run_command(self.model_name, messages[-1]["content"])
+            return control_lights(self.model_name, messages[-1]["content"])
         elif request_type["category"] == "music":
             return play_music(self.model_name, messages[-1]["content"])
         elif request_type["category"] == "weather":
