@@ -1,5 +1,6 @@
 {
   "scripts": {
+    "dev": "webpack --watch",
     "build": "webpack"
   },
   "dependencies": {
