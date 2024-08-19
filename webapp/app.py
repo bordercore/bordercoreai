@@ -62,7 +62,7 @@ def rag_upload():
     name = request.files["file"].filename
     text = request.files["file"].read()
     chromdb = Path(__file__).resolve().parent.parent / "chromdb"
-    rag = RAG(chromdb=str(chromdb), use_openai=True)
+    rag = RAG(None, chromdb=str(chromdb))
     rag.add_document(text=text, name=name)
 
     return jsonify(
@@ -77,6 +77,7 @@ def rag_chat():
 
     sha1sum = request.form["sha1sum"]
     message = request.form["message"]
+    model_name = request.form["model"]
     speak = request.form.get("speak", "false")
     audio_speed = float(request.form.get("audio_speed", 1.0))
     temperature = float(request.form.get("temperature", 0.7))
@@ -84,7 +85,7 @@ def rag_chat():
     store_params_in_session(speak, audio_speed, temperature)
 
     chromdb = Path(__file__).resolve().parent.parent / "chromdb"
-    rag = RAG(chromdb=str(chromdb), use_openai=True)
+    rag = RAG(model_name, chromdb=str(chromdb))
     try:
         rag.get_collection(sha1sum=sha1sum)
         return rag.query_document(message)

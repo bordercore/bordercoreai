@@ -29,8 +29,9 @@ class RAG():
     # The number of characters each chunk overlaps with the next.
     overlap = 20
 
-    def __init__(self, chromdb="chromdb", use_openai=True):
-        self.use_openai = use_openai
+    def __init__(self, model_name, chromdb="chromdb", use_openai_embeddings=True):
+        self.model_name = model_name
+        self.use_openai_embeddings = use_openai_embeddings
         self.client = chromadb.PersistentClient(path=chromdb)
 
     def extract_text_from_pdf(self, pdf):
@@ -119,7 +120,7 @@ class RAG():
                 "documents": [chunk],
                 "ids": [str(uuid.uuid4())],
             }
-            if self.use_openai:
+            if self.use_openai_embeddings:
                 embeddings = len_safe_get_embedding(chunk)
                 args["embeddings"] = [embeddings]
             self.collection.add(**args)
@@ -130,23 +131,16 @@ class RAG():
         for chunk in chunks:
             prompt += f"Here is one chunk of text: {chunk}. "
 
-        response = openai.ChatCompletion.create(
-            model="gpt-3.5-turbo",
-            messages=[
-                {"role": "system", "content": "You are a helpful assistant."},
-                {"role": "user", "content": prompt},
-            ],
-            stream=True
-        )
-        for chunk in response:
-            content = chunk["choices"][0]["delta"].get("content", "")
-            yield content
+        from modules.chatbot import ChatBot
+        chatbot = ChatBot(self.model_name)
+        response = chatbot.send_message_to_model(prompt, {})
+        return ChatBot.get_streaming_message(response)
 
     def query_document(self, query):
         args = {
             "n_results": 3
         }
-        if self.use_openai:
+        if self.use_openai_embeddings:
             embeddings = len_safe_get_embedding(query)
             args["query_embeddings"] = [embeddings]
         else:
@@ -170,6 +164,7 @@ class RAG():
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="")
     parser.add_argument("-i", "--index", help="Index document", action="store_true")
+    parser.add_argument("-m", "--model-name", help="The LLM model name", default="gpt-4o-mini")
     parser.add_argument("-o", "--openai", help="Use OpenAI embeddings", action="store_true", default=False)
     parser.add_argument("-f", "--filename", help="The file to query")
     parser.add_argument("-t", "--text", help="The text to query")
@@ -177,7 +172,8 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     force_index = args.index
-    use_openai = args.openai
+    model_name = args.model_name
+    use_openai_embeddings = args.openai
     filename = args.filename
     text = args.text
     list_collections = args.list
@@ -187,7 +183,7 @@ if __name__ == "__main__":
     if not filename and not text:
         raise ValueError("Error: you must specify either a filename or some text to query.")
 
-    rag = RAG(use_openai=use_openai)
+    rag = RAG(model_name, use_openai_embeddings=use_openai_embeddings)
     rag.add_document(text=text, filename=filename)
 
     if list_collections:
