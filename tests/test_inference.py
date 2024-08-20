@@ -18,7 +18,7 @@ def config():
     }
     with patch("modules.inference.get_model_info", return_value=model_info), \
          patch("modules.inference.get_tokenizer", return_value=None):
-        return Inference("/some/dir", "model1")
+        return Inference("/path/to/model1")
 
 
 def test_get_config_option_existing_key(config):

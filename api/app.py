@@ -13,15 +13,15 @@ app = Flask(__name__)
 device = "cuda:0" if torch.cuda.is_available() else "cpu"
 
 
-def get_model_list(path):
-    """Return a list of all models within the specified path."""
+def get_model_list(directory):
+    """Return a list of all models within the specified directory."""
 
-    if not os.path.isdir(path):
-        raise ValueError(f"The specified path: {path} is not a valid directory.")
+    if not os.path.isdir(directory):
+        raise ValueError(f"{directory} is not a valid directory.")
 
     directories = []
-    for item in os.listdir(path):
-        full_path = os.path.join(path, item)
+    for item in os.listdir(directory):
+        full_path = os.path.join(directory, item)
         if os.path.isdir(full_path) or full_path.endswith("gguf"):
             directories.append(item)
     return directories
@@ -45,10 +45,10 @@ def load_model(model_name):
     model_path = f"{settings.model_dir}/{settings.model_name}"
 
     inference = Inference(
-        model_dir=settings.model_dir,
-        model_name=settings.model_name,
+        model_path=model_path,
         quantize=True
     )
+
     inference.load_model()
     settings.model = inference.model
     settings.tokenizer = get_tokenizer(model_path)
@@ -97,9 +97,9 @@ def main(id=None):
 
     payload = request.json
 
+    model_path = f"{settings.model_dir}/{settings.model_name}"
     inference = Inference(
-        model_dir=settings.model_dir,
-        model_name=settings.model_name,
+        model_path=model_path,
         temperature=get_temperature(payload),
         debug=True,
         stream=True

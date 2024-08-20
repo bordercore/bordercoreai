@@ -1,6 +1,7 @@
 import argparse
 import json
 import os
+from pathlib import Path
 from threading import Thread
 
 import torch
@@ -36,9 +37,9 @@ class Inference:
     top_p = 0.95
     top_k = 40
 
-    def __init__(self, model_dir, model_name, temperature=None, quantize=False, stream=False, interactive=False, debug=False):
-        self.model_name = model_name
-        self.model_path = f"{model_dir}/{model_name}"
+    def __init__(self, model_path, temperature=None, quantize=False, stream=False, interactive=False, debug=False):
+        self.model_path = model_path
+        self.model_name = Path(model_path).parts[-1]
         self.quantize = quantize
         self.model_info = get_model_info()
         self.temperature = temperature or self.temperature_default
@@ -211,9 +212,6 @@ class Inference:
             response = generation_output[0]["generated_text"]
             print(f"\n{COLOR_BLUE}Assistant{COLOR_RESET}: " + response)
 
-            if self.debug:
-                print("\n" + response)
-
         if self.interactive:
             self.context.add(response, True, role="assistant")
 
@@ -238,16 +236,9 @@ if __name__ == "__main__":
 
     parser = argparse.ArgumentParser(description="")
     parser.add_argument(
-        "-d",
-        "--directory",
-        default=".",
-        help="The model directory"
-    )
-    parser.add_argument(
         "-m",
-        "--model-name",
-        help="The target model",
-        default="Mistral-7B-Instruct-v0.2-finetuned"
+        "--model-path",
+        help="The path to the model directory"
     )
     parser.add_argument(
         "-s",
@@ -264,14 +255,12 @@ if __name__ == "__main__":
     )
 
     args = parser.parse_args()
-    dir = args.directory
-    model_name = args.model_name
+    model_path = args.model_path
     stream = args.stream
     quantize = args.quantize
 
     inference = Inference(
-        model_dir=dir,
-        model_name=model_name,
+        model_path=model_path,
         quantize=quantize,
         stream=stream,
         interactive=True
