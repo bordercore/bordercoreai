@@ -1,3 +1,5 @@
+informatiker_Hermes-3-Llama-3.1-8B-AWQ-INT4:
+  name: Nous Research Hermes 3 LLama3 8B AWQ
 hugging-quants_Meta-Llama-3.1-8B-Instruct-AWQ-INT4:
   name: Llama 3.1 8B Instruct AWQ
 mistralai_Mistral-Nemo-Instruct-2407:
