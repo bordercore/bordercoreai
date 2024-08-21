@@ -4,13 +4,13 @@ import os
 import torch
 from flask import Flask, jsonify, request
 from modules.inference import Inference
-from modules.util import get_tokenizer
 
 from api import settings
 
 app = Flask(__name__)
 
 device = "cuda:0" if torch.cuda.is_available() else "cpu"
+model = None
 
 
 def get_model_list(directory):
@@ -28,16 +28,19 @@ def get_model_list(directory):
 
 
 def unload_model():
+    global model
 
     # Remove model from VRAM
-    del settings.model
+    del model
     gc.collect()
     torch.cuda.empty_cache()
-    settings.model = None
+    model = None
 
 
 def load_model(model_name):
-    if settings.model:
+    global model
+
+    if model:
         return
 
     settings.model_name = model_name
@@ -50,8 +53,7 @@ def load_model(model_name):
     )
 
     inference.load_model()
-    settings.model = inference.model
-    settings.tokenizer = get_tokenizer(model_path)
+    model = inference.model
 
 
 def get_temperature(payload):
@@ -104,5 +106,5 @@ def main(id=None):
         debug=True,
         stream=True
     )
-    inference.model = settings.model
+    inference.model = model
     return inference.generate(payload["messages"])
