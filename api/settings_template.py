@@ -1,3 +1,5 @@
+system_message = "You are a helpful assistant."
+
 flask_secret_key = ""
 
 api_host = "http://localhost:5000"

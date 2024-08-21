@@ -12,6 +12,7 @@ try:
 except ModuleNotFoundError:
     # Useful during testing the webapp, which does not have the awq package
     pass
+from api import settings
 from transformers import (AutoModelForCausalLM, BitsAndBytesConfig,
                           TextIteratorStreamer, pipeline)
 
@@ -22,8 +23,6 @@ device = "cuda:0" if torch.cuda.is_available() else "cpu"
 
 # This stifles the "Special tokens have been added in the vocabulary..." warning
 transformers.logging.set_verbosity_error()
-
-system_message = ""
 
 COLOR_GREEN = "\033[32m"
 COLOR_BLUE = "\033[34m"
@@ -57,11 +56,6 @@ class Inference:
 
     def get_prompt_template(self, tokenizer, messages):
 
-        # Remove any 'system' roles to avoid this error when using a llama2 template:
-        #   jinja2.exceptions.TemplateError: Conversation roles must alternate user/assistant/user/assistant/...
-        # Is this required for all template types?
-        messages = [x for x in messages if x["role"] != "system"]
-
         if hasattr(tokenizer, "chat_template"):
             return tokenizer.apply_chat_template(messages, tokenize=False, add_generation_prompt=True)
         else:
@@ -69,7 +63,7 @@ class Inference:
             if template_type == "chatml":
                 prompt_template = """
             <|im_start|>system
-            {system_message}<|im_end|>
+            {settings.system_message}<|im_end|>
             <|im_start|>user
             {prompt}<|im_end|>
             <|im_start|>assistant
@@ -151,6 +145,18 @@ class Inference:
                 yield x
 
     def generate(self, messages):
+
+        # Set the system message based on the user's settings. If it already exists,
+        #  override it. Otherwise add it.
+        try:
+            index = next(i for i, item in enumerate(messages) if item["role"] == "system")
+            messages[index]["content"] = settings.system_message
+        except StopIteration:
+            messages.insert(0, {"role": "system", "content": settings.system_message})
+
+        if "gemma" in self.model_name.lower():
+            # Gemma models don't support the system role
+            messages = [x for x in messages if x["role"] != "system"]
 
         prompt_template = self.get_prompt_template(self.tokenizer, messages)
 
