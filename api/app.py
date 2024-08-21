@@ -1,4 +1,5 @@
 import gc
+import importlib
 import os
 
 import torch
@@ -92,6 +93,16 @@ def load():
         message = str(e)
 
     return jsonify(status=status, message=message)
+
+
+@app.route("/reload-settings", methods=["POST"])
+def force_settings_reload():
+    try:
+        api = importlib.import_module("api")
+        importlib.reload(api.settings)
+        return jsonify({"message": "Settings reloaded successfully."}), 200
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
 
 
 @app.route("/v1/chat/completions", methods=["POST"])
