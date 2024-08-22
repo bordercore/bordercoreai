@@ -38,11 +38,10 @@ URI_MODEL_INFO = f"{HOST}/v1/internal/model/info"
 URI_MODEL_LIST = f"{HOST}/v1/internal/model/list"
 URI_MODEL_LOAD = f"{HOST}/v1/internal/model/load"
 
-CYAN = "\033[36m"
-WHITE = "\033[37m"
-MAGENTA = "\033[35m"
 RED = "\033[91m"
-END = "\033[0m"
+COLOR_GREEN = "\033[32m"
+COLOR_BLUE = "\033[34m"
+COLOR_RESET = "\033[0m"
 
 CONTROL_VALUE = "9574724975"
 
@@ -98,9 +97,10 @@ class ChatBot():
             print(f"Failed to get audio: status_code = {response.status_code}")
 
 
-    def interactive(self):
+    def interactive(self, inference=None):
 
         if self.args["voice"]:
+            print("Loading STT package...")
             mic = WhisperMic(model="small", energy=100)
             active = False
 
@@ -123,11 +123,18 @@ class ChatBot():
                         sys.exit(0)
                 print(f"\b\b\b\b\b\b\b\b\b\b\b\b{user_input}")
             else:
-                user_input = input(f"\n{MAGENTA}You:{END} ")
+                try:
+                    user_input = input(f"\n{COLOR_GREEN}You:{COLOR_RESET} ")
+                except KeyboardInterrupt:
+                    sys.exit(0)
 
             try:
-                response = self.send_message_to_model(user_input)
-                print(f"\n{MAGENTA}AI{CYAN} ", end="")
+                if inference:
+                    inference.context.add(user_input, True)
+                    response = inference.generate(inference.context.get())
+                else:
+                    response = self.send_message_to_model(user_input)
+                print(f"\n{COLOR_BLUE}AI{COLOR_RESET} ", end="")
                 content = ""
                 for x in response:
                     content += x
@@ -314,13 +321,38 @@ class ChatBot():
 if __name__ == "__main__":
 
     parser = argparse.ArgumentParser(description="")
-    parser.add_argument("-a", "--assistant", help="Assistant mode", action="store_true")
-    parser.add_argument("-d", "--debug", help="Debug mode", action="store_true")
-    parser.add_argument("-m", "--mode", choices=["chatgpt", "localllm", "interactive"], default="interactive", help="The mode: interactive, localllm on discord, chatgpt on discord")
-    parser.add_argument("-s", "--speak", help="Voice output", action="store_true")
-    parser.add_argument("-v", "--voice", help="Voice input", action="store_true")
+    parser.add_argument(
+        "-a",
+        "--assistant",
+        help="Assistant mode",
+        action="store_true"
+    )
+    parser.add_argument(
+        "-d",
+        "--debug",
+        help="Debug mode",
+        action="store_true"
+    )
+    parser.add_argument(
+        "-m",
+        "--mode",
+        choices=["chatgpt", "localllm", "interactive"],
+        default="interactive",
+        help="The mode: interactive, localllm on discord, chatgpt on discord"
+    )
+    parser.add_argument(
+        "-s",
+        "--speak",
+        help="Voice output",
+        action="store_true"
+    )
+    parser.add_argument(
+        "-v",
+        "--voice",
+        help="Voice input",
+        action="store_true"
+    )
     args = parser.parse_args()
-
     assistant = args.assistant
     mode = args.mode
     speak = args.speak

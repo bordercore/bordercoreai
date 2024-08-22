@@ -36,15 +36,13 @@ class Inference:
     top_p = 0.95
     top_k = 40
 
-    def __init__(self, model_path, temperature=None, quantize=False, stream=False, interactive=False, debug=False):
+    def __init__(self, model_path, temperature=None, quantize=False, debug=False):
         self.model_path = model_path
         self.model_name = Path(model_path).parts[-1]
         self.quantize = quantize
         self.model_info = get_model_info()
         self.temperature = temperature or self.temperature_default
         self.tokenizer = get_tokenizer(self.model_path)
-        self.stream = stream
-        self.interactive = interactive
         self.debug = debug
 
     def get_template_type(self):
@@ -135,15 +133,6 @@ class Inference:
             )
         self.tokenizer = get_tokenizer(self.model_path)
 
-    def generate_tokens(self, streamer):
-        response = ""
-        for x in streamer:
-            response += x
-            if self.interactive:
-                print(x, end="", flush=True)
-            else:
-                yield x
-
     def generate(self, messages):
 
         # Set the system message based on the user's settings. If it already exists,
@@ -178,64 +167,29 @@ class Inference:
             "top_k": self.top_k,
             "eos_token_id": terminators,
         }
-        if self.stream:
-            if self.interactive:
-                print(f"\n{COLOR_BLUE}Assistant{COLOR_RESET}: ", end="")
+        streamer = TextIteratorStreamer(
+            self.tokenizer,
+            skip_prompt=True,
+            skip_special_tokens=True
+        )
+        generator = pipeline("text-generation", streamer=streamer, **args)
 
-            streamer = TextIteratorStreamer(
-                self.tokenizer,
-                skip_prompt=True,
-                skip_special_tokens=True
-            )
-            generator = pipeline("text-generation", streamer=streamer, **args)
+        generation_kwargs = dict(
+            max_new_tokens=self.max_new_tokens,
+            return_full_text=False
+        )
+        thread = Thread(
+            target=generator,
+            args=(prompt_template,),
+            kwargs=generation_kwargs
+        )
+        thread.start()
 
-            generation_kwargs = dict(
-                max_new_tokens=self.max_new_tokens,
-                return_full_text=False
-            )
-            thread = Thread(
-                target=generator,
-                args=(prompt_template,),
-                kwargs=generation_kwargs
-            )
-            thread.start()
-
-            response = ""
-            for x in streamer:
-                response += x
-                if self.interactive:
-                    print(x, end="", flush=True)
-                else:
-                    yield x
-            thread.join()
-
-            if self.interactive:
-                print()
-
-        else:
-            generator = pipeline("text-generation", **args)
-            generation_output = generator(prompt_template, return_full_text=False)
-            response = generation_output[0]["generated_text"]
-            print(f"\n{COLOR_BLUE}Assistant{COLOR_RESET}: " + response)
-
-        if self.interactive:
-            self.context.add(response, True, role="assistant")
-
-    def run(self):
-
-        print(f"Using model {self.model_name}.\n")
-
-        self.load_model()
-        self.context = Context()
-
-        while True:
-            user_input = input(f"\n{COLOR_GREEN}User{COLOR_RESET}: ")
-            self.context.add(user_input, True)
-            generate_tokens = self.generate(self.context.get())
-            try:
-                next(generate_tokens)
-            except StopIteration:
-                pass
+        response = ""
+        for x in streamer:
+            response += x
+            yield x
+        thread.join()
 
 
 if __name__ == "__main__":
@@ -247,28 +201,30 @@ if __name__ == "__main__":
         help="The path to the model directory"
     )
     parser.add_argument(
-        "-s",
-        "--stream",
-        help="Stream responses from LLM",
-        action="store_true",
-        default=False
-    )
-    parser.add_argument(
         "-q",
         "--quantize",
         help="Quantize the target model on-the-fly",
         action="store_true"
     )
+    parser.add_argument(
+        "-s",
+        "--speak",
+        help="Voice output",
+        action="store_true"
+    )
 
     args = parser.parse_args()
     model_path = args.model_path
-    stream = args.stream
     quantize = args.quantize
+    speak = args.speak
 
     inference = Inference(
         model_path=model_path,
         quantize=quantize,
-        stream=stream,
-        interactive=True
     )
-    inference.run()
+    inference.load_model()
+    inference.context = Context()
+
+    from modules.chatbot import ChatBot
+    chatbot = ChatBot(voice=False, speak=speak)
+    chatbot.interactive(inference=inference)

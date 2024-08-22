@@ -115,7 +115,6 @@ def main(id=None):
         model_path=model_path,
         temperature=get_temperature(payload),
         debug=True,
-        stream=True
     )
     inference.model = model
     return inference.generate(payload["messages"])
