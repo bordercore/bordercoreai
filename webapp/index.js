@@ -5,8 +5,8 @@ import "bootstrap";
 import "bootstrap/dist/css/bootstrap.min.css";
 import {library} from "@fortawesome/fontawesome-svg-core";
 import {FontAwesomeIcon} from "@fortawesome/vue-fontawesome";
-import {faBackward, faCheck, faCopy, faFileAlt, faForward, faPaperclip, faPaste, faPlus, faRotateLeft} from "@fortawesome/free-solid-svg-icons";
-library.add(faBackward, faCheck, faCopy, faFileAlt, faForward, faPaperclip, faPaste, faPlus, faRotateLeft);
+import {faBackward, faCheck, faCopy, faExclamationTriangle, faFileAlt, faForward, faPaperclip, faPaste, faPlus, faRotateLeft} from "@fortawesome/free-solid-svg-icons";
+library.add(faBackward, faCheck, faCopy, faExclamationTriangle, faFileAlt, faForward, faPaperclip, faPaste, faPlus, faRotateLeft);
 import "media-chrome";
 import {Modal} from "bootstrap";
 import Oruga from "@oruga-ui/oruga-next";
@@ -352,6 +352,8 @@ const app = createApp({
         };
 
         async function sendMessageToChatbot(endpoint, message, args={}, regenerate=false) {
+            error.value = "";
+
             setTimeout(function() {
                 waiting.value = true;
             }, 500);

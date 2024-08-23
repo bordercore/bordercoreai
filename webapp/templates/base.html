@@ -64,6 +64,10 @@
                         </div>
                         <div v-show="waiting" class="spinner-border ms-3 text-info" enter-active-class="animate__animated animate__fadeIn" role="status">
                         </div>
+                        <div v-show="error" class="notice animate__animated animate__pulse animate__slower w-100 fw-bold ms-5">
+                            <font-awesome-icon icon="exclamation-triangle" class="fa-xl me-2"></font-awesome-icon>
+                            <span :class="'text-' + error.variant">[[ error.body ]]</span>
+                        </div>
                     </div>
                 </div>
                 <div class="chatbot-sidepanel ps-2" v-cloak>
@@ -99,9 +103,6 @@
                     </div>
                     <div v-if="notice" class="notice animate__animated animate__pulse animate__slower animate__infinite d-flex align-items-center fw-bold ms-3 mt-5 px-3">
                         <span v-cloak>[[ notice ]]</span>
-                    </div>
-                    <div v-if="error" class="notice animate__animated animate__pulse animate__slower w-100 mt-3 px-3" :class="'text-' + error.variant">
-                        <span v-cloak>[[ error.body ]]</span>
                     </div>
                 </div>
             </div>
