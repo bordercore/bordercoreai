@@ -99,13 +99,13 @@ class ChatBot():
 
     def interactive(self, inference=None):
 
-        if self.args["voice"]:
+        if self.args["stt"]:
             print("Loading STT package...")
             mic = WhisperMic(model="small", energy=100)
             active = False
 
         while True:
-            if self.args["voice"]:
+            if self.args["stt"]:
                 print("Listening...")
                 user_input = self.sanitize_string(mic.listen())
                 if self.args["debug"]:
@@ -140,7 +140,7 @@ class ChatBot():
                     content += x
                     print(x, end="", flush=True)
                 print()
-                if self.args["speak"]:
+                if self.args["tts"]:
                     self.speak(content)
 
             except ConnectionError:
@@ -341,25 +341,23 @@ if __name__ == "__main__":
         help="The mode: interactive, localllm on discord, chatgpt on discord"
     )
     parser.add_argument(
-        "-s",
-        "--speak",
-        help="Voice output",
+        "--tts",
+        help="TTS (Text to Speech)",
         action="store_true"
     )
     parser.add_argument(
-        "-v",
-        "--voice",
-        help="Voice input",
+        "--stt",
+        help="STT (Speech to Text)",
         action="store_true"
     )
     args = parser.parse_args()
     assistant = args.assistant
     mode = args.mode
-    speak = args.speak
-    voice = args.voice
+    tts = args.tts
+    stt = args.stt
 
     if mode == "interactive":
-        chatbot = ChatBot(assistant=args.assistant, debug=args.debug, voice=voice, speak=speak)
+        chatbot = ChatBot(assistant=args.assistant, debug=args.debug, stt=stt, tts=tts)
         chatbot.interactive()
     elif mode == "chatgpt":
         from modules.discord_bot import DiscordBot

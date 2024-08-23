@@ -207,16 +207,21 @@ if __name__ == "__main__":
         action="store_true"
     )
     parser.add_argument(
-        "-s",
-        "--speak",
-        help="Voice output",
+        "--tts",
+        help="TTS (Text to Speech)",
+        action="store_true"
+    )
+    parser.add_argument(
+        "--stt",
+        help="STT (Speech to Text)",
         action="store_true"
     )
 
     args = parser.parse_args()
     model_path = args.model_path
     quantize = args.quantize
-    speak = args.speak
+    tts = args.tts
+    stt = args.stt
 
     inference = Inference(
         model_path=model_path,
@@ -226,5 +231,5 @@ if __name__ == "__main__":
     inference.context = Context()
 
     from modules.chatbot import ChatBot
-    chatbot = ChatBot(voice=False, speak=speak)
+    chatbot = ChatBot(stt=stt, tts=tts)
     chatbot.interactive(inference=inference)

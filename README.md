@@ -110,7 +110,7 @@ python -m api
 
 ## Command line
 
-You can interact with the API via a command-line option:
+You can interact with the API via the command-line:
 
 ```bash
 python3 -m modules.chatbot -m interactive
@@ -118,7 +118,8 @@ python3 -m modules.chatbot -m interactive
 
 Options:
 
-- -s: enable AllTalk TTS
+- --tts: enable AllTalk TTS (Text to Speech)
+- --stt: enable STT (Speech to Text)
 
 To use RAG with a local file:
 
