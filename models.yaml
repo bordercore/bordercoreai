@@ -2,8 +2,13 @@ informatiker_Hermes-3-Llama-3.1-8B-AWQ-INT4:
   name: Nous Research Hermes 3 LLama3 8B AWQ
 hugging-quants_Meta-Llama-3.1-8B-Instruct-AWQ-INT4:
   name: Llama 3.1 8B Instruct AWQ
+meta-llama_Meta-Llama-3.1-8B-Instruct:
+  name: Llama 3.1 8B Instruct
 mistralai_Mistral-Nemo-Instruct-2407:
   name: Mistral Nemo Instruct 2407
+Phi-3.5-mini-instruct:
+  name: Phi 3.5-mini Instruct
+  quantize: true
 hermes-pro-llama3-awq:
   name: Nous Research Hermes 2 LLama3 8B AWQ
   add_bos_token: true
@@ -33,8 +38,6 @@ Mistral-7B-Instruct-v0.2:
 NousResearch_Nous-Hermes-2-Mistral-7B-DPO:
   name: Nous Research Hermes 2 Mistral 7B DPO
   template: chatml
-microsoft_Phi-3-mini-128k-instruct:
-  name: Phi 3 mini 128k instruct
 TheBloke_CodeLlama-7B-Instruct-AWQ:
   name: CodeLlama 7B Instruct AWQ
 TheBloke_CodeLlama-13B-Instruct-AWQ:
@@ -42,4 +45,4 @@ TheBloke_CodeLlama-13B-Instruct-AWQ:
 TheBloke_Karen_theEditor_13B-AWQ:
   name: Karen 13B
 TheBloke_WizardLM-13B-V1-0-Uncensored-SuperHOT-8K-GPTQ:
-  name: Floyd -- WizardLM 13B
+  name: WizardLM 13B
