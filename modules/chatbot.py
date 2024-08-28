@@ -16,8 +16,8 @@ from api import settings
 from http_constants.status import HttpStatus
 from requests.exceptions import ConnectionError
 
-from modules.calendar import get_schedule
 from modules.context import Context
+from modules.google_calendar import get_schedule
 from modules.govee import control_lights
 from modules.music import play_music
 from modules.util import get_model_info, sort_models
