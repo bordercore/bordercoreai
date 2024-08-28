@@ -21,3 +21,5 @@ music_api_host = ""
 music_uri = ""
 
 weather_api_key = ""
+
+wolfram_alpha_app_id = ""

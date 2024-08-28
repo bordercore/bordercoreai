@@ -114,6 +114,8 @@ def main(id=None):
     inference = Inference(
         model_path=model_path,
         temperature=get_temperature(payload),
+        tool_name=payload.get("tool_name", None),
+        tool_list=payload.get("tool_list", None),
         debug=True,
     )
     inference.model = model

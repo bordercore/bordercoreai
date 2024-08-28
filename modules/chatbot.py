@@ -22,6 +22,7 @@ from modules.govee import control_lights
 from modules.music import play_music
 from modules.util import get_model_info, sort_models
 from modules.weather import get_weather_info
+from modules.wolfram_alpha import WolframAlphaFunctionCall
 
 warnings.filterwarnings("ignore", message=".*The 'nopython' keyword.*")
 
@@ -159,10 +160,13 @@ class ChatBot():
             return get_schedule(self.model_name, messages[-1]["content"])
         elif request_type["category"] == "agenda":
             return self.get_agenda()
+        elif request_type["category"] == "math":
+            func_call = WolframAlphaFunctionCall(self.model_name)
+            return func_call.run(messages[-1]["content"])
         else:
             return self.send_message_to_model(messages, replace_context=True)
 
-    def send_message_to_model(self, messages, args={}, prune=True, replace_context=False):
+    def send_message_to_model(self, messages, args={}, prune=True, replace_context=False, tool_name=None, tool_list=None):
         if type(messages) is not list:
             messages = [{"role": "user", "content": messages}]
         self.context.add(messages, prune, replace_context)
@@ -173,7 +177,7 @@ class ChatBot():
         elif model_vendor == "anthropic":
             response = self.send_message_to_model_anthropic(args)
         else:
-            response = self.send_message_to_model_local_llm(args)
+            response = self.send_message_to_model_local_llm(args, tool_name, tool_list)
 
         return response
 
@@ -218,10 +222,12 @@ class ChatBot():
             if chunk.type == "content_block_delta":
                 yield chunk.delta.text
 
-    def send_message_to_model_local_llm(self, args):
+    def send_message_to_model_local_llm(self, args, tool_name, tool_list):
         request = {
             "mode": "instruct",
             "messages": self.context.get(),
+            "tool_name": tool_name,
+            "tool_list": tool_list,
             **args
         }
 
@@ -241,7 +247,7 @@ class ChatBot():
 
     def get_request_type(self, message):
         prompt = """
-        I want you to put this instruction into one of multiple categories. If the instruction is to play some music, the category is "music". If the instruction is to control lights, the category is "lights". If the instruction is asking about the weather or the moon's phase, the category is "weather". If the instruction is asking about today's calendar, or is something like 'What's happening today' or 'What is my schedule', the category is "calendar". If the instruction is asking about today's agenda, or something like 'What's my update?', the category is "agenda". For everything else, the category is "other". Give me the category in JSON format with the field name "category". Do not format the JSON by including newlines. Give only the JSON and no additional characters, text, or comments. Here is the instruction:
+        I want you to put this instruction into one of multiple categories. If the instruction is to play some music, the category is "music". If the instruction is to control lights, the category is "lights". If the instruction is asking about the weather or the moon's phase, the category is "weather". If the instruction is asking about today's calendar, or is something like 'What's happening today' or 'What is my schedule', the category is "calendar". If the instruction is asking about today's agenda, or something like 'What's my update?', the category is "agenda". If the instruction is asking for mathematical calculation, the category is "math". For everything else, the category is "other". Give me the category in JSON format with the field name "category". Do not format the JSON by including newlines. Give only the JSON and no additional characters, text, or comments. Here is the instruction:
         """
         prompt += message
 

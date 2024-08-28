@@ -29,7 +29,7 @@ class Context():
         return self.context
 
     def size(self):
-        return sum([len(x["role"]) + len(x["content"]) for x in self.context])
+        return sum(len(str(value)) for d in self.context for value in d.values())
 
     def clear(self):
         self.context = []

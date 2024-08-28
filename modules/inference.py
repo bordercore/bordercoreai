@@ -1,4 +1,5 @@
 import argparse
+import importlib
 import json
 import os
 from pathlib import Path
@@ -36,13 +37,15 @@ class Inference:
     top_p = 0.95
     top_k = 40
 
-    def __init__(self, model_path, temperature=None, quantize=False, debug=False):
+    def __init__(self, model_path, temperature=None, quantize=False, tool_name=None, tool_list=None, debug=False):
         self.model_path = model_path
         self.model_name = Path(model_path).parts[-1]
         self.quantize = quantize
         self.model_info = get_model_info()
         self.temperature = temperature or self.temperature_default
         self.tokenizer = get_tokenizer(self.model_path)
+        self.tool_name = tool_name
+        self.tool_list = tool_list
         self.debug = debug
 
     def get_template_type(self):
@@ -53,9 +56,8 @@ class Inference:
             return "llama2"
 
     def get_prompt_template(self, tokenizer, messages):
-
         if hasattr(tokenizer, "chat_template"):
-            return tokenizer.apply_chat_template(messages, tokenize=False, add_generation_prompt=True)
+            return tokenizer.apply_chat_template(messages, tokenize=False, add_generation_prompt=True, tools=self.get_tools())
         else:
             template_type = self.get_template_type()
             if template_type == "chatml":
@@ -106,6 +108,14 @@ class Inference:
         else:
             return None
 
+    def get_tools(self):
+        if self.tool_name:
+            main_module = importlib.import_module(f"modules.{self.tool_name}")
+            func = getattr(main_module, self.tool_list)
+            return [func]
+        else:
+            return None
+
     def load_model(self):
         model_config = self.get_model_config()
         args = {
@@ -122,7 +132,7 @@ class Inference:
                 **args,
                 fuse_layers=self.get_config_option("fuse_layers", True),
                 safetensors=True,
-                max_new_tokens=4096,
+                max_new_tokens=self.max_new_tokens,
                 batch_size=1,
                 max_memory={0: "8000MiB", "cpu": "99GiB"}
             ).model
@@ -134,14 +144,15 @@ class Inference:
         self.tokenizer = get_tokenizer(self.model_path)
 
     def generate(self, messages):
-
         # Set the system message based on the user's settings. If it already exists,
-        #  override it. Otherwise add it.
-        try:
-            index = next(i for i, item in enumerate(messages) if item["role"] == "system")
-            messages[index]["content"] = settings.system_message
-        except StopIteration:
-            messages.insert(0, {"role": "system", "content": settings.system_message})
+        #  override it. Otherwise add it. If tools are being used,
+        #  make no changes.
+        if not self.tool_name:
+            try:
+                index = next(i for i, item in enumerate(messages) if item["role"] == "system")
+                messages[index]["content"] = settings.system_message
+            except StopIteration:
+                messages.insert(0, {"role": "system", "content": settings.system_message})
 
         if "gemma" in self.model_name.lower():
             # Gemma models don't support the system role
@@ -152,11 +163,6 @@ class Inference:
         if self.get_config_option("add_bos_token"):
             prompt_template = f"<|begin_of_text|>{prompt_template}"
 
-        terminators = [
-            self.tokenizer.eos_token_id,
-            self.tokenizer.convert_tokens_to_ids("<|eot_id|>")  # LLama3
-        ]
-
         args = {
             "model": self.model,
             "tokenizer": self.tokenizer,
@@ -165,12 +171,19 @@ class Inference:
             "temperature": self.temperature,
             "top_p": self.top_p,
             "top_k": self.top_k,
-            "eos_token_id": terminators,
         }
+        if not self.tool_name:
+            args["eos_token_id"] = [
+                self.tokenizer.eos_token_id,
+                self.tokenizer.convert_tokens_to_ids("<|eot_id|>")  # LLama3
+            ]
+        # If we're using tools, we don't want to skip special tokens
+        #  in the response.
+        skip_special_tokens = self.tool_name is None
         streamer = TextIteratorStreamer(
             self.tokenizer,
             skip_prompt=True,
-            skip_special_tokens=True
+            skip_special_tokens=skip_special_tokens
         )
         generator = pipeline("text-generation", streamer=streamer, **args)
 

@@ -24,6 +24,10 @@ Chat with your uploaded documents.
 
 Upload audio files to convert them to text, then ask questions based on the generated transcription.
 
+## Tool Calling
+
+Supports using Wolfram Alpha for mathematical calculations.
+
 ## Discord Bot Support
 
 Discord bots can be backed by either OpenAI's ChatGPT or an open source LLM.

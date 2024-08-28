@@ -159,6 +159,13 @@ except ModuleNotFoundError:
     pass
 
 
+def generate_stream(chatbot, message):
+    try:
+        yield from chatbot.handle_message(message)
+    except Exception as error:
+        yield f"An error occurred: {error}"
+
+
 @app.route("/chat", methods=["POST"])
 def chat():
     message = json.loads(request.form["message"])
@@ -177,11 +184,7 @@ def chat():
         speak=False,
         temperature=temperature,
     )
-    try:
-        return Response(stream_with_context(chatbot.handle_message(message)), mimetype="text/plain")
-    except Exception as error:
-        print(error)
-        traceback.print_exc()
+    return Response(stream_with_context(generate_stream(chatbot, message)), mimetype="text/plain")
 
 
 @app.route("/info")
