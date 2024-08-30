@@ -231,6 +231,7 @@ class ChatBot():
             "messages": self.context.get(),
             "tool_name": tool_name,
             "tool_list": tool_list,
+            "temperature": self.TEMPERATURE,
             **args
         }
 
@@ -254,9 +255,8 @@ class ChatBot():
         """
         prompt += message
 
-        args = {"temperature": 0.1}
-        chatbot = ChatBot(self.model_name)
-        response = chatbot.send_message_to_model(prompt, args)
+        chatbot = ChatBot(self.model_name, temperature=0.1)
+        response = chatbot.send_message_to_model(prompt)
         content = ChatBot.get_streaming_message(response)
 
         if settings.debug:

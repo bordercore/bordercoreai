@@ -80,7 +80,7 @@ class FunctionCall():
         )
 
         from modules.chatbot import ChatBot
-        chatbot = ChatBot(self.model_name)
+        chatbot = ChatBot(self.model_name, temperature=0.1)
         response = chatbot.send_message_to_model(messages, replace_context=True, tool_name=self.tool_name, tool_list=self.tool_list)
         content = ChatBot.get_streaming_message(response)
 

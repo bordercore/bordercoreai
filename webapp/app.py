@@ -1,5 +1,4 @@
 import json
-import traceback
 import warnings
 from pathlib import Path
 
