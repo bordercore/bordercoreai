@@ -356,7 +356,9 @@ const app = createApp({
             error.value = "";
 
             setTimeout(function() {
-                waiting.value = true;
+                if (!error.value) {
+                    waiting.value = true;
+                }
             }, 500);
             // If we're regenerating the response, remove the last response from
             //   chatHistory and resubmit everything else to the AI.
@@ -455,8 +457,9 @@ const app = createApp({
                     }
                     doTTS(result);
                 })
-                .catch((error) => {
-                    console.error("Error:", error);
+                .catch((exception) => {
+                    error.value = "Error communicating with webapp.";
+                    console.error("Error:", exception);
                 });
         };
 
