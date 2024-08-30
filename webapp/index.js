@@ -86,6 +86,7 @@ const app = createApp({
         let mediaRecorder;
         let audioChunks = [];
         let myvad = null;
+        const wolframAlpha = ref(false);
 
         const sliderSpeed = ref(null);
         const sliderTemperature = ref(null);
@@ -373,6 +374,7 @@ const app = createApp({
                 "audio_speed": audioSpeed.value,
                 "speak": speak.value,
                 "temperature": temperature.value,
+                "wolfram_alpha": wolframAlpha.value,
                 ...args
             };
 
@@ -703,6 +705,7 @@ const app = createApp({
             ttsHost,
             uploadedFilename,
             waiting,
+            wolframAlpha,
         };
     },
 });

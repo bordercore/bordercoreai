@@ -148,7 +148,10 @@ class ChatBot():
                 print("Error: API refusing connections.")
 
     def handle_message(self, messages):
-        request_type = self.get_request_type(messages[-1]["content"])
+        if self.args.get("wolfram_alpha", False):
+            request_type = {"category": "math"}
+        else:
+            request_type = self.get_request_type(messages[-1]["content"])
 
         if request_type["category"] == "lights":
             return control_lights(self.model_name, messages[-1]["content"])

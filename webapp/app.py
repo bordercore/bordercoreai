@@ -173,6 +173,7 @@ def chat():
     speak = request.form.get("speak", "false")
     audio_speed = float(request.form.get("audio_speed", 1.0))  # Playback speed
     temperature = float(request.form.get("temperature", 0.7))
+    wolfram_alpha = request.form.get("wolfram_alpha", "false").lower() == "true"
 
     store_params_in_session(speak, audio_speed, temperature)
 
@@ -183,6 +184,7 @@ def chat():
         voice=False,
         speak=False,
         temperature=temperature,
+        wolfram_alpha=wolfram_alpha
     )
     return Response(stream_with_context(generate_stream(chatbot, message)), mimetype="text/plain")
 
