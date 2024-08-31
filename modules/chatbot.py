@@ -3,12 +3,12 @@ import json
 import logging
 import string
 import sys
+import tempfile
 import urllib.parse
 import warnings
 
 import anthropic
 import openai
-import pyaudio
 import pysbd
 import requests
 import sounddevice  # Adding this eliminates an annoying warning
@@ -86,14 +86,19 @@ class ChatBot():
         text = urllib.parse.quote(text)
         host = settings.tts_host
         voice = settings.tts_voice
-        output_file = "output.wav"
+        output_file = "stream_output.wav"
         url = f"http://{host}/api/tts-generate-streaming?text={text}&voice={voice}&language=en&output_file={output_file}"
         response = requests.get(url, stream=True)
+
         if response.status_code == HttpStatus.OK:
-            p = pyaudio.PyAudio()
-            stream = p.open(format=8, channels=1, rate=24000, output=True)
-            for chunk in response.iter_content(chunk_size=1024):
-                stream.write(chunk)
+            with tempfile.NamedTemporaryFile(suffix=".wav") as temp_file:
+                with open(temp_file.name, "wb") as f:
+                    f.write(response.raw.read())
+                # Set playsounds' logger level to ERROR to suppress this warning:
+                #  "playsound is relying on another python subprocess..."
+                logging.getLogger("playsound").setLevel(logging.ERROR)
+                from playsound import playsound
+                playsound(temp_file.name)
         else:
             print(f"Failed to get audio: status_code = {response.status_code}")
 
