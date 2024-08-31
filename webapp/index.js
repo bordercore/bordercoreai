@@ -450,9 +450,13 @@ const app = createApp({
                     console.log(`Speed: ${speed} t/s`);
                     if (buffer) {
                         const jsonObject = JSON.parse(buffer.slice(controlValue.length));
-                        if (jsonObject?.music_info?.length > 0) {
-                            musicInfo.value = jsonObject.music_info;
-                            playSong(musicInfo.value[0]);
+                        if (jsonObject?.music_info) {
+                            if (jsonObject.music_info.length > 0) {
+                                musicInfo.value = jsonObject.music_info;
+                                playSong(musicInfo.value[0]);
+                            } else {
+                                chatHistory.value[chatHistory.value.length - 1].content = "No music found.";
+                            }
                         }
                     }
                     doTTS(result);
