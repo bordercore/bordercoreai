@@ -11,4 +11,10 @@
 {% block chat_handler %}sendMessageToChatbot{% endblock %}
 
 {% block content %}
+    <div v-if="url" class="d-flex align-items-center">
+        <div>
+            <font-awesome-icon icon="link" class="fa-lg text-primary ms-3" />
+        </div>
+        <div class="text-info ms-2">[[ url ]]</div>
+    </div>
 {% endblock %}

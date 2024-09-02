@@ -20,7 +20,7 @@ from modules.context import Context
 from modules.google_calendar import get_schedule
 from modules.govee import control_lights
 from modules.music import play_music
-from modules.util import get_model_info, sort_models
+from modules.util import get_model_info, get_webpage_contents, sort_models
 from modules.weather import get_weather_info
 from modules.wolfram_alpha import WolframAlphaFunctionCall
 
@@ -67,8 +67,8 @@ class ChatBot():
 
     def __init__(self, model_name=None, **args):
         self.context = Context()
-        self.args = args
         self.model_name = model_name
+        self.args = args
         if "temperature" in self.args:
             self.TEMPERATURE = self.args["temperature"]
 
@@ -155,6 +155,10 @@ class ChatBot():
     def handle_message(self, messages):
         if self.args.get("wolfram_alpha", False):
             request_type = {"category": "math"}
+        elif self.args.get("url", None):
+            request_type = {"category": "other"}
+            contents = get_webpage_contents(self.args.get("url"))
+            messages[-1]["content"] += f": {contents}"
         else:
             request_type = self.get_request_type(messages[-1]["content"])
 

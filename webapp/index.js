@@ -1,12 +1,12 @@
-import {doGet, doPost, encodeWAV, animateCSS} from "./util.js";
+import {doGet, doPost, encodeWAV, animateCSS, isValidURL} from "./util.js";
 
 import axios from "axios";
 import "bootstrap";
 import "bootstrap/dist/css/bootstrap.min.css";
 import {library} from "@fortawesome/fontawesome-svg-core";
 import {FontAwesomeIcon} from "@fortawesome/vue-fontawesome";
-import {faBackward, faCheck, faCopy, faExclamationTriangle, faFileAlt, faForward, faPaperclip, faPaste, faPlus, faRotateLeft} from "@fortawesome/free-solid-svg-icons";
-library.add(faBackward, faCheck, faCopy, faExclamationTriangle, faFileAlt, faForward, faPaperclip, faPaste, faPlus, faRotateLeft);
+import {faBackward, faCheck, faCopy, faExclamationTriangle, faFileAlt, faForward, faLink, faPaperclip, faPaste, faPlus, faRotateLeft} from "@fortawesome/free-solid-svg-icons";
+library.add(faBackward, faCheck, faCopy, faExclamationTriangle, faFileAlt, faForward, faLink, faPaperclip, faPaste, faPlus, faRotateLeft);
 import "media-chrome";
 import {Modal} from "bootstrap";
 import Oruga from "@oruga-ui/oruga-next";
@@ -87,6 +87,7 @@ const app = createApp({
         let audioChunks = [];
         let myvad = null;
         const wolframAlpha = ref(false);
+        const url = ref("");
 
         const sliderSpeed = ref(null);
         const sliderTemperature = ref(null);
@@ -276,6 +277,7 @@ const app = createApp({
         function handleNewChat(event) {
             chatHistory.value.length = 1;
             clipboard.value = null;
+            url.value = "";
         };
 
         function handleSendMessageRag(event) {
@@ -377,6 +379,7 @@ const app = createApp({
                 "speak": speak.value,
                 "temperature": temperature.value,
                 "wolfram_alpha": wolframAlpha.value,
+                "url": url.value,
                 ...args
             };
 
@@ -586,6 +589,12 @@ const app = createApp({
             event.preventDefault();
             const paste = (event.clipboardData || window.clipboardData).getData("text");
 
+            if (isValidURL(paste)) {
+                url.value = paste;
+                prompt.value = "";
+                return;
+            };
+
             if (paste.length > 200) {
                 clipboard.value = {"content": paste, "id": id + 1};
             } else {
@@ -711,6 +720,7 @@ const app = createApp({
             temperature,
             ttsHost,
             uploadedFilename,
+            url,
             waiting,
             wolframAlpha,
         };

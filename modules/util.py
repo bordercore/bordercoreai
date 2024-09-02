@@ -1,6 +1,13 @@
 from pathlib import Path
 
+import requests
 import yaml
+
+try:
+    from trafilatura import bare_extraction
+except Exception:
+    # This package is not required for the API
+    pass
 from transformers import AutoTokenizer
 
 
@@ -42,3 +49,10 @@ def sort_models(original_list, sort_order):
 
     # Combine the sorted items and the items to keep at the end
     return sorted_items + to_keep
+
+
+def get_webpage_contents(url):
+    response = requests.get(url, timeout=10)
+    response.raise_for_status()
+    extracted_text = bare_extraction(response.text)
+    return extracted_text["raw_text"]

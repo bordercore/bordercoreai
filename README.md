@@ -28,6 +28,10 @@ Upload audio files to convert them to text, then ask questions based on the gene
 
 Supports using Wolfram Alpha for mathematical calculations.
 
+## Chat with Web Pages
+
+Paste a URL into the input box and say "Summarize" or something similar.
+
 ## Discord Bot Support
 
 Discord bots can be backed by either OpenAI's ChatGPT or an open source LLM.

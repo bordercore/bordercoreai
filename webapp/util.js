@@ -182,3 +182,12 @@ new Promise((resolve, reject) => {
 
     node.addEventListener("animationend", handleAnimationEnd, {once: true});
 });
+
+export function isValidURL(string) {
+  try {
+    new URL(string);
+    return true;
+  } catch (err) {
+    return false;
+  }
+}
