@@ -67,7 +67,7 @@ def test_prune_preserves_first_message(context):
     context.context_limit = 30
     context.add("This is a long message", prune=True)
     context.add("Another long message", prune=True)
-    assert len(context.context) == 1
+    assert len(context.context) == 2
     assert context.context[0]["role"] == "system"
 
 

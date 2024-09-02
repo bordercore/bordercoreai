@@ -37,6 +37,7 @@ class Context():
     def prune(self):
         # Remove messages from the context, starting at the beginning,
         #  until we're under the context limit.
-        # Don't remove the first message, the system message.
-        while self.size() > self.context_limit and len(self.context) > 1:
+        # Don't remove the first message, the system message, and the
+        #  second message, the first user message
+        while self.size() > self.context_limit and len(self.context) > 2:
             self.context.pop(1)

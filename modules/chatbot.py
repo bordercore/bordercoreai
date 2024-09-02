@@ -241,9 +241,12 @@ class ChatBot():
         }
 
         response = requests.post(URI_CHAT, json=request, stream=True)
+        content = ""
         for chunk in response.iter_content(chunk_size=1024):
             if chunk:  # Filter out keep-alive new chunks
+                content += chunk.decode("utf-8")
                 yield chunk.decode("utf-8")
+        self.context.add(content, role="assistant")
 
     def get_agenda(self):
         response = get_weather_info(self.model_name, "What's the weather today?")
