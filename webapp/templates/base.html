@@ -65,8 +65,8 @@
                         <div v-show="waiting" class="spinner-border ms-3 text-info" enter-active-class="animate__animated animate__fadeIn" role="status">
                         </div>
                         <div v-show="error" class="notice animate__animated animate__pulse animate__slower w-100 fw-bold ms-5">
-                            <font-awesome-icon icon="exclamation-triangle" class="fa-xl me-2"></font-awesome-icon>
-                            <span>[[ error ]]</span>
+                            <font-awesome-icon icon="exclamation-triangle" class="fa-xl me-2" :class="'text-' + error.variant"></font-awesome-icon>
+                            <span>[[ error.body ]]</span>
                         </div>
                     </div>
                 </div>
