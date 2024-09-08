@@ -465,7 +465,7 @@ const app = createApp({
                     doTTS(result);
                 })
                 .catch((exception) => {
-                    error.value = "Error communicating with webapp.";
+                    error.value = {"body": "Error communicating with webapp.", "variant": "danger"};
                     console.error("Error:", exception);
                 });
         };

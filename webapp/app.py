@@ -4,6 +4,7 @@ from pathlib import Path
 
 import ffmpeg
 import numpy as np
+import requests
 import sounddevice  # Adding this eliminates an annoying warning
 from flask import (Flask, Response, jsonify, render_template, request, session,
                    stream_with_context)
@@ -161,6 +162,8 @@ except ModuleNotFoundError:
 def generate_stream(chatbot, message):
     try:
         yield from chatbot.handle_message(message)
+    except requests.exceptions.ConnectionError:
+        yield "Error connecting to API"
     except Exception as error:
         yield f"An error occurred: {error}"
 
