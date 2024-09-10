@@ -155,8 +155,6 @@ The hamburger menu to the upper-right lets you adjust the following:
 
 **Audio Speed**: How fast the TTS audio plays.
 
-**Speak**: This enables TTS.
-
 **TTS Host**: The hostname and port for the TTS server.
 
 # Tests
