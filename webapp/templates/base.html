@@ -85,22 +85,22 @@
                         Features
                     </div>
                     <div id="switches" class="d-flex flex-wrap">
-                        <div class="text-nowrap mt-3 me-5 mb-2">
+                        <div class="text-nowrap w-100 mt-3 me-5 mb-2">
                             <o-switch v-model="microPhoneOn" @click="handleListen('{% block chat_handler %}{% endblock %}')">
                                 Speech to Text
                             </o-switch>
                         </div>
-                        <div class="text-nowrap mt-3 me-5 mb-2">
+                        <div class="text-nowrap w-100 mt-3 me-5 mb-2">
                             <o-switch id="speakSwitch" v-model="speak">
                                 Text to Speech
                             </o-switch>
                         </div>
-                        <div class="text-nowrap mt-3 me-5 mb-2">
+                        <div class="text-nowrap w-100 mt-3 me-5 mb-2">
                             <o-switch v-model="microPhoneVADOn" @click="handleListenVAD">
-                                VAD
+                                Speech Detection (VAD)
                             </o-switch>
                         </div>
-                        <div class="text-nowrap mt-3 me-5 mb-2">
+                        <div class="text-nowrap w-100 mt-3 me-5 mb-2">
                             <o-switch v-model="wolframAlpha">
                                 Wolfram Alpha
                             </o-switch>
