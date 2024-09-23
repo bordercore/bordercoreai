@@ -672,7 +672,9 @@ const app = createApp({
             getModelInfo();
             getModelList();
 
-            document.getElementById("prompt").focus();
+            setTimeout( () => {
+              document.getElementById("prompt").focus();
+            });
         });
 
         return {
