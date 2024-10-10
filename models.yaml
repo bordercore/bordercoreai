@@ -1,5 +1,8 @@
 informatiker_Hermes-3-Llama-3.1-8B-AWQ-INT4:
   name: Nous Research Hermes 3 LLama3 8B AWQ
+Qwen2.5-7B-Instruct-AWQ:
+  name: Qwen2.5 7B Instruct AWQ
+  do_sample: false
 hugging-quants_Meta-Llama-3.1-8B-Instruct-AWQ-INT4:
   name: Llama 3.1 8B Instruct AWQ
 meta-llama_Meta-Llama-3.1-8B-Instruct:
