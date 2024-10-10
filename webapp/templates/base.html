@@ -37,10 +37,10 @@
                     <form>
                         <div class="d-flex align-items-center mb-3">
                             {% block input %}{% endblock %}
-                            <div v-if="chatHistory.length > 2" class="icon text-primary ms-3" @click="handleRegenerate" data-bs-toggle="tooltip" data-placement="bottom" title="Regenerate Response">
+                            <div v-if="chatHistory.length > 2 || error" class="icon text-primary ms-3" @click="handleRegenerate" data-bs-toggle="tooltip" data-placement="bottom" title="Regenerate Response">
                                 <font-awesome-icon icon="rotate-left" />
                             </div>
-                            <div v-if="chatHistory.length > 2" class="icon text-primary ms-3" @click="handleNewChat" data-bs-toggle="tooltip" data-placement="bottom" title="New Chat">
+                            <div v-if="chatHistory.length > 2 || error" class="icon text-primary ms-3" @click="handleNewChat" data-bs-toggle="tooltip" data-placement="bottom" title="New Chat">
                                 <font-awesome-icon icon="plus" />
                             </div>
                             <transition enter-active-class="animate__animated animate__bounceIn" leave-active-class="animate__animated animate__bounceOut">

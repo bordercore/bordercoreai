@@ -279,6 +279,7 @@ const app = createApp({
             chatHistory.value.length = 1;
             clipboard.value = null;
             url.value = "";
+            error.value = "";
         };
 
         function handleSendMessageRag(event) {
@@ -356,20 +357,25 @@ const app = createApp({
         };
 
         async function sendMessageToChatbot(message, args={}, regenerate=false) {
-            error.value = "";
-
             setTimeout(function() {
                 if (!error.value) {
                     waiting.value = true;
                 }
             }, 500);
+
             // If we're regenerating the response, remove the last response from
             //   chatHistory and resubmit everything else to the AI.
+            // Don't remove the last response after an error, since in that case
+            //   there is no response to remove.
             if (regenerate) {
-                chatHistory.value.pop();
+                if (!error) {
+                    chatHistory.value.pop();
+                }
             } else {
                 addMessage("user", message);
             }
+
+            error.value = "";
             const messages = addClipboardToMessages();
             prompt.value = "";
 
