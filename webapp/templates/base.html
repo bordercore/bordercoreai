@@ -235,6 +235,7 @@
         <script id="session" type="application/json">{{ session|tojson|safe }}</script>
         <script id="settings" type="application/json">{{ settings|tojson|safe }}</script>
         <div id="controlValue" class="d-none">{{ control_value }}</div>
+        <div id="chatEndpoint" class="d-none">{{ chat_endpoint }}</div>
         <script src="{{ url_for('static', filename='js/javascript.bundle.js') }}"></script>
     </body>
 </html>

@@ -41,7 +41,8 @@ def main():
         session=dict(session),
         settings=dict(music_uri=settings.music_uri),
         num_stars=NUM_STARS,
-        control_value=CONTROL_VALUE
+        control_value=CONTROL_VALUE,
+        chat_endpoint="/chat"
     )
 
 
@@ -53,7 +54,8 @@ def rag():
         session=dict(session),
         settings=dict(music_uri=settings.music_uri),
         num_stars=NUM_STARS,
-        control_value=CONTROL_VALUE
+        control_value=CONTROL_VALUE,
+        chat_endpoint="/rag/chat"
     )
 
 
@@ -104,7 +106,8 @@ def audio():
         session=dict(session),
         settings=dict(music_uri=settings.music_uri),
         num_stars=NUM_STARS,
-        control_value=CONTROL_VALUE
+        control_value=CONTROL_VALUE,
+        chat_endpoint="/audio/chat"
     )
 
 

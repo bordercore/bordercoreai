@@ -43,6 +43,7 @@ const app = createApp({
         const session = JSON.parse(document.getElementById("session").textContent);
         const settings = JSON.parse(document.getElementById("settings").textContent);
         const controlValue = document.getElementById("controlValue").textContent;
+        const chatEndpoint = document.getElementById("chatEndpoint").textContent;
 
         const chatHistory = ref(
             [
@@ -284,14 +285,14 @@ const app = createApp({
             const args = {
                 "sha1sum": sha1sum.value,
             };
-            sendMessageToChatbot("/rag/chat", prompt.value, args);
+            sendMessageToChatbot(prompt.value, args);
         };
 
         function handleSendMessageAudio() {
             const args = {
                 "transcript": audioFileTranscript.value,
             };
-            sendMessageToChatbot("/audio/chat", prompt.value, args);
+            sendMessageToChatbot(prompt.value, args);
         };
 
         function handleCopyText(event) {
@@ -306,11 +307,11 @@ const app = createApp({
         };
 
         function handleRegenerate(event) {
-            sendMessageToChatbot("/chat", prompt.value, {}, true);
+            sendMessageToChatbot(prompt.value, {}, true);
         };
 
-        function handleSendMessage(event, endpoint="/chat") {
-            sendMessageToChatbot(endpoint, prompt.value);
+        function handleSendMessage(event) {
+            sendMessageToChatbot(prompt.value);
         };
 
         function getModelInfo() {
@@ -354,7 +355,7 @@ const app = createApp({
             audioMotion.volume = 0;
         };
 
-        async function sendMessageToChatbot(endpoint, message, args={}, regenerate=false) {
+        async function sendMessageToChatbot(message, args={}, regenerate=false) {
             error.value = "";
 
             setTimeout(function() {
@@ -392,7 +393,7 @@ const app = createApp({
 
             let start = null;
             let buffer = "";
-            fetch(endpoint, {
+            fetch(chatEndpoint, {
                 method: "POST",
                 headers: {
                     "Responsetype": "stream",
@@ -504,7 +505,8 @@ const app = createApp({
                                     "Content-Type": "multipart/form-data",
                                 },
                             }).then((response) => {
-                                chatHandlers[chatHandler](response.data.input);
+                                notice.value = "";
+                                chatHandlers[chatHandler](chatEndpoint, response.data.input);
                                 // Delete the current audio in case we want to start a new recording later
                                 audioChunks = [];
                             });
@@ -543,7 +545,7 @@ const app = createApp({
                                 "Content-Type": "multipart/form-data",
                             },
                         }).then((response) => {
-                            sendMessageToChatbot("/chat", response.data.input);
+                            sendMessageToChatbot(response.data.input);
                             // Delete the current audio in case we want to start a new recording later
                             audioChunks = [];
                         });
