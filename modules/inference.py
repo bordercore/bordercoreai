@@ -57,7 +57,12 @@ class Inference:
 
     def get_prompt_template(self, tokenizer, messages):
         if hasattr(tokenizer, "chat_template"):
-            return tokenizer.apply_chat_template(messages, tokenize=False, add_generation_prompt=True, tools=self.get_tools())
+            return tokenizer.apply_chat_template(
+                messages,
+                tokenize=False,
+                add_generation_prompt=True,
+                tools=self.get_tools()
+            )
         else:
             template_type = self.get_template_type()
             if template_type == "chatml":
