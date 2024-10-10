@@ -167,12 +167,15 @@ class Inference:
             "model": self.model,
             "tokenizer": self.tokenizer,
             "max_new_tokens": self.max_new_tokens,
-            "do_sample": True,
-            "temperature": self.temperature,
-            "top_p": self.top_p,
-            "top_k": self.top_k,
+            "do_sample": self.get_config_option("do_sample", True),
         }
-        if not self.tool_name:
+
+        if args["do_sample"]:
+            args["temperature"] = self.temperature
+            args["top_p"] = self.top_p
+            args["top_k"] = self.top_k
+
+        if not self.tool_name and "llama" in self.model_name.lower():
             args["eos_token_id"] = [
                 self.tokenizer.eos_token_id,
                 self.tokenizer.convert_tokens_to_ids("<|eot_id|>")  # LLama3
