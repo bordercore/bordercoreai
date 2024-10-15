@@ -1,4 +1,5 @@
 import argparse
+import base64
 import importlib
 import json
 import os
@@ -7,6 +8,7 @@ from threading import Thread
 
 import torch
 import transformers
+from qwen_vl_utils import process_vision_info
 
 try:
     from awq import AutoAWQForCausalLM
@@ -14,11 +16,12 @@ except ModuleNotFoundError:
     # Useful during testing the webapp, which does not have the awq package
     pass
 from api import settings
-from transformers import (AutoModelForCausalLM, BitsAndBytesConfig,
+from transformers import (AutoModelForCausalLM, AutoProcessor, AutoTokenizer,
+                          BitsAndBytesConfig, Qwen2VLForConditionalGeneration,
                           TextIteratorStreamer, pipeline)
 
 from modules.context import Context
-from modules.util import get_model_info, get_tokenizer
+from modules.util import get_model_info
 
 device = "cuda:0" if torch.cuda.is_available() else "cpu"
 
@@ -32,7 +35,7 @@ COLOR_RESET = "\033[0m"
 
 class Inference:
 
-    max_new_tokens = 750
+    max_new_tokens = 4096
     temperature_default = 0.7
     top_p = 0.95
     top_k = 40
@@ -43,10 +46,39 @@ class Inference:
         self.quantize = quantize
         self.model_info = get_model_info()
         self.temperature = temperature or self.temperature_default
-        self.tokenizer = get_tokenizer(self.model_path)
+        self.tokenizer = self.get_tokenizer()
         self.tool_name = tool_name
         self.tool_list = tool_list
         self.debug = debug
+
+    def prepare_image(self, image_path):
+
+        path = Path(image_path)
+
+        if not path.is_file():
+            raise FileNotFoundError(f"The file {image_path} does not exist.")
+
+        # Read the image file and convert to base64
+        with open(image_path, "rb") as image_file:
+            encoded_string = base64.b64encode(image_file.read()).decode('utf-8')
+
+        messages = [
+            {
+                "role": "user",
+                "content": [
+                    {
+                        "type": "image",
+                        "image": f"data:image;base64,{encoded_string}",
+                    },
+                    {
+                        "type": "text",
+                        "text": "Describe this image."
+                    }
+                ]
+            }
+        ]
+
+        return messages
 
     def get_template_type(self):
         if self.model_name in self.model_info and "template" in self.model_info[self.model_name]:
@@ -121,6 +153,22 @@ class Inference:
         else:
             return None
 
+    def get_tokenizer(self):
+        if self.get_config_option("qwen_vision", False):
+            tokenizer = AutoProcessor.from_pretrained(self.model_path)
+        else:
+            tokenizer = AutoTokenizer.from_pretrained(self.model_path)
+            tokenizer.padding_side = "right"
+
+            if tokenizer.pad_token is None:
+                tokenizer.pad_token = tokenizer.eos_token
+
+        # Required for the unsloth_gemma-2-2b-it-bnb-4bit model
+        if "unsloth_gemma-2-2b-it-bnb-4bit" in self.model_path:
+            tokenizer.add_special_tokens(dict(eos_token="<end_of_turn>"))
+
+        return tokenizer
+
     def load_model(self):
         model_config = self.get_model_config()
         args = {
@@ -134,7 +182,12 @@ class Inference:
         if settings.use_flash_attention:
             args["attn_implementation"] = "flash_attention_2"
 
-        if "awq" in self.model_name.lower():
+        if self.get_config_option("qwen_vision", False):
+            self.model = Qwen2VLForConditionalGeneration.from_pretrained(
+                self.model_path,
+                **args
+            )
+        elif "awq" in self.model_name.lower():
             self.model = AutoAWQForCausalLM.from_quantized(
                 self.model_path,
                 **args,
@@ -147,9 +200,9 @@ class Inference:
         else:
             self.model = AutoModelForCausalLM.from_pretrained(
                 self.model_path,
+                max_new_tokens=self.max_new_tokens,
                 **args
             )
-        self.tokenizer = get_tokenizer(self.model_path)
 
     def generate(self, messages):
         # Set the system message based on the user's settings. If it already exists,
@@ -191,6 +244,30 @@ class Inference:
         # If we're using tools, we don't want to skip special tokens
         #  in the response.
         skip_special_tokens = self.tool_name is None
+
+        if self.get_config_option("qwen_vision", False):
+            image_inputs, video_inputs = process_vision_info(messages)
+            inputs = self.tokenizer(
+                text=[prompt_template],
+                images=image_inputs,
+                videos=video_inputs,
+                padding=True,
+                return_tensors="pt",
+            )
+            inputs = inputs.to("cuda")
+
+            # Qwen2 Vision doesn't yet support pipeline streaming
+            generated_ids = self.model.generate(**inputs, max_new_tokens=128)
+            generated_ids_trimmed = [
+                out_ids[len(in_ids):] for in_ids, out_ids in zip(inputs.input_ids, generated_ids)
+            ]
+            output_text = self.tokenizer.batch_decode(
+                generated_ids_trimmed, skip_special_tokens=True, clean_up_tokenization_spaces=False
+            )
+            for x in output_text:
+                yield x
+            return
+
         streamer = TextIteratorStreamer(
             self.tokenizer,
             skip_prompt=True,
@@ -209,9 +286,7 @@ class Inference:
         )
         thread.start()
 
-        response = ""
         for x in streamer:
-            response += x
             yield x
         thread.join()
 
@@ -240,12 +315,18 @@ if __name__ == "__main__":
         help="STT (Speech to Text)",
         action="store_true"
     )
+    parser.add_argument(
+        "-i",
+        "--image",
+        help="The image to identify by a vision model",
+    )
 
     args = parser.parse_args()
     model_path = args.model_path
     quantize = args.quantize
     tts = args.tts
     stt = args.stt
+    image = args.image
 
     inference = Inference(
         model_path=model_path,
@@ -256,4 +337,13 @@ if __name__ == "__main__":
 
     from modules.chatbot import ChatBot
     chatbot = ChatBot(stt=stt, tts=tts)
-    chatbot.interactive(inference=inference)
+
+    if image:
+        messages = inference.prepare_image(image)
+        inference.context.add(messages, True)
+        response = inference.generate(inference.context.get())
+        for x in response:
+            print(x, end="", flush=True)
+        print()
+    else:
+        chatbot.interactive(inference=inference)

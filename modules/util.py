@@ -8,22 +8,6 @@ try:
 except Exception:
     # This package is not required for the API
     pass
-from transformers import AutoTokenizer
-
-
-def get_tokenizer(model_path):
-
-    tokenizer = AutoTokenizer.from_pretrained(model_path)
-    tokenizer.padding_side = "right"
-
-    if tokenizer.pad_token is None:
-        tokenizer.pad_token = tokenizer.eos_token
-
-    # Required for the unsloth_gemma-2-2b-it-bnb-4bit model
-    if "unsloth_gemma-2-2b-it-bnb-4bit" in model_path:
-        tokenizer.add_special_tokens(dict(eos_token="<end_of_turn>"))
-
-    return tokenizer
 
 
 # Load the model config file

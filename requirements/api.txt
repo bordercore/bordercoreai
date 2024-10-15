@@ -1,5 +1,5 @@
 anthropic==0.30.1
-autoawq==0.2.6
+autoawq @ git+https://github.com/casper-hansen/AutoAWQ.git@79547665bdb27768a9b392ef375776b020acbf0c
 bitsandbytes==0.43.1
 flash-attn==2.6.3
 Flask==3.0.0
@@ -9,6 +9,9 @@ http-constants==0.5.0
 openai==0.27.8
 PyAudio==0.2.14
 pydub==0.25.1
+pysbd==0.3.4
+qwen_vl_utils==0.0.8
 sounddevice==0.4.6
-torch==2.1.1
-transformers==4.43.1
+torch==2.3.1
+torchvision==0.19.1
+transformers==4.45.1

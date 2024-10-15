@@ -75,6 +75,7 @@ const app = createApp({
         const showMenu = ref(false);
         const speak = ref(session.speak !== undefined ? session.speak : true);
         const temperature = ref(session.temperature || 0.7);
+        const visionImage = ref(null);
         const waiting = ref(false);
 
         const ttsHost = ref(session.tts_host);
@@ -92,6 +93,10 @@ const app = createApp({
 
         const sliderSpeed = ref(null);
         const sliderTemperature = ref(null);
+
+        if (window.location.pathname === "/vision") {
+            prompt.value = "Describe this image";
+        }
 
         useEvent("ended", handleAudioEnded, {id: "player"});
         useEvent("pause", handleAudioPlayerPause, {id: "player"});
@@ -133,7 +138,7 @@ const app = createApp({
                 },
             );
             nextTick(() => {
-                const scrollableDiv = document.getElementsByClassName("message-container")[0];
+                const scrollableDiv = document.getElementById("message-container");
                 scrollableDiv.scrollTop = scrollableDiv.scrollHeight;
             });
         };
@@ -257,6 +262,17 @@ const app = createApp({
                 });
         };
 
+        function handleFileUploadVision(event) {
+            visionImage.value = event.target.files[0];
+
+            const reader = new FileReader();
+            reader.onload = function(event) {
+                const imagePreview = document.getElementById("image-preview");
+                imagePreview.src = event.target.result;
+            };
+            reader.readAsDataURL(visionImage.value);
+        }
+
         function handleSongBackward(event) {
             if (songIndex.value > 0) {
                 nextTick(() => {
@@ -280,6 +296,7 @@ const app = createApp({
             clipboard.value = null;
             url.value = "";
             error.value = "";
+            visionImage.value = null;
         };
 
         function handleSendMessageRag(event) {
@@ -294,6 +311,17 @@ const app = createApp({
                 "transcript": audioFileTranscript.value,
             };
             sendMessageToChatbot(prompt.value, args);
+        };
+
+        function handleSendMessageVision() {
+            const reader = new FileReader();
+            reader.onload = function(event) {
+                const args = {
+                    image: event.target.result,
+                };
+                sendMessageToChatbot(prompt.value, args);
+            };
+            reader.readAsDataURL(visionImage.value);
         };
 
         function handleCopyText(event) {
@@ -368,7 +396,7 @@ const app = createApp({
             // Don't remove the last response after an error, since in that case
             //   there is no response to remove.
             if (regenerate) {
-                if (!error) {
+                if (!error.value) {
                     chatHistory.value.pop();
                 }
             } else {
@@ -387,7 +415,7 @@ const app = createApp({
                 "temperature": temperature.value,
                 "wolfram_alpha": wolframAlpha.value,
                 "url": url.value,
-                ...args
+                ...args,
             };
 
             const formData = new FormData();
@@ -645,6 +673,10 @@ const app = createApp({
             return formatBytes(ragFileSize.value);
         };
 
+        function getVisionFileSize() {
+            return formatBytes(visionImage.value.size);
+        };
+
         function formatBytes(bytes, decimals = 2) {
             if (!+bytes) return "0 Bytes";
 
@@ -681,7 +713,7 @@ const app = createApp({
             getModelList();
 
             setTimeout( () => {
-              document.getElementById("prompt").focus();
+                document.getElementById("prompt").focus();
             });
         });
 
@@ -699,6 +731,7 @@ const app = createApp({
             handleDeleteClipboard,
             handleFileUpload,
             handleFileUploadAudio,
+            handleFileUploadVision,
             handleSongBackward,
             handleSongForward,
             handleListen,
@@ -708,11 +741,13 @@ const app = createApp({
             handleSendMessage,
             handleSendMessageAudio,
             handleSendMessageRag,
+            handleSendMessageVision,
             icon,
             getAudioFileSize,
             getRagFileSize,
             getListenButtonValue,
             getMarkdown,
+            getVisionFileSize,
             audioSpeed,
             model,
             modelList,
@@ -731,6 +766,7 @@ const app = createApp({
             ttsHost,
             uploadedFilename,
             url,
+            visionImage,
             waiting,
             wolframAlpha,
         };

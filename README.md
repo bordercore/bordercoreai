@@ -24,6 +24,10 @@ Chat with your uploaded documents.
 
 Upload audio files to convert them to text, then ask questions based on the generated transcription.
 
+## Multimodality
+
+Support for the **Qwen2-VL** vision models for analyzing images.
+
 ## Tool Calling
 
 Supports using Wolfram Alpha for mathematical calculations.
@@ -92,7 +96,7 @@ Copy `api/settings_template.py` to `api/settings.py` and set the following:
 **model_name**: default model to load
 **model_dir**: the relative directory containing your models
 
-Edit `models.yaml` to add configuration options for your models. Here is an example entry:
+Edit `models.yaml` to add configuration options for your models. Use `models_template.yaml` as a guide. Example:
 
 ```yaml
 NousResearch_Nous-Hermes-2-Mistral-7B-DPO:
@@ -109,6 +113,9 @@ The **template** is the chat template type used by the model (eg ChatML, Alpaca,
 The **type** specifies an API-based (as opposed to local) model.
 The **vendor** specifies the vendor for commercial models. Can be set to *openai* or *anthropic*.
 Set **quantize: true** to automatically quantize models to 4bits using the bitsandbytes library.
+Set **qwen_vision: true** to enable vision support for the Qwen2-VL models.
+Set **do_sample: false** to disable sampling via `temperature`, `top_p`, and `top_k`.
+Set **add_bos_token: true** to prepend a beginning-of-sequence (BOS) token to the input text.
 
 To run:
 

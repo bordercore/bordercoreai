@@ -20,7 +20,12 @@ body {
   z-index: 10;
 }
 
-.message-container {
+.container {
+  flex: 1;
+}
+
+#message-container {
+  flex: 1;
   position: relative;
   height: 75vh;
   overflow-y: auto;
@@ -39,10 +44,25 @@ body {
   }
 }
 
+#artifact-container {
+  flex: 1;
+}
+
+// Expand the message-container to 100% if the artifact-container isn't present
+.container:not(:has(#artifact-container)) #message-container {
+  flex: 1 0 100%;
+}
+
 .transcript-container {
   position: relative;
   max-height: 50vh;
   overflow-y: auto;
+}
+
+#image-preview {
+  border: 1px solid #73adff;
+  border-radius: 5px;
+  object-fit: contain;
 }
 
 #top-divider {

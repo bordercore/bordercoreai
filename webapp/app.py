@@ -16,6 +16,7 @@ warnings.filterwarnings("ignore", message=".*The 'nopython' keyword.*")
 from api import settings
 from modules.audio import Audio
 from modules.rag import RAG
+from modules.vision import Vision
 
 NUM_STARS = 10
 
@@ -138,6 +139,35 @@ def audio_chat():
 
     audio = Audio()
     return audio.query_transcription(model_name, message, transcript)
+
+
+@app.route("/vision")
+def vision():
+
+    return render_template(
+        "vision.html",
+        session=dict(session),
+        settings=dict(music_uri=settings.music_uri),
+        num_stars=NUM_STARS,
+        control_value=CONTROL_VALUE,
+        chat_endpoint="/vision/chat"
+    )
+
+
+@app.route("/vision/chat", methods=["POST"])
+def audio_vision():
+
+    message = json.loads(request.form["message"])
+    image = request.form["image"]
+    model_name = request.form["model"]
+    speak = request.form.get("speak", "false")
+    audio_speed = float(request.form.get("audio_speed", 1.0))
+    temperature = float(request.form.get("temperature", 0.7))
+
+    store_params_in_session(speak, audio_speed, temperature)
+
+    vision = Vision(model_name, message, image)
+    return vision()
 
 
 @app.route("/speech2text", methods=["POST"])

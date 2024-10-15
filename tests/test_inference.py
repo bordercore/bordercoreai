@@ -5,7 +5,7 @@ from modules.inference import Inference
 
 
 @pytest.fixture
-def config():
+def config(monkeypatch):
     model_info = {
         "model1": {
             "option1": "value1",
@@ -16,8 +16,13 @@ def config():
             "option3": "value4"
         }
     }
-    with patch("modules.inference.get_model_info", return_value=model_info), \
-         patch("modules.inference.get_tokenizer", return_value=None):
+
+    def mocked_method(self):
+        return None
+
+    monkeypatch.setattr(Inference, "get_tokenizer", mocked_method)
+
+    with patch("modules.inference.get_model_info", return_value=model_info):
         return Inference("/path/to/model1")
 
 

@@ -51,22 +51,27 @@
                         </div>
                     </form>
                     {% block content %}{% endblock %}
-                    <div class="message-container">
-                        <div v-for="message in filteredChatHistory" :key="message.id" :class="'chatbot-' + message.role" class="d-flex px-3 mt-2">
-                            <div v-if="message.role === 'user'" class="role fw-bold me-2" v-cloak>
-                                You
+                    <div class="container d-flex">
+                        <div id="message-container" class="align-items-start">
+                            <div v-for="message in filteredChatHistory" :key="message.id" :class="'chatbot-' + message.role" class="d-flex px-3 mt-2">
+                                <div v-if="message.role === 'user'" class="role fw-bold me-2" v-cloak>
+                                    You
+                                </div>
+                                <div v-else class="role fw-bold me-2" v-cloak>
+                                    AI
+                                </div>
+                                <div v-html="getMarkdown(message.content)">
+                                </div>
                             </div>
-                            <div v-else class="role fw-bold me-2" v-cloak>
-                                AI
+                            <div v-show="waiting" class="spinner-border ms-3 text-info" enter-active-class="animate__animated animate__fadeIn" role="status">
                             </div>
-                            <div v-html="getMarkdown(message.content)">
+                            <div v-show="error" class="notice animate__animated animate__headShake w-100 fw-bold">
+                                <font-awesome-icon icon="exclamation-triangle" class="fa-xl me-2" :class="'text-' + error.variant"></font-awesome-icon>
+                                <span>[[ error.body ]]</span>
                             </div>
                         </div>
-                        <div v-show="waiting" class="spinner-border ms-3 text-info" enter-active-class="animate__animated animate__fadeIn" role="status">
-                        </div>
-                        <div v-show="error" class="notice animate__animated animate__pulse animate__slower w-100 fw-bold">
-                            <font-awesome-icon icon="exclamation-triangle" class="fa-xl me-2" :class="'text-' + error.variant"></font-awesome-icon>
-                            <span>[[ error.body ]]</span>
+                        <div id="artifact-container" :class="{'d-none': visionImage ===  null }" class="p-2">
+                            <img id="image-preview" class="w-100 p-1" src="" alt="Image preview">
                         </div>
                     </div>
                 </div>
