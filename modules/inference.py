@@ -131,6 +131,9 @@ class Inference:
         if "quantization_config" not in model_config:
             args["quantization_config"] = self.get_quantization_config()
 
+        if settings.use_flash_attention:
+            args["attn_implementation"] = "flash_attention_2"
+
         if "awq" in self.model_name.lower():
             self.model = AutoAWQForCausalLM.from_quantized(
                 self.model_path,

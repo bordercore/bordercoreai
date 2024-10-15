@@ -1,6 +1,7 @@
 anthropic==0.30.1
 autoawq==0.2.6
 bitsandbytes==0.43.1
+flash-attn==2.6.3
 Flask==3.0.0
 google-api-python-client==1.6.2
 httplib2==0.22.0
