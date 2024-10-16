@@ -1,0 +1,10 @@
+meta-llama_Meta-Llama-3.1-8B-Instruct:
+  name: Llama 3.1 8B Instruct
+gpt-4o:
+  name: ChatGPT-4o
+  type: api
+  vendor: openai
+claude-3-5-sonnet-20240620:
+  name: Claude 3.5 Sonnet
+  type: api
+  vendor: anthropic

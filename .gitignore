@@ -9,6 +9,7 @@ node_modules/
 *.pyc
 *.wasm
 api/settings.py
+models.yaml
 chromdb/
 voices/
 calendar_credentials.json
