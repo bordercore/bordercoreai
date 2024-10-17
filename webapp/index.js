@@ -63,6 +63,7 @@ const app = createApp({
         const audioSpeed = ref(session.audio_speed || 1);
         const clipboard = ref(null);
         const icon = ref("copy");
+        const isDragOver = ref(false);
         const model = ref({});
         const modelList = ref([]);
         const musicInfo = ref(null);
@@ -200,6 +201,13 @@ const app = createApp({
             }, 500);
         };
 
+        function handleImageDrop(event) {
+            const image = event.dataTransfer.files[0];
+            if (image.type.indexOf("image/") >= 0) {
+                handleFileUploadVision(event);
+            }
+        }
+
         function handleFileUpload(event) {
             const modal = new Modal("#modalProcessing");
             modal.show();
@@ -263,7 +271,11 @@ const app = createApp({
         };
 
         function handleFileUploadVision(event) {
-            visionImage.value = event.target.files[0];
+            if (event.target.files) {
+                visionImage.value = event.target.files[0];
+            } else {
+                visionImage.value = event.dataTransfer.files[0];
+            }
 
             const reader = new FileReader();
             reader.onload = function(event) {
@@ -732,6 +744,7 @@ const app = createApp({
             handleFileUpload,
             handleFileUploadAudio,
             handleFileUploadVision,
+            handleImageDrop,
             handleSongBackward,
             handleSongForward,
             handleListen,
@@ -743,6 +756,7 @@ const app = createApp({
             handleSendMessageRag,
             handleSendMessageVision,
             icon,
+            isDragOver,
             getAudioFileSize,
             getRagFileSize,
             getListenButtonValue,

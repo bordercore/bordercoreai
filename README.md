@@ -26,7 +26,7 @@ Upload audio files to convert them to text, then ask questions based on the gene
 
 ## Multimodality
 
-Support for the **Qwen2-VL** vision models for analyzing images.
+Support for the **Qwen2-VL** vision models for analyzing images. Upload images or drag-and-drop them into the UI.
 
 ## Tool Calling
 

@@ -51,7 +51,15 @@
                         </div>
                     </form>
                     {% block content %}{% endblock %}
-                    <div class="container d-flex">
+                    <div
+                        class="container d-flex"
+                        :class="{'drag-over': isDragOver}"
+                        @dragover.prevent="isDragOver = true"
+                        @drop="isDragOver = false"
+                        @drop.prevent="handleImageDrop"
+                        @dragenter.prevent
+                        @dragleave.prevent="isDragOver = false"
+                    >
                         <div id="message-container" class="align-items-start">
                             <div v-for="message in filteredChatHistory" :key="message.id" :class="'chatbot-' + message.role" class="d-flex px-3 mt-2">
                                 <div v-if="message.role === 'user'" class="role fw-bold me-2" v-cloak>
