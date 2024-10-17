@@ -324,6 +324,7 @@ class ChatBot():
                 "model": x,
                 "name": model_info.get(x, {"name": x}).get("name", x),
                 "type": model_info.get(x, {"type": x}).get("type", None),
+                "qwen_vision": model_info.get(x, {"qwen_vision": x}).get("qwen_vision", None),
             }
             for x in
             model_list

@@ -152,13 +152,13 @@ const app = createApp({
             return markdown.render(content);
         };
 
-        function getModelType(modelName) {
+        function getModelAttribute(modelName, attribute) {
             const result = modelList.value.find((obj) => obj.model === modelName);
-            return result ? result.type : "";
+            return result ? result[attribute] : "";
         };
 
         function handleChangeModel(event) {
-            const modelType = getModelType(event.srcElement.value);
+            const modelType = getModelAttribute(event.srcElement.value, "type");
             let modal = null;
             if (modelType !== "api") {
                 modal = new Modal("#modalProcessing");
@@ -402,6 +402,12 @@ const app = createApp({
                     waiting.value = true;
                 }
             }, 500);
+
+            if (window.location.pathname === "/vision" &&
+                getModelAttribute(model.value, "qwen_vision") === null) {
+                error.value = {"body": "Error: you must load a vision model to use this feature.", "variant": "danger"};
+                return;
+            }
 
             // If we're regenerating the response, remove the last response from
             //   chatHistory and resubmit everything else to the AI.
