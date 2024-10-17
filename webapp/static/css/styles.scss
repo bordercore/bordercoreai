@@ -22,6 +22,7 @@ body {
 
 .container {
   flex: 1;
+  border-radius: 10px;
 }
 
 #message-container {
@@ -54,7 +55,7 @@ body {
 }
 
 .drag-over {
-  background-color: #03031f;
+  background-color: #66668f;
 }
 
 .transcript-container {
