@@ -325,13 +325,13 @@ const app = createApp({
             sendMessageToChatbot(prompt.value, args);
         };
 
-        function handleSendMessageVision() {
+        function handleSendMessageVision(event, regenerate=false) {
             const reader = new FileReader();
             reader.onload = function(event) {
                 const args = {
                     image: event.target.result,
                 };
-                sendMessageToChatbot(prompt.value, args);
+                sendMessageToChatbot(prompt.value, args, regenerate);
             };
             reader.readAsDataURL(visionImage.value);
         };
@@ -348,7 +348,11 @@ const app = createApp({
         };
 
         function handleRegenerate(event) {
-            sendMessageToChatbot(prompt.value, {}, true);
+            if (window.location.pathname === "/vision") {
+                handleSendMessageVision(null, true);
+            } else {
+                sendMessageToChatbot(prompt.value, {}, true);
+            }
         };
 
         function handleSendMessage(event) {
