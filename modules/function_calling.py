@@ -98,6 +98,7 @@ class FunctionCall():
         return ChatBot.get_streaming_message(response)
 
     def run(self, prompt):
+        prompt += f"{prompt} Please don't tell me how you got the answer, I only want the answer."
         messages = [
             {"role": "system", "content": "You are a helpful assistant that can use functions when necessary. When you receive a tool call response, use the output to format an answer to the orginal user question."},
             {"role": "user", "content": prompt}
