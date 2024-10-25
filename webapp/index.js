@@ -562,7 +562,7 @@ const app = createApp({
                                 },
                             }).then((response) => {
                                 notice.value = "";
-                                chatHandlers[chatHandler](chatEndpoint, response.data.input);
+                                chatHandlers[chatHandler](response.data.input);
                                 // Delete the current audio in case we want to start a new recording later
                                 audioChunks = [];
                             });
