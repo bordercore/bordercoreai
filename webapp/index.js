@@ -144,10 +144,6 @@ const app = createApp({
             });
         };
 
-        function getListenButtonValue() {
-            return microPhoneOn.value ? "Mic Off" : "Mic On";
-        };
-
         function getMarkdown(content) {
             return markdown.render(content);
         };
@@ -769,7 +765,6 @@ const app = createApp({
             isDragOver,
             getAudioFileSize,
             getRagFileSize,
-            getListenButtonValue,
             getMarkdown,
             getVisionFileSize,
             audioSpeed,
