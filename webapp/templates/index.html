@@ -8,7 +8,9 @@
 <input v-model="prompt" id="prompt" class="form-control" type="text" placeholder="Prompt" @keydown.enter.prevent="handleSendMessage" />
 {% endblock %}
 
-{% block chat_handler %}sendMessageToChatbot{% endblock %}
+{% block chat_handler %}
+    <div id="chatHandler" class="d-none">chat</div>
+{% endblock %}
 
 {% block content %}
     <div v-if="url" class="d-flex align-items-center">

@@ -112,7 +112,12 @@ const app = createApp({
             return musicInfo.value.findIndex((x) => x === currentSong.value);
         });
 
-        const chatHandlers = {handleSendMessageAudio, handleSendMessageRag, sendMessageToChatbot};
+        const chatHandlers = {
+            chat: sendMessageToChatbot,
+            audio: handleSendMessageAudio,
+            rag: handleSendMessageRag,
+            vision: handleSendMessageVision,
+        };
 
         function addClipboardToMessages() {
             if (!clipboard.value) {
@@ -558,6 +563,7 @@ const app = createApp({
                                 },
                             }).then((response) => {
                                 notice.value = "";
+                                const chatHandler = document.getElementById("chatHandler").textContent.trim();
                                 chatHandlers[chatHandler](response.data.input);
                                 // Delete the current audio in case we want to start a new recording later
                                 audioChunks = [];

@@ -8,7 +8,9 @@
     <input v-model="prompt" id="prompt" class="form-control" type="text" placeholder="Prompt" @keydown.enter.prevent="handleSendMessageVision" :disabled="! visionImage" />
 {% endblock %}
 
-{% block chat_handler %}sendMessageToChatbotVision{% endblock %}
+{% block chat_handler %}
+    <div id="chatHandler" class="d-none">vision</div>
+{% endblock %}
 
 {% block content %}
     <div class="d-flex align-items-center mb-3">

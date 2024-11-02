@@ -8,7 +8,9 @@
     <input v-model="prompt" id="prompt" class="form-control" type="text" placeholder="Prompt" @keydown.enter.prevent="handleSendMessageAudio" :disabled="! audioFileTranscript" />
 {% endblock %}
 
-{% block chat_handler %}sendMessageToChatbotAudio{% endblock %}
+{% block chat_handler %}
+    <div id="chatHandler" class="d-none">audio</div>
+{% endblock %}
 
 {% block content %}
     <div class="d-flex align-items-center mb-3">
