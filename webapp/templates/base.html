@@ -119,6 +119,10 @@
                             </o-switch>
                         </div>
                     </div>
+                    <stream-messages
+                        :sensor-uri="settings.sensor_uri"
+                        @sensor-data="handleSensorData"
+                    ></stream-messages>
                     <div v-if="notice" class="notice animate__animated animate__pulse animate__slower animate__infinite d-flex align-items-center fw-bold ms-3 mt-5 px-3">
                         <span v-cloak>[[ notice ]]</span>
                     </div>

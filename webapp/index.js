@@ -12,7 +12,7 @@ import {Modal} from "bootstrap";
 import Oruga from "@oruga-ui/oruga-next";
 import "@oruga-ui/oruga-next/dist/oruga-full.css";
 import "@oruga-ui/oruga-next/dist/oruga-full-vars.css";
-import {computed, createApp, nextTick, onMounted, ref} from "vue";
+import {computed, createApp, nextTick, onBeforeUnmount, onMounted, ref} from "vue";
 import Slider from "./src/components/Slider.vue";
 
 import AudioMotionAnalyzer from "audiomotion-analyzer";
@@ -27,9 +27,15 @@ const EventBus = {
     $emit: (...args) => emitter.emit(...args),
 };
 window.EventBus = EventBus;
+window.computed = computed;
+window.onMounted = onMounted;
+window.onBeforeUnmount = onBeforeUnmount;
+window.ref = ref;
 
 import Nav from "./vue/Nav.vue";
 window.MyNav = Nav;
+import StreamMessages from "./vue/StreamMessages.vue";
+window.StreamMessages = StreamMessages;
 
 const app = createApp({
     name: "ChatBot",
@@ -38,6 +44,7 @@ const app = createApp({
         FontAwesomeIcon,
         MyNav,
         Slider,
+        StreamMessages,
     },
     setup() {
         const session = JSON.parse(document.getElementById("session").textContent);
@@ -74,6 +81,7 @@ const app = createApp({
         const ragFileSize = ref(null);
         const sha1sum = ref("");
         const showMenu = ref(false);
+        let sensorDetectMode = true;
         const speak = ref(session.speak !== undefined ? session.speak : true);
         const temperature = ref(session.temperature || 0.7);
         const visionImage = ref(null);
@@ -94,6 +102,8 @@ const app = createApp({
 
         const sliderSpeed = ref(null);
         const sliderTemperature = ref(null);
+
+        const sensorThreshold = settings.sensor_threshold ?? 100;
 
         if (window.location.pathname === "/vision") {
             prompt.value = "Describe this image";
@@ -335,6 +345,17 @@ const app = createApp({
                 sendMessageToChatbot(prompt.value, args, regenerate);
             };
             reader.readAsDataURL(visionImage.value);
+        };
+
+        function handleSensorData(event) {
+            if (event.moving_target_energy == sensorThreshold && sensorDetectMode) {
+                sensorDetectMode = false;
+                handleListen();
+                microPhoneOn.value = !microPhoneOn.value;
+                setTimeout(function() {
+                    sensorDetectMode = true;
+                }, 2000);
+            }
         };
 
         function handleCopyText(event) {
@@ -767,6 +788,7 @@ const app = createApp({
             handleSendMessageAudio,
             handleSendMessageRag,
             handleSendMessageVision,
+            handleSensorData,
             icon,
             isDragOver,
             getAudioFileSize,
@@ -782,6 +804,7 @@ const app = createApp({
             notice,
             prompt,
             ragFileUploaded,
+            settings,
             showMenu,
             sliderSpeed,
             sliderTemperature,

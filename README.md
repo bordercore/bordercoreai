@@ -56,6 +56,19 @@ To run the ChatGPT bot:
 python3 -m modules.chatbot -m chatgpt
 ```
 
+## Sensor Support
+
+Experimental support for reading real-time sensor data. This can be used, for example, to activate Speech to Text by waving a hand in front of a sensor like the HLK-LD2410B. To install the required Bluetooth packages:
+
+```bash
+pip install requirements/sensor.txt
+```
+
+To run the sensor webapp:
+
+```bash
+python3 -m sensor
+```
 
 # Installation
 

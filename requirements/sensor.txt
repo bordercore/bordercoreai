@@ -1,0 +1,4 @@
+-r webapp.txt
+bleak==0.22.3
+Flask-Cors==5.0.0
+ld2410-ble==0.2.0

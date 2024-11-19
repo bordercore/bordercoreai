@@ -24,3 +24,7 @@ music_uri = ""
 weather_api_key = ""
 
 wolfram_alpha_app_id = ""
+
+sensor_uri = ""
+sensor_threshold = 30
+sensor_bt_address = ""

@@ -19,6 +19,7 @@ from modules.rag import RAG
 from modules.vision import Vision
 
 NUM_STARS = 10
+SENSOR_THRESHOLD_DEFAULT = 100
 
 app = Flask(__name__)
 app.debug = True
@@ -40,7 +41,7 @@ def main():
     return render_template(
         "index.html",
         session=dict(session),
-        settings=dict(music_uri=settings.music_uri),
+        settings=dict(music_uri=settings.music_uri, sensor_uri=settings.sensor_uri, sensor_threshold=getattr(settings, "sensor_threshold", SENSOR_THRESHOLD_DEFAULT)),
         num_stars=NUM_STARS,
         control_value=CONTROL_VALUE,
         chat_endpoint="/chat"
@@ -53,7 +54,7 @@ def rag():
     return render_template(
         "rag.html",
         session=dict(session),
-        settings=dict(music_uri=settings.music_uri),
+        settings=dict(music_uri=settings.music_uri, sensor_uri=settings.sensor_uri, sensor_threshold=getattr(settings, "sensor_threshold", SENSOR_THRESHOLD_DEFAULT)),
         num_stars=NUM_STARS,
         control_value=CONTROL_VALUE,
         chat_endpoint="/rag/chat"
@@ -105,7 +106,7 @@ def audio():
     return render_template(
         "audio.html",
         session=dict(session),
-        settings=dict(music_uri=settings.music_uri),
+        settings=dict(music_uri=settings.music_uri, sensor_uri=settings.sensor_uri, sensor_threshold=getattr(settings, "sensor_threshold", SENSOR_THRESHOLD_DEFAULT)),
         num_stars=NUM_STARS,
         control_value=CONTROL_VALUE,
         chat_endpoint="/audio/chat"
@@ -147,7 +148,7 @@ def vision():
     return render_template(
         "vision.html",
         session=dict(session),
-        settings=dict(music_uri=settings.music_uri),
+        settings=dict(music_uri=settings.music_uri, sensor_uri=settings.sensor_uri, sensor_threshold=getattr(settings, "sensor_threshold", SENSOR_THRESHOLD_DEFAULT)),
         num_stars=NUM_STARS,
         control_value=CONTROL_VALUE,
         chat_endpoint="/vision/chat"
