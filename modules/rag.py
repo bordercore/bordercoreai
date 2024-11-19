@@ -6,7 +6,7 @@ from io import BytesIO
 
 import chromadb
 import openai
-import PyPDF2
+import pypdf
 from nltk.tokenize import sent_tokenize
 
 from modules.chatbot import ChatBot
@@ -35,7 +35,7 @@ class RAG():
         self.client = chromadb.PersistentClient(path=chromdb)
 
     def extract_text_from_pdf(self, pdf):
-        reader = PyPDF2.PdfReader(pdf)
+        reader = pypdf.PdfReader(pdf)
         content = ""
         for page in reader.pages:
             content += page.extract_text()
