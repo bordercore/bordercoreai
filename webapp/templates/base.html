@@ -97,7 +97,7 @@
                     <div class="text-info">
                         Features
                     </div>
-                    <div id="switches" class="d-flex flex-wrap">
+                    <div class="switches d-flex flex-wrap">
                         <div class="text-nowrap w-100 mt-3 me-5 mb-2">
                             <o-switch v-model="microPhoneOn" @click="handleListen()">
                                 Speech to Text
@@ -135,11 +135,11 @@
                         <div v-if="musicInfo">
                             Playing <span class="text-info">[[ currentSong.title ]]</span> by <span class="text-info">[[ currentSong.artist ]]</span>
                             <div id="songIndex">
-                                <span class="me-3" :class="songIndex > 0 ? 'text-info' : 'text-secondary'" >
+                                <span class="me-3" :class="songIndex > 0 ? 'text-info' : 'text-secondary'">
                                     <font-awesome-icon icon="backward" class="glow" @click="handleSongBackward" />
                                 </span>
                                 <span class="fw-bold">[[ songIndex + 1 ]]</span> / <span class="fw-bold">[[ musicInfo.length ]]</span>
-                                <span class="ms-3" :class="songIndex < musicInfo.length - 1 ? 'text-info' : 'text-secondary'" >
+                                <span class="ms-3" :class="songIndex < musicInfo.length - 1 ? 'text-info' : 'text-secondary'">
                                     <font-awesome-icon icon="forward" class="glow" @click="handleSongForward" />
                                 </span>
                             </div>
