@@ -159,6 +159,17 @@ const app = createApp({
             });
         };
 
+        function convertBase64ToBytes(data) {
+            const base64Clean = data.audio.replace(/^data:audio\/\w+;base64,/, "");
+            const byteCharacters = atob(base64Clean);
+            const byteNumbers = new Array(byteCharacters.length);
+            for (let i = 0; i < byteCharacters.length; i++) {
+                byteNumbers[i] = byteCharacters.charCodeAt(i);
+            }
+            const byteArray = new Uint8Array(byteNumbers);
+            return new Blob([byteArray], {type: "audio/mp3"});
+        };
+
         function getMarkdown(content) {
             return markdown.render(content);
         };
@@ -250,18 +261,28 @@ const app = createApp({
                 });
         };
 
-        function handleFileUploadAudio(event) {
+        function handleTranscribeAudio(event, url=null) {
             const modal = new Modal("#modalProcessing");
             modal.show();
 
             const formData = new FormData();
-            const fileData = event.target.files[0];
-            if (!fileData) {
-                return;
+            let fileData;
+            let endpoint;
+
+            if (url) {
+                endpoint = "audio/upload/url";
+                formData.append("url", url);
+            } else {
+                endpoint = "audio/upload/file";
+                fileData = event.target.files[0];
+                if (!fileData) {
+                    return;
+                }
+                formData.append("file", fileData);
             }
-            formData.append("file", fileData);
+
             axios.post(
-                "audio/upload",
+                endpoint,
                 formData,
                 {
                     headers: {
@@ -270,12 +291,19 @@ const app = createApp({
                 }).then((response) => {
                     audioFileTranscript.value = response.data.text;
                     audioFileSize.value = audioFileTranscript.value.length;
-                    uploadedFilename.value = event.target.files[0].name;
+                    if (url) {
+                        uploadedFilename.value = response.data.title;
+                    } else {
+                        uploadedFilename.value = event.target.files[0].name;
+                    }
                     modal.hide();
                     // Load the audio into the player
                     let el = document.getElementById("audioPlayer");
                     el.classList.replace("d-none", "d-flex");
                     el = document.getElementById("player");
+                    if (url) {
+                        fileData = convertBase64ToBytes(response.data);
+                    }
                     const audioURL = URL.createObjectURL(fileData);
                     el.src = audioURL;
                 });
@@ -330,6 +358,9 @@ const app = createApp({
         };
 
         function handleSendMessageAudio() {
+            if (!audioFileTranscript.value) {
+                return;
+            }
             const args = {
                 "transcript": audioFileTranscript.value,
             };
@@ -673,6 +704,9 @@ const app = createApp({
             if (isValidURL(paste)) {
                 url.value = paste;
                 prompt.value = "";
+                if (window.location.pathname === "/audio") {
+                    handleTranscribeAudio(event, url.value);
+                }
                 return;
             };
 
@@ -775,7 +809,7 @@ const app = createApp({
             handleCopyText,
             handleDeleteClipboard,
             handleFileUpload,
-            handleFileUploadAudio,
+            handleTranscribeAudio,
             handleFileUploadVision,
             handleImageDrop,
             handleSongBackward,

@@ -1,4 +1,6 @@
+import base64
 import json
+import os
 import warnings
 from pathlib import Path
 
@@ -113,15 +115,36 @@ def audio():
     )
 
 
-@app.route("/audio/upload", methods=["POST"])
-def audio_upload():
-    audio_data = request.files["file"].read()
+@app.route("/audio/upload/file", methods=["POST"])
+def audio_upload_file():
     audio = Audio()
+    audio_data = request.files["file"].read()
     text = audio.transcribe(audio_data=audio_data)
 
     return jsonify(
         {
             "text": text
+        }
+    )
+
+
+@app.route("/audio/upload/url", methods=["POST"])
+def audio_upload_url():
+    audio = Audio()
+    url = request.form.get("url", None)
+    filename = audio.download_audio(url=url)
+    text = audio.transcribe(filename=filename)
+
+    audio_data = b""
+    with open(filename, "rb") as file:
+        audio_data = file.read()
+    os.remove(filename)
+
+    return jsonify(
+        {
+            "text": text,
+            "title": Path(filename).stem,
+            "audio": base64.b64encode(audio_data).decode("utf-8")
         }
     )
 

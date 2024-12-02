@@ -22,7 +22,7 @@ Chat with your uploaded documents.
 
 ## Audio Transcription
 
-Upload audio files to convert them to text, then ask questions based on the generated transcription.
+Upload audio files to convert them to text, then ask questions based on the generated transcription. Also supports pasting in Youtube URLs.
 
 ## Multimodality
 

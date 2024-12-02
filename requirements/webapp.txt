@@ -24,3 +24,4 @@ sounddevice==0.4.6
 torchvision==0.19.1
 trafilatura==1.12.1
 whisper-mic==1.1.1
+yt-dlp==2024.11.18

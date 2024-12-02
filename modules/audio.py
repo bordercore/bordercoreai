@@ -12,10 +12,12 @@
 #  of "sdpa" for PyTorch 2.1.1 and later. Why?
 
 import argparse
+import os
 import time
 from pathlib import Path
 
 import torch
+import yt_dlp
 from transformers import AutoModelForSpeechSeq2Seq, AutoProcessor, pipeline
 
 
@@ -72,6 +74,34 @@ class Audio():
         print(f"Time: {time.time() - start}")
 
         return result["text"]
+
+    def download_audio(self, url):
+        """
+        Download the audio from a Youtube video as an mp3 file.
+        """
+        try:
+            ydl_opts = {
+                "format": "bestaudio/best",
+                "postprocessors": [{
+                    "key": "FFmpegExtractAudio",
+                    "preferredcodec": "mp3",
+                    "preferredquality": "192",
+                }],
+                "outtmpl": "/tmp/%(title)s.%(ext)s",
+            }
+
+            # Download the audio
+            with yt_dlp.YoutubeDL(ydl_opts) as ydl:
+                info_dict = ydl.extract_info(url, download=True)
+                audio_file = ydl.prepare_filename(info_dict)
+
+                # Replace the original extension with .mp3
+                mp3_file = os.path.splitext(audio_file)[0] + ".mp3"
+
+            return mp3_file
+        except Exception as e:
+            print(f"Error downloading Youtube audio: {e}")
+            return None
 
     def fix_timestamps(self, timestamps):
         """
