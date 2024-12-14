@@ -1,4 +1,4 @@
-import argparse
+import urllib.parse
 
 import requests
 from api import settings
@@ -15,7 +15,7 @@ def calculate(query: str) -> float:
     Returns:
         The result of the mathematical calculation.
     """
-    URI_API = f"http://api.wolframalpha.com/v1/result?appid={settings.wolfram_alpha_app_id}&i={query}"
+    URI_API = f"http://api.wolframalpha.com/v1/result?appid={settings.wolfram_alpha_app_id}&i={urllib.parse.quote(query)}"
     result = requests.get(URI_API).text
 
     if settings.debug:
