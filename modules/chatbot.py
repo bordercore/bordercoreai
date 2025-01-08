@@ -33,6 +33,7 @@ except ImportError:
     #  sometimes I want to run this code as a daemon using supervisor
     pass
 
+
 HOST = settings.api_host
 URI_CHAT = f"{HOST}/v1/chat/completions"
 URI_MODEL_INFO = f"{HOST}/v1/internal/model/info"
@@ -82,7 +83,6 @@ class ChatBot():
         return f"{self.ASSISTANT_NAME}".lower()
 
     def speak(self, text):
-
         text = urllib.parse.quote(text)
         host = settings.tts_host
         voice = settings.tts_voice
@@ -101,7 +101,6 @@ class ChatBot():
                 playsound(temp_file.name)
         else:
             print(f"Failed to get audio: status_code = {response.status_code}")
-
 
     def interactive(self, inference=None):
 

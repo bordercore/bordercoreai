@@ -83,9 +83,9 @@ class Inference:
     def get_template_type(self):
         if self.model_name in self.model_info and "template" in self.model_info[self.model_name]:
             return self.model_info[self.model_name]["template"]
-        else:
-            print("No chat template found in models.yaml. Using llama2.")
-            return "llama2"
+
+        print("No chat template found in models.yaml. Using llama2.")
+        return "llama2"
 
     def get_prompt_template(self, tokenizer, messages):
         if hasattr(tokenizer, "chat_template"):
@@ -95,29 +95,29 @@ class Inference:
                 add_generation_prompt=True,
                 tools=self.get_tools()
             )
-        else:
-            template_type = self.get_template_type()
-            if template_type == "chatml":
-                prompt_template = """
-            <|im_start|>system
-            {settings.system_message}<|im_end|>
-            <|im_start|>user
-            {prompt}<|im_end|>
-            <|im_start|>assistant
-                    """
-                return prompt_template.format(system_message="", prompt=messages[0]["content"])
-            else:
-                print("Warning: no chat template found. Using llama2.")
 
-                template = ""
-                for message in messages:
-                    if message["role"] == "system":
-                        next
-                    elif message["role"] == "user":
-                        template += f"[INST]{message['content']}[/INST]"
-                    elif message["role"] == "assistant":
-                        template += f"{message['content']}</s>"
-                return template
+        template_type = self.get_template_type()
+        if template_type == "chatml":
+            prompt_template = """
+        <|im_start|>system
+        {settings.system_message}<|im_end|>
+        <|im_start|>user
+        {prompt}<|im_end|>
+        <|im_start|>assistant
+                """
+            return prompt_template.format(system_message="", prompt=messages[0]["content"])
+
+        print("Warning: no chat template found. Using llama2.")
+
+        template = ""
+        for message in messages:
+            if message["role"] == "system":
+                continue
+            if message["role"] == "user":
+                template += f"[INST]{message['content']}[/INST]"
+            elif message["role"] == "assistant":
+                template += f"{message['content']}</s>"
+        return template
 
     def get_model_config(self):
         config_file = f"{self.model_path}/config.json"
@@ -165,7 +165,7 @@ class Inference:
 
         # Required for the unsloth_gemma-2-2b-it-bnb-4bit model
         if "unsloth_gemma-2-2b-it-bnb-4bit" in self.model_path:
-            tokenizer.add_special_tokens(dict(eos_token="<end_of_turn>"))
+            tokenizer.add_special_tokens({"eos_token": "<end_of_turn>"})
 
         return tokenizer
 
@@ -275,10 +275,10 @@ class Inference:
         )
         generator = pipeline("text-generation", streamer=streamer, **args)
 
-        generation_kwargs = dict(
-            max_new_tokens=self.max_new_tokens,
-            return_full_text=False
-        )
+        generation_kwargs = {
+            "max_new_tokens": self.max_new_tokens,
+            "return_full_text": False
+        }
         thread = Thread(
             target=generator,
             args=(prompt_template,),

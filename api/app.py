@@ -10,7 +10,6 @@ from api import settings
 
 app = Flask(__name__)
 
-device = "cuda:0" if torch.cuda.is_available() else "cpu"
 model = None
 
 
@@ -106,7 +105,7 @@ def force_settings_reload():
 
 
 @app.route("/v1/chat/completions", methods=["POST"])
-def main(id=None):
+def main():
 
     payload = request.json
 
