@@ -23,8 +23,6 @@ from transformers import (AutoModelForCausalLM, AutoProcessor, AutoTokenizer,
 from modules.context import Context
 from modules.util import get_model_info
 
-device = "cuda:0" if torch.cuda.is_available() else "cpu"
-
 # This stifles the "Special tokens have been added in the vocabulary..." warning
 transformers.logging.set_verbosity_error()
 
@@ -41,6 +39,7 @@ class Inference:
     top_k = 40
 
     def __init__(self, model_path, temperature=None, quantize=False, tool_name=None, tool_list=None, debug=False):
+        self.context = Context()
         self.model_path = model_path
         self.model_name = Path(model_path).parts[-1]
         self.quantize = quantize
@@ -333,7 +332,6 @@ if __name__ == "__main__":
         quantize=quantize,
     )
     inference.load_model()
-    inference.context = Context()
 
     from modules.chatbot import ChatBot
     chatbot = ChatBot(stt=stt, tts=tts)
