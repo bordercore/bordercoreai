@@ -192,14 +192,12 @@ class Inference:
                 **args,
                 fuse_layers=self.get_config_option("fuse_layers", True),
                 safetensors=True,
-                max_new_tokens=self.max_new_tokens,
                 batch_size=1,
                 max_memory={0: "8000MiB", "cpu": "99GiB"}
             ).model
         else:
             self.model = AutoModelForCausalLM.from_pretrained(
                 self.model_path,
-                max_new_tokens=self.max_new_tokens,
                 **args
             )
 
