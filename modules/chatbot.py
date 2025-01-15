@@ -20,7 +20,8 @@ from modules.context import Context
 from modules.google_calendar import get_schedule
 from modules.govee import control_lights
 from modules.music import play_music
-from modules.util import get_model_info, get_webpage_contents, sort_models
+from modules.util import (get_model_info, get_webpage_contents, sort_models,
+                          strip_code_fences)
 from modules.weather import get_weather_info
 from modules.wolfram_alpha import WolframAlphaFunctionCall
 
@@ -273,7 +274,7 @@ class ChatBot():
         if settings.debug:
             print(f"{content=}")
 
-        return json.loads(content)
+        return json.loads(strip_code_fences(content))
 
     @staticmethod
     def get_streaming_message(streamer):

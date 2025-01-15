@@ -40,3 +40,14 @@ def get_webpage_contents(url):
     response.raise_for_status()
     extracted_text = bare_extraction(response.text)
     return extracted_text["raw_text"]
+
+
+def strip_code_fences(text):
+    """
+    Some models, such as Phi-4, add an unnecessary code fence around JSON responses.
+    Use this function to remove them.
+    """
+    lines = text.splitlines()
+    if lines and lines[0].startswith("```") and lines[-1].startswith("```"):
+        return "\n".join(lines[1:-1])
+    return text
