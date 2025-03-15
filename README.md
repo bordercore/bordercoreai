@@ -10,7 +10,7 @@ Bordercore AI is a web-based AI chatbot and voice assistant supporting multiple 
 
 ## Text to Speech (TTS)
 
-Two TTS engines are supported: [AllTalk TTS](https://github.com/erew123/alltalk_tts) and [Piper](https://github.com/rhasspy/piper).
+Two TTS engines are supported: [Kokoro](https://kokorottsai.com/) and [AllTalk TTS](https://github.com/erew123/alltalk_tts).
 
 ## Speech to Text (STT)
 
