@@ -15,6 +15,20 @@
         "indent": ["error", 4],
         "max-len": "off",
         "quotes": [2, "double"],
-        "require-jsdoc": "off"
-    }
+        "require-jsdoc": "off",
+        "vue/html-indent": ["error", 4],
+        "vue/script-indent": ["error", 4, {
+            "baseIndent": 1,
+            "switchCase": 0,
+            "ignores": []
+        }],
+    },
+    "overrides": [
+        {
+            "files": ["*.vue"],
+            "rules": {
+                "indent": "off"
+            }
+        }
+    ]
 }

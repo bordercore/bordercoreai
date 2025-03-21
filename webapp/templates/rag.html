@@ -5,7 +5,7 @@
 {% endblock %}
 
 {% block input %}
-<input v-model="prompt" id="prompt" class="form-control" type="text" placeholder="Prompt" @keydown.enter.prevent="handleSendMessageRag" :disabled="! ragFileUploaded" />
+    <input v-model="prompt" id="prompt" class="form-control" type="text" placeholder="Prompt" @keydown.enter.prevent="handleSendMessageRag" :disabled="! ragFileUploaded" />
 {% endblock %}
 
 {% block chat_handler %}

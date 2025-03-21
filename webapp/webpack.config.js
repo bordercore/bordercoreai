@@ -6,7 +6,6 @@ const {VueLoaderPlugin} = require("vue-loader");
 const fs = require("fs");
 
 module.exports = (env, argv) => {
-
     config = {
         entry: {
             "static/css/styles": ["./static/css/styles.scss"],
@@ -33,11 +32,11 @@ module.exports = (env, argv) => {
             new webpack.NormalModuleReplacementPlugin(
                 /@optional-module/,
                 (resource) => {
-                    const modulePath = path.resolve(__dirname,  "./local/optional.js");
+                    const modulePath = path.resolve(__dirname, "./local/optional.js");
                     if (!fs.existsSync(modulePath)) {
                         resource.request = path.resolve(__dirname, "fallback.js");
                     }
-                }
+                },
             ),
 
             // Remove the boilerplate JS files from chunks of CSS only entries
@@ -79,12 +78,12 @@ module.exports = (env, argv) => {
                     test: /\.(png|jpe?g|gif)$/i,
                     type: "asset/resource",
                     generator: {
-                        filename: "static/img/[name][ext]"
-                    }
+                        filename: "static/img/[name][ext]",
+                    },
                 },
                 {
-                   test: /\.vue$/,
-                   loader: "vue-loader",
+                    test: /\.vue$/,
+                    loader: "vue-loader",
                 },
             ],
         },

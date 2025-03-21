@@ -9,7 +9,7 @@
             >
                 <a
                     class="nav-link"
-                   :href="navItem.link"
+                    :href="navItem.link"
                 >{{ navItem.label }}</a>
             </li>
         </ul>

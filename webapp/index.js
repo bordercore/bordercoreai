@@ -228,7 +228,7 @@ const app = createApp({
             if (image.type.indexOf("image/") >= 0) {
                 handleFileUploadVision(event);
             }
-        }
+        };
 
         function handleFileUpload(event) {
             const modal = new Modal("#modalProcessing");
@@ -322,7 +322,7 @@ const app = createApp({
                 imagePreview.src = event.target.result;
             };
             reader.readAsDataURL(visionImage.value);
-        }
+        };
 
         function handleSongBackward(event) {
             if (songIndex.value > 0) {
@@ -331,7 +331,7 @@ const app = createApp({
                 });
                 playSong(musicInfo.value[songIndex.value - 1]);
             }
-        }
+        };
 
         function handleSongForward(event) {
             if (songIndex.value < musicInfo.value.length - 1) {
@@ -340,7 +340,7 @@ const app = createApp({
                 });
                 playSong(musicInfo.value[songIndex.value + 1]);
             }
-        }
+        };
 
         function handleNewChat(event) {
             chatHistory.value.length = 1;
@@ -720,7 +720,7 @@ const app = createApp({
         async function loadOptionalModule(uuid) {
             return await import(/* webpackChunkName: "optional" */ "@optional-module");
             module.run(uuid);
-        }
+        };
 
         async function playSong(song) {
             chatHistory.value[chatHistory.value.length - 1].content = `Playing **${song.title}** by **${song.artist}**`;
@@ -765,7 +765,7 @@ const app = createApp({
 
             const i = Math.floor(Math.log(bytes) / Math.log(k));
             return `${parseInt((bytes / Math.pow(k, i)).toFixed(dm))} ${sizes[i]}`;
-        }
+        };
 
         onMounted(() => {
             const menuDiv = document.getElementById("menu");
