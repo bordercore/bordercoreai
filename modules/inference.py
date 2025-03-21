@@ -17,7 +17,8 @@ except ModuleNotFoundError:
     pass
 from api import settings
 from transformers import (AutoModelForCausalLM, AutoProcessor, AutoTokenizer,
-                          BitsAndBytesConfig, Qwen2VLForConditionalGeneration,
+                          BitsAndBytesConfig, Gemma3ForConditionalGeneration,
+                          Qwen2_5_VLForConditionalGeneration,
                           TextIteratorStreamer, pipeline)
 
 from modules.context import Context
@@ -182,7 +183,7 @@ class Inference:
             args["attn_implementation"] = "flash_attention_2"
 
         if self.get_config_option("qwen_vision", False):
-            self.model = Qwen2VLForConditionalGeneration.from_pretrained(
+            self.model = Qwen2_5_VLForConditionalGeneration.from_pretrained(
                 self.model_path,
                 **args
             )
