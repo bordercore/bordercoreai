@@ -41,7 +41,7 @@ def before_request_func():
 def main():
 
     return render_template(
-        "index.html",
+        "base.html",
         session=dict(session),
         settings={
             "music_uri": settings.music_uri,
@@ -51,23 +51,6 @@ def main():
         num_stars=NUM_STARS,
         control_value=CONTROL_VALUE,
         chat_endpoint="/chat"
-    )
-
-
-@app.route("/rag")
-def rag():
-
-    return render_template(
-        "rag.html",
-        session=dict(session),
-        settings={
-            "music_uri": settings.music_uri,
-            "sensor_uri": settings.sensor_uri,
-            "sensor_threshold": getattr(settings, "sensor_threshold", SENSOR_THRESHOLD_DEFAULT)
-        },
-        num_stars=NUM_STARS,
-        control_value=CONTROL_VALUE,
-        chat_endpoint="/rag/chat"
     )
 
 
@@ -108,23 +91,6 @@ def rag_chat():
             "status": "error",
             "message": "Document not found"
         }
-
-
-@app.route("/audio")
-def audio():
-
-    return render_template(
-        "audio.html",
-        session=dict(session),
-        settings={
-            "music_uri": settings.music_uri,
-            "sensor_uri": settings.sensor_uri,
-            "sensor_threshold": getattr(settings, "sensor_threshold", SENSOR_THRESHOLD_DEFAULT)
-        },
-        num_stars=NUM_STARS,
-        control_value=CONTROL_VALUE,
-        chat_endpoint="/audio/chat"
-    )
 
 
 @app.route("/audio/upload/file", methods=["POST"])
@@ -176,22 +142,6 @@ def audio_chat():
     audio = Audio()
     return audio.query_transcription(model_name, message, transcript)
 
-
-@app.route("/vision")
-def vision():
-
-    return render_template(
-        "vision.html",
-        session=dict(session),
-        settings={
-            "music_uri": settings.music_uri,
-            "sensor_uri": settings.sensor_uri,
-            "sensor_threshold": getattr(settings, "sensor_threshold", SENSOR_THRESHOLD_DEFAULT)
-        },
-        num_stars=NUM_STARS,
-        control_value=CONTROL_VALUE,
-        chat_endpoint="/vision/chat"
-    )
 
 
 @app.route("/vision/chat", methods=["POST"])

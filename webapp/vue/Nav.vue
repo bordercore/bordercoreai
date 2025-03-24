@@ -7,10 +7,11 @@
                 class="nav-item"
                 :class="{'active': navItem.label === active}"
             >
-                <a
+                <span
                     class="nav-link"
-                    :href="navItem.link"
-                >{{ navItem.label }}</a>
+                    href="#"
+                    @click="switchMode(navItem.label)"
+                >{{ navItem.label }}</span>
             </li>
         </ul>
     </nav>
@@ -21,12 +22,13 @@
     export default {
         name: "Nav",
         props: {
-            active: {
+            activeInitial: {
                 type: String,
                 default: "Chat",
             },
         },
-        setup(props) {
+        emits: ["mode"],
+        setup(props, ctx) {
             const navItems = [
                 {
                     "label": "Chat",
@@ -46,8 +48,17 @@
                 },
             ];
 
+            const active = ref(props.activeInitial);
+
+            function switchMode(mode) {
+                active.value = mode;
+                ctx.emit("mode", mode);
+            };
+
             return {
+                active,
                 navItems,
+                switchMode,
             };
         },
     };

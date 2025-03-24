@@ -27,7 +27,7 @@
                         </button>
                     </div>
                     <div class="text-nowrap mt-auto">
-                        {% block nav %}{% endblock %}
+                        <my-nav :active="mode" @mode="handleSwitchMode"></my-nav>
                     </div>
                 </div>
             </div>
@@ -36,7 +36,7 @@
                 <div class="me-3">
                     <form>
                         <div class="d-flex align-items-center mb-3">
-                            {% block input %}{% endblock %}
+                            <input v-model="prompt" id="prompt" class="form-control" type="text" placeholder="Prompt" @keydown.enter.prevent="handleSendMessage" :disabled="inputIsDisabled" />
                             <div v-if="chatHistory.length > 2 || error" class="icon text-primary ms-3" @click="handleRegenerate" data-bs-toggle="tooltip" data-placement="bottom" title="Regenerate Response">
                                 <font-awesome-icon icon="rotate-left" />
                             </div>
@@ -50,7 +50,61 @@
                             </transition>
                         </div>
                     </form>
-                    {% block content %}{% endblock %}
+                    <div v-if="mode === 'Audio' && !url" class="file-input-wrapper">
+                        <font-awesome-icon icon="paperclip" class="fa-lg text-primary ms-3 me-1"></font-awesome-icon> Add audio file
+                        <input type="file" class="file-input" @change="handleTranscribeAudio">
+                    </div>
+                    <div v-if="mode === 'Audio' && audioFileTranscript" class="d-flex align-items-center">
+                        <div>
+                            <font-awesome-icon icon="file-alt" class="fa-lg text-primary ms-3"></font-awesome-icon>
+                        </div>
+                        <div class="file-name ms-2">[[ uploadedFilename ]]</div>
+                        <div class="ms-2">•</div>
+                        <div class="ms-2" v-html="getAudioFileSize()"></div>
+                    </div>
+                    <div v-if="mode === 'Vision'" class="d-flex align-items-center mb-3">
+                        <div class="file-input-wrapper">
+                            <font-awesome-icon icon="paperclip" class="fa-lg text-primary ms-3 me-1"></font-awesome-icon> Add image
+                            <input type="file" name="image" class="file-input" accept=".jpg,.jpeg,.png,.gif"
+                                   @change="handleFileUploadVision">
+                        </div>
+                        <div v-if="visionImage" class="d-flex align-items-center">
+                            <div>
+                                <font-awesome-icon icon="file-alt" class="fa-lg text-primary ms-3"></font-awesome-icon>
+                            </div>
+                            <div class="file-name ms-2">[[ visionImage.name ]]</div>
+                            <div class="ms-2">•</div>
+                            <div class="ms-2" v-html="getVisionFileSize()"></div>
+                        </div>
+                    </div>
+                    <div v-if="mode === 'RAG'" class="d-flex align-items-center mb-3">
+                        <div class="file-input-wrapper">
+                            <font-awesome-icon icon="paperclip" class="fa-lg text-primary ms-3 me-1"></font-awesome-icon> Add content
+                            <input type="file" class="file-input" @change="handleFileUpload">
+                        </div>
+                        <div v-if="ragFileUploaded" class="d-flex align-items-center">
+                            <div>
+                                <font-awesome-icon icon="file-alt" class="fa-lg text-primary ms-3" />
+                            </div>
+                            <div class="file-name ms-2">[[ uploadedFilename ]]</div>
+                            <div class="ms-2">•</div>
+                            <div class="ms-2" v-html="getRagFileSize()"></div>
+                        </div>
+                    </div>
+                    <div v-if="url && !audioFileTranscript" class="d-flex align-items-center">
+                        <div>
+                            <font-awesome-icon icon="link" class="fa-lg text-primary ms-3" />
+                        </div>
+                        <div class="text-info ms-2">[[ url ]]</div>
+                    </div>
+                    <div class="transcript-container">
+                        <div v-if="mode === 'Audio' && audioFileTranscript" id="transcript" class="position-relative">
+                            <div id="copyIcon" class="hover-target d-none" @click="handleCopyText">
+                                <font-awesome-icon :icon="icon" class="fa-lg ms-3" />
+                            </div>
+                            [[ audioFileTranscript ]]
+                        </div>
+                    </div>
                     <div
                         class="container d-flex"
                         :class="{'drag-over': isDragOver}"
@@ -252,8 +306,6 @@
         <script id="session" type="application/json">{{ session|tojson|safe }}</script>
         <script id="settings" type="application/json">{{ settings|tojson|safe }}</script>
         <div id="controlValue" class="d-none">{{ control_value }}</div>
-        <div id="chatEndpoint" class="d-none">{{ chat_endpoint }}</div>
         <script src="{{ url_for('static', filename='js/javascript.bundle.js') }}"></script>
-        {% block chat_handler %}{% endblock %}
     </body>
 </html>

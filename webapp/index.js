@@ -50,7 +50,6 @@ const app = createApp({
         const session = JSON.parse(document.getElementById("session").textContent);
         const settings = JSON.parse(document.getElementById("settings").textContent);
         const controlValue = document.getElementById("controlValue").textContent;
-        const chatEndpoint = document.getElementById("chatEndpoint").textContent;
 
         const chatHistory = ref(
             [
@@ -71,6 +70,7 @@ const app = createApp({
         const clipboard = ref(null);
         const icon = ref("copy");
         const isDragOver = ref(false);
+        const mode = ref("Chat");
         const model = ref({});
         const modelList = ref([]);
         const musicInfo = ref(null);
@@ -105,10 +105,6 @@ const app = createApp({
 
         const sensorThreshold = settings.sensor_threshold ?? 100;
 
-        if (window.location.pathname === "/vision") {
-            prompt.value = "Describe this image";
-        }
-
         useEvent("ended", handleAudioEnded, {id: "player"});
         useEvent("pause", handleAudioPlayerPause, {id: "player"});
         useEvent("play", handleAudioPlayerPlay, {id: "player"});
@@ -122,12 +118,28 @@ const app = createApp({
             return musicInfo.value.findIndex((x) => x === currentSong.value);
         });
 
-        const chatHandlers = {
-            chat: sendMessageToChatbot,
-            audio: handleSendMessageAudio,
-            rag: handleSendMessageRag,
-            vision: handleSendMessageVision,
-        };
+        const inputIsDisabled = computed(() => {
+            if (mode.value === "Vision" && !visionImage.value) {
+                return true;
+            } else if (mode.value === "RAG" && !ragFileUploaded.value) {
+                return true;
+            } else {
+                return false;
+            }
+        });
+
+        const chatEndpoint = computed(() => {
+            switch (mode.value) {
+            case "Audio":
+                return "/audio/chat";
+            case "Vision":
+                return "/vision/chat";
+            case "RAG":
+                return "/rag/chat";
+            default:
+                return "/chat";
+            }
+        });
 
         function addClipboardToMessages() {
             if (!clipboard.value) {
@@ -350,7 +362,19 @@ const app = createApp({
             visionImage.value = null;
         };
 
-        function handleSendMessageRag(event) {
+        function handleSendMessage(event, message=prompt.value) {
+            if (mode.value === "Rag") {
+                handleSendMessageRag(event);
+            } else if (mode.value === "Audio") {
+                handleSendMessageAudio();
+            } else if (mode.value === "Vision") {
+                handleSendMessageVision();
+            } else {
+                sendMessageToChatbot(message);
+            }
+        };
+
+        function handleSendMessageRag() {
             const args = {
                 "sha1sum": sha1sum.value,
             };
@@ -401,15 +425,15 @@ const app = createApp({
         };
 
         function handleRegenerate(event) {
-            if (window.location.pathname === "/vision") {
+            if (mode.value === "Vision") {
                 handleSendMessageVision(null, true);
             } else {
                 sendMessageToChatbot(prompt.value, {}, true);
             }
         };
 
-        function handleSendMessage(event) {
-            sendMessageToChatbot(prompt.value);
+        function handleSwitchMode(modeNew) {
+            mode.value = modeNew;
         };
 
         function getModelInfo() {
@@ -460,7 +484,7 @@ const app = createApp({
                 }
             }, 500);
 
-            if (window.location.pathname === "/vision" &&
+            if (mode.value === "Vision" &&
                 getModelAttribute(model.value, "qwen_vision") === null) {
                 error.value = {"body": "Error: you must load a vision model to use this feature.", "variant": "danger"};
                 return;
@@ -502,7 +526,7 @@ const app = createApp({
 
             let start = null;
             let buffer = "";
-            fetch(chatEndpoint, {
+            fetch(chatEndpoint.value, {
                 method: "POST",
                 headers: {
                     "Responsetype": "stream",
@@ -615,8 +639,7 @@ const app = createApp({
                                 },
                             }).then((response) => {
                                 notice.value = "";
-                                const chatHandler = document.getElementById("chatHandler").textContent.trim();
-                                chatHandlers[chatHandler](response.data.input);
+                                handleSendMessage(null, response.data.input);
                                 // Delete the current audio in case we want to start a new recording later
                                 audioChunks = [];
                             });
@@ -655,7 +678,7 @@ const app = createApp({
                                 "Content-Type": "multipart/form-data",
                             },
                         }).then((response) => {
-                            sendMessageToChatbot(response.data.input);
+                            handleSendMessage(null, response.data.input);
                             // Delete the current audio in case we want to start a new recording later
                             audioChunks = [];
                         });
@@ -704,7 +727,7 @@ const app = createApp({
             if (isValidURL(paste)) {
                 url.value = paste;
                 prompt.value = "";
-                if (window.location.pathname === "/audio") {
+                if (mode.value === "Audio") {
                     handleTranscribeAudio(event, url.value);
                 }
                 return;
@@ -823,13 +846,16 @@ const app = createApp({
             handleSendMessageRag,
             handleSendMessageVision,
             handleSensorData,
+            handleSwitchMode,
             icon,
+            inputIsDisabled,
             isDragOver,
             getAudioFileSize,
             getRagFileSize,
             getMarkdown,
             getVisionFileSize,
             audioSpeed,
+            mode,
             model,
             modelList,
             microPhoneOn,
