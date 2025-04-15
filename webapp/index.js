@@ -696,7 +696,7 @@ const app = createApp({
 
             const voice = session.tts_voice;
             const outputFile = "stream_output.wav";
-            const streamingUrl = `http://${ttsHost.value}/?text=${response}&voice=${voice}&language=en&output_file=${outputFile}`;
+            const streamingUrl = `http://${ttsHost.value}/?text=${encodeURIComponent(response)}&voice=${voice}&language=en&output_file=${outputFile}`;
             audioElement.src = streamingUrl;
             audioMotion.gradient = "steelblue";
             audioMotion.volume = 1;
