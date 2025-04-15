@@ -660,6 +660,10 @@ const app = createApp({
 
             myvad = await vad.MicVAD.new({
                 onSpeechStart: () => {
+                    // Stop any TTS currently playing from previous responses
+                    audioElement.pause();
+                    audioElement.src = "";
+
                     notice.value = "Listening...";
                     audioMotion.gradient = "rainbow";
                     audioMotion.volume = 0;
