@@ -115,6 +115,7 @@ def main():
         temperature=get_temperature(payload),
         tool_name=payload.get("tool_name", None),
         tool_list=payload.get("tool_list", None),
+        enable_thinking=payload.get("enable_thinking", False),
         debug=True,
     )
     inference.model = model

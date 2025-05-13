@@ -122,7 +122,15 @@
                                 <div v-else class="role fw-bold me-2" v-cloak>
                                     AI
                                 </div>
-                                <div v-html="getMarkdown(message.content)">
+                                <div>
+                                    <div v-if="message.role === 'assistant' && enableThinking">
+                                        <thinking-message
+                                            ref="thinkingMessage"
+                                            :text="message.thinking"
+                                        ></thinking-message>
+                                    </div>
+                                    <div v-html="getMarkdown(message.content)">
+                                    </div>
                                 </div>
                             </div>
                             <div v-show="waiting" class="spinner-border ms-3 text-info" enter-active-class="animate__animated animate__fadeIn" role="status">
@@ -170,6 +178,11 @@
                         <div class="text-nowrap w-100 mt-3 me-5 mb-2">
                             <o-switch v-model="wolframAlpha">
                                 Wolfram Alpha
+                            </o-switch>
+                        </div>
+                        <div class="text-nowrap w-100 mt-3 me-5 mb-2">
+                            <o-switch v-model="enableThinking">
+                                Enable Thinking
                             </o-switch>
                         </div>
                     </div>

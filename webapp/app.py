@@ -200,8 +200,9 @@ def chat():
     temperature = float(request.form.get("temperature", 0.7))
     wolfram_alpha = request.form.get("wolfram_alpha", "false").lower() == "true"
     url = request.form.get("url", None)
+    enable_thinking = request.form.get("enable_thinking", "false").lower() == "true"
 
-    store_params_in_session(speak, audio_speed, temperature)
+    store_params_in_session(speak, audio_speed, temperature, enable_thinking)
 
     chatbot = ChatBot(
         model_name=model_name,
@@ -211,7 +212,8 @@ def chat():
         speak=False,
         temperature=temperature,
         wolfram_alpha=wolfram_alpha,
-        url=url
+        url=url,
+        enable_thinking=enable_thinking
     )
     return Response(stream_with_context(generate_stream(chatbot, message)), mimetype="text/plain")
 
@@ -282,9 +284,10 @@ def load_audio(file: (str, bytes), sr: int = 16000):
     return np.frombuffer(out, np.int16).flatten().astype(np.float32) / 32768.0
 
 
-def store_params_in_session(speak, audio_speed, temperature):
+def store_params_in_session(speak, audio_speed, temperature, enable_thinking):
 
     session.permanent = True
     session["speak"] = speak.lower() == "true"  # Convert "true" to True, for example
     session["audio_speed"] = audio_speed
     session["temperature"] = temperature
+    session["enable_thinking"] = enable_thinking

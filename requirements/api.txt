@@ -1,5 +1,5 @@
 anthropic==0.30.1
-autoawq @ git+https://github.com/casper-hansen/AutoAWQ.git@23d584c25d80381671293d2f08a9fadfa5a8986a
+autoawq @ git+https://github.com/casper-hansen/AutoAWQ.git@f0dd15d4aac6c9ccfdd17571b8633e370b1fa927
 bitsandbytes==0.45.2
 flash-attn==2.6.3
 Flask==3.0.0
@@ -14,4 +14,4 @@ qwen_vl_utils==0.0.8
 sounddevice==0.4.6
 torch==2.4.1
 torchvision==0.19.1
-transformers @ git+https://github.com/huggingface/transformers@46350f5eae87ac1d168ddfdc57a0b39b64b9a029
+transformers==4.51.0

@@ -241,6 +241,7 @@ class ChatBot():
             "tool_name": tool_name,
             "tool_list": tool_list,
             "temperature": self.TEMPERATURE,
+            "enable_thinking": self.args.get("enable_thinking", False),
             **args
         }
 

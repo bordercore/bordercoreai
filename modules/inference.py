@@ -39,7 +39,7 @@ class Inference:
     top_p = 0.95
     top_k = 40
 
-    def __init__(self, model_path, temperature=None, quantize=False, tool_name=None, tool_list=None, debug=False):
+    def __init__(self, model_path, temperature=None, quantize=False, tool_name=None, tool_list=None, enable_thinking=False, debug=False):
         self.context = Context()
         self.model_path = model_path
         self.model_name = Path(model_path).parts[-1]
@@ -49,6 +49,7 @@ class Inference:
         self.tokenizer = self.get_tokenizer()
         self.tool_name = tool_name
         self.tool_list = tool_list
+        self.enable_thinking = enable_thinking
         self.debug = debug
 
     def prepare_image(self, image_path):
@@ -93,7 +94,8 @@ class Inference:
                 messages,
                 tokenize=False,
                 add_generation_prompt=True,
-                tools=self.get_tools()
+                tools=self.get_tools(),
+                enable_thinking=self.enable_thinking
             )
 
         template_type = self.get_template_type()

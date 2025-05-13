@@ -5,14 +5,14 @@ import "bootstrap";
 import "bootstrap/dist/css/bootstrap.min.css";
 import {library} from "@fortawesome/fontawesome-svg-core";
 import {FontAwesomeIcon} from "@fortawesome/vue-fontawesome";
-import {faBackward, faCheck, faCopy, faExclamationTriangle, faFileAlt, faForward, faLink, faPaperclip, faPaste, faPlus, faRotateLeft} from "@fortawesome/free-solid-svg-icons";
-library.add(faBackward, faCheck, faCopy, faExclamationTriangle, faFileAlt, faForward, faLink, faPaperclip, faPaste, faPlus, faRotateLeft);
+import {faBackward, faCheck, faChevronUp, faCopy, faExclamationTriangle, faFileAlt, faForward, faGear, faLink, faPaperclip, faPaste, faPlus, faRotateLeft} from "@fortawesome/free-solid-svg-icons";
+library.add(faBackward, faCheck, faChevronUp, faCopy, faExclamationTriangle, faFileAlt, faForward, faGear, faLink, faPaperclip, faPaste, faPlus, faRotateLeft);
 import "media-chrome";
 import {Modal} from "bootstrap";
 import Oruga from "@oruga-ui/oruga-next";
 import "@oruga-ui/oruga-next/dist/oruga-full.css";
 import "@oruga-ui/oruga-next/dist/oruga-full-vars.css";
-import {computed, createApp, nextTick, onBeforeUnmount, onMounted, ref} from "vue";
+import {computed, createApp, nextTick, onBeforeUnmount, onMounted, ref, watch} from "vue";
 import Slider from "./src/components/Slider.vue";
 
 import AudioMotionAnalyzer from "audiomotion-analyzer";
@@ -27,6 +27,7 @@ const EventBus = {
     $emit: (...args) => emitter.emit(...args),
 };
 window.EventBus = EventBus;
+window.FontAwesomeIcon = FontAwesomeIcon;
 window.computed = computed;
 window.onMounted = onMounted;
 window.onBeforeUnmount = onBeforeUnmount;
@@ -36,6 +37,8 @@ import Nav from "./vue/Nav.vue";
 window.MyNav = Nav;
 import StreamMessages from "./vue/StreamMessages.vue";
 window.StreamMessages = StreamMessages;
+import ThinkingMessage from "./vue/ThinkingMessage.vue";
+window.ThinkingMessage = ThinkingMessage;
 
 const app = createApp({
     name: "ChatBot",
@@ -45,6 +48,7 @@ const app = createApp({
         MyNav,
         Slider,
         StreamMessages,
+        ThinkingMessage,
     },
     setup() {
         const session = JSON.parse(document.getElementById("session").textContent);
@@ -98,10 +102,20 @@ const app = createApp({
         let audioChunks = [];
         let myvad = null;
         const wolframAlpha = ref(false);
+        const enableThinking = ref(false);
         const url = ref("");
 
         const sliderSpeed = ref(null);
         const sliderTemperature = ref(null);
+        const thinkingMessage = ref(null);
+        let thinkingStarted = null;
+
+        watch(thinkingMessage, (newValue, oldValue) => {
+            if (newValue) {
+                thinkingStarted = Date.now();
+                newValue[0].startSpinning();
+            }
+        });
 
         const sensorThreshold = settings.sensor_threshold ?? 100;
 
@@ -477,23 +491,38 @@ const app = createApp({
             audioMotion.volume = 0;
         };
 
-        async function sendMessageToChatbot(message, args={}, regenerate=false) {
+        function removeThinkingField(array) {
+            return array.map((obj) => {
+                // Create a new object by copying properties
+                const newObj = {...obj};
+
+                // Remove the "thinking" property if it exists
+                if ("thinking" in newObj) {
+                    delete newObj.thinking;
+                }
+
+                return newObj;
+            });
+        };
+
+        async function sendMessageToChatbot(message, args = {}, regenerate = false) {
             setTimeout(function() {
                 if (!error.value) {
                     waiting.value = true;
                 }
             }, 500);
 
-            if (mode.value === "Vision" &&
-                getModelAttribute(model.value, "qwen_vision") === null) {
-                error.value = {"body": "Error: you must load a vision model to use this feature.", "variant": "danger"};
+            if (
+                mode.value === "Vision" &&
+                    getModelAttribute(model.value, "qwen_vision") === null
+            ) {
+                error.value = {
+                    body: "Error: you must load a vision model to use this feature.",
+                    variant: "danger",
+                };
                 return;
             }
 
-            // If we're regenerating the response, remove the last response from
-            //   chatHistory and resubmit everything else to the AI.
-            // Don't remove the last response after an error, since in that case
-            //   there is no response to remove.
             if (regenerate) {
                 if (!error.value) {
                     chatHistory.value.pop();
@@ -503,17 +532,18 @@ const app = createApp({
             }
 
             error.value = "";
-            const messages = addClipboardToMessages();
+            const messages = removeThinkingField(addClipboardToMessages());
             prompt.value = "";
 
             const payload = {
-                "message": JSON.stringify(messages),
-                "model": model.value,
-                "audio_speed": audioSpeed.value,
-                "speak": speak.value,
-                "temperature": temperature.value,
-                "wolfram_alpha": wolframAlpha.value,
-                "url": url.value,
+                message: JSON.stringify(messages),
+                model: model.value,
+                audio_speed: audioSpeed.value,
+                speak: speak.value,
+                temperature: temperature.value,
+                wolfram_alpha: wolframAlpha.value,
+                enable_thinking: enableThinking.value,
+                url: url.value,
                 ...args,
             };
 
@@ -526,10 +556,12 @@ const app = createApp({
 
             let start = null;
             let buffer = "";
+            let revealed = enableThinking.value ? false : true;
+
             fetch(chatEndpoint.value, {
                 method: "POST",
                 headers: {
-                    "Responsetype": "stream",
+                    Responsetype: "stream",
                 },
                 body: formData,
             })
@@ -541,32 +573,59 @@ const app = createApp({
                     const reader = response.body.getReader();
                     const decoder = new TextDecoder("utf-8");
 
-                    // Create an empty message. We'll fill it in as data streams in.
                     addMessage("assistant", "");
+
                     return new ReadableStream({
                         start(controller) {
                             function push() {
-                                reader.read().then(({done, value}) => {
-                                    if (done) {
-                                        controller.close();
-                                        return;
-                                    }
-                                    waiting.value = false;
-                                    const content = decoder.decode(value, {stream: true});
+                                reader
+                                    .read()
+                                    .then(({done, value}) => {
+                                        if (done) {
+                                            controller.close();
+                                            return;
+                                        }
 
-                                    // If the response begins with the magic control value, we know
-                                    //  this is JSON and not a message to display to the user. So
-                                    //  Add to an accumulating buffer. If the buffer already exist,
-                                    //  the same situation applies.
-                                    if (content.slice(0, controlValue.length) === controlValue || buffer) {
+                                        waiting.value = false;
+                                        const content = decoder.decode(value, {
+                                            stream: true,
+                                        });
+
                                         buffer += content;
-                                    } else {
-                                        chatHistory.value[chatHistory.value.length - 1].content += content;
-                                    }
 
-                                    controller.enqueue(value);
-                                    push();
-                                })
+                                        // Handle JSON control payloads if any
+                                        if (
+                                            buffer.slice(0, controlValue.length) ===
+                                                controlValue
+                                        ) {
+                                            // Do nothing here; will be handled in final .then()
+                                        } else if (!revealed) {
+                                            const thinkCompleteMatch = buffer.match(
+                                                /^<think>(.*?)<\/think>([\s\S]*)/s,
+                                            );
+                                            if (thinkCompleteMatch) {
+                                                const realContent = thinkCompleteMatch[2];
+                                                chatHistory.value[
+                                                    chatHistory.value.length - 1
+                                                ].content += realContent;
+                                                chatHistory.value[
+                                                    chatHistory.value.length - 1
+                                                ].thinking = thinkCompleteMatch[1];
+                                                revealed = true;
+                                                if (thinkingMessage.value) {
+                                                    thinkingMessage.value[0].setTitle(`Thought for ${Math.floor((Date.now() - thinkingStarted) / 1000)} seconds`);
+                                                    thinkingMessage.value[0].stopSpinning();
+                                                }
+                                            }
+                                        } else {
+                                            chatHistory.value[
+                                                chatHistory.value.length - 1
+                                            ].content += content;
+                                        }
+
+                                        controller.enqueue(value);
+                                        push();
+                                    })
                                     .catch((error) => {
                                         console.error(error);
                                         controller.error(error);
@@ -585,21 +644,33 @@ const app = createApp({
                     const wordCount = result.trim().split(/\s+/).length;
                     const speed = Math.round(wordCount / (elapsed / 1000));
                     console.log(`Speed: ${speed} t/s`);
-                    if (buffer) {
-                        const jsonObject = JSON.parse(buffer.slice(controlValue.length));
+
+                    if (
+                        buffer.slice(0, controlValue.length) === controlValue &&
+                            buffer.length > controlValue.length
+                    ) {
+                        const jsonObject = JSON.parse(
+                            buffer.slice(controlValue.length),
+                        );
                         if (jsonObject?.music_info) {
                             if (jsonObject.music_info.length > 0) {
                                 musicInfo.value = jsonObject.music_info;
                                 playSong(musicInfo.value[0]);
                             } else {
-                                chatHistory.value[chatHistory.value.length - 1].content = "No music found.";
+                                chatHistory.value[
+                                    chatHistory.value.length - 1
+                                ].content = "No music found.";
                             }
                         }
                     }
+
                     doTTS(result);
                 })
                 .catch((exception) => {
-                    error.value = {"body": "Error communicating with webapp.", "variant": "danger"};
+                    error.value = {
+                        body: "Error communicating with webapp.",
+                        variant: "danger",
+                    };
                     console.error("Error:", exception);
                 });
         };
@@ -829,6 +900,7 @@ const app = createApp({
             chatHistory,
             clipboard,
             currentSong,
+            enableThinking,
             error,
             filteredChatHistory,
             handleChangeModel,
@@ -875,6 +947,7 @@ const app = createApp({
             songIndex,
             speak,
             temperature,
+            thinkingMessage,
             ttsHost,
             uploadedFilename,
             url,

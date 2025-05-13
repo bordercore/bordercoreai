@@ -32,6 +32,10 @@ Support for the **Qwen2-VL** vision models for analyzing images. Upload images o
 
 Supports using Wolfram Alpha for mathematical calculations.
 
+## Thinking
+
+Supports some so-called "thinking" models, such as Qwen3.
+
 ## Chat with Web Pages
 
 Paste a URL into the input box and say "Summarize" or something similar.
