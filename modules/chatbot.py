@@ -71,6 +71,7 @@ class ChatBot():
         self.context = Context()
         self.model_name = model_name
         self.args = args
+
         if "temperature" in self.args:
             self.TEMPERATURE = self.args["temperature"]
 
@@ -164,19 +165,18 @@ class ChatBot():
 
         if request_type["category"] == "lights":
             return control_lights(self.model_name, messages[-1]["content"])
-        elif request_type["category"] == "music":
+        if request_type["category"] == "music":
             return play_music(self.model_name, messages[-1]["content"])
-        elif request_type["category"] == "weather":
+        if request_type["category"] == "weather":
             return get_weather_info(self.model_name, messages[-1]["content"])
-        elif request_type["category"] == "calendar":
+        if request_type["category"] == "calendar":
             return get_schedule(self.model_name, messages[-1]["content"])
-        elif request_type["category"] == "agenda":
+        if request_type["category"] == "agenda":
             return self.get_agenda()
-        elif request_type["category"] == "math":
+        if request_type["category"] == "math":
             func_call = WolframAlphaFunctionCall(self.model_name)
             return func_call.run(messages[-1]["content"])
-        else:
-            return self.send_message_to_model(messages, replace_context=True)
+        return self.send_message_to_model(messages, replace_context=True)
 
     def send_message_to_model(self, messages, args={}, prune=True, replace_context=False, tool_name=None, tool_list=None):
         if type(messages) is not list:
@@ -208,7 +208,8 @@ class ChatBot():
         messages = self.context.get()
 
         # Anthropic will reject messages with extraneous attributes
-        [x.pop("id", None) for x in messages]
+        for x in messages:
+            x.pop("id", None)
 
         # Anthropic requires any system messages to be provided
         #  as a separate parameter and not be present in the
@@ -245,7 +246,11 @@ class ChatBot():
             **args
         }
 
-        response = requests.post(URI_CHAT, json=request, stream=True)
+        response = requests.post(
+            URI_CHAT,
+            json=request,
+            stream=True,
+        )
         content = ""
         for chunk in response.iter_content(chunk_size=1024):
             if chunk:  # Filter out keep-alive new chunks
