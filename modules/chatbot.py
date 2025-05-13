@@ -275,7 +275,14 @@ class ChatBot():
         if settings.debug:
             print(f"{content=}")
 
-        return json.loads(strip_code_fences(content))
+        response_json = None
+        try:
+            response_json = json.loads(strip_code_fences(content))
+        except json.decoder.JSONDecodeError:
+            print(f"Content generating invalid JSON: {content}")
+            raise ValueError("Request type response is not proper JSON.")
+
+        return response_json
 
     @staticmethod
     def get_streaming_message(streamer):
