@@ -173,7 +173,8 @@ class ChatBot():
             return get_schedule(self.model_name, messages[-1]["content"])
         if request_type["category"] == "agenda":
             return self.get_agenda()
-        if request_type["category"] == "math":
+        # Don't use Wolfram Alpha if the user has enabled thinking
+        if request_type["category"] == "math" and not self.args.get("enable_thinking", False):
             func_call = WolframAlphaFunctionCall(self.model_name)
             return func_call.run(messages[-1]["content"])
         return self.send_message_to_model(messages, replace_context=True)
