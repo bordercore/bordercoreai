@@ -17,7 +17,7 @@ except ModuleNotFoundError:
     pass
 from api import settings
 from transformers import (AutoModelForCausalLM, AutoProcessor, AutoTokenizer,
-                          BitsAndBytesConfig, Gemma3ForConditionalGeneration,
+                          BitsAndBytesConfig,
                           Qwen2_5_VLForConditionalGeneration,
                           TextIteratorStreamer, pipeline)
 
@@ -127,15 +127,14 @@ class Inference:
         if not os.path.isdir(self.model_path) or not os.path.isfile(config_file):
             return {}
 
-        with open(config_file, "r") as file:
-            config = json.load(file)
-        return config
+        with open(config_file, "r", encoding="utf-8") as file:
+            model_config = json.load(file)
+        return model_config
 
     def get_config_option(self, name, default=None):
         if name in self.model_info[self.model_name]:
             return self.model_info[self.model_name][name]
-        else:
-            return default
+        return default
 
     def get_quantization_config(self):
         if self.quantize or self.model_info[self.model_name].get("quantize", None):
@@ -144,16 +143,14 @@ class Inference:
                 bnb_4bit_compute_dtype=torch.bfloat16,
                 bnb_4bit_quant_type="nf4",
             )
-        else:
-            return None
+        return None
 
     def get_tools(self):
         if self.tool_name:
             main_module = importlib.import_module(f"modules.{self.tool_name}")
             func = getattr(main_module, self.tool_list)
             return [func]
-        else:
-            return None
+        return None
 
     def get_tokenizer(self):
         if self.get_config_option("qwen_vision", False):
@@ -264,8 +261,7 @@ class Inference:
             output_text = self.tokenizer.batch_decode(
                 generated_ids_trimmed, skip_special_tokens=True, clean_up_tokenization_spaces=False
             )
-            for x in output_text:
-                yield x
+            yield from output_text
             return
 
         streamer = TextIteratorStreamer(
@@ -286,8 +282,7 @@ class Inference:
         )
         thread.start()
 
-        for x in streamer:
-            yield x
+        yield from streamer
         thread.join()
 
 
@@ -321,12 +316,12 @@ if __name__ == "__main__":
         help="The image to identify by a vision model",
     )
 
-    args = parser.parse_args()
-    model_path = args.model_path
-    quantize = args.quantize
-    tts = args.tts
-    stt = args.stt
-    image = args.image
+    config = parser.parse_args()
+    model_path = config.model_path
+    quantize = config.quantize
+    tts = config.tts
+    stt = config.stt
+    image = config.image
 
     inference = Inference(
         model_path=model_path,
@@ -341,8 +336,8 @@ if __name__ == "__main__":
         messages = inference.prepare_image(image)
         inference.context.add(messages, True)
         response = inference.generate(inference.context.get())
-        for x in response:
-            print(x, end="", flush=True)
+        for chunk in response:
+            print(chunk, end="", flush=True)
         print()
     else:
         chatbot.interactive(inference=inference)

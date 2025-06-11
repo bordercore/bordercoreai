@@ -1,5 +1,6 @@
 import json
 from datetime import datetime, timedelta
+from pathlib import Path
 
 import dateutil.parser
 import httplib2
@@ -13,11 +14,14 @@ from .rfc3339 import now as now_rfc3339
 
 def get_schedule(model_name, command):
 
+    credentials_path = Path("./calendar_credentials.json")
     try:
-        with open("./calendar_credentials.json", "r") as file:
+        with credentials_path.open("r", encoding="utf-8") as file:
             cal_info = json.load(file)
-    except FileNotFoundError:
-        raise Exception("Calendar credentials not found.")
+    except FileNotFoundError as e:
+        raise FileNotFoundError(f"Credential file not found: {credentials_path}") from e
+    except json.JSONDecodeError as e:
+        raise ValueError(f"Invalid JSON in credentials file: {e}") from e
 
     credentials = OAuth2Credentials(
         cal_info["access_token"],
@@ -41,13 +45,13 @@ def get_schedule(model_name, command):
         developerKey="",
         cache_discovery=False
     )
-    timeMax = datetime.now() + timedelta(days=7)
+    time_max = datetime.now() + timedelta(days=7)
 
     events = service.events().list(calendarId=settings.calendar_id,
                                    orderBy="startTime",
                                    singleEvents=True,
                                    timeMin=str(now_rfc3339()).replace(" ", "T"),
-                                   timeMax=datetimetostr(timeMax)).execute()
+                                   timeMax=datetimetostr(time_max)).execute()
 
     prompt = f"""
     I will give you a series of events on my personal calendar. I want you to answer a question about my calendar based on those events. For reference assume today is {datetime.now().strftime("%A")}. The question is the following: {command}. Answer that question based on the following list of calendar events. If there are no events on my calendar, say some variation of the following: 'Your calendar is clear today'.

@@ -23,7 +23,7 @@ def get_devices():
 
     url = f"{URL_BASE}/devices"
 
-    response = requests.get(url, headers=headers)
+    response = requests.get(url, headers=headers, timeout=10)
 
     return response.json()
 
@@ -130,8 +130,8 @@ if __name__ == "__main__":
         default="llama",
         help="The model to use: chatgpt or llama"
     )
-    args = parser.parse_args()
-    model = args.model
+    config = parser.parse_args()
+    model = config.model
 
     device_list = get_devices()
 

@@ -161,14 +161,16 @@ if __name__ == "__main__":
         default=False
     )
 
-    args = parser.parse_args()
-    model_name = args.model_name
-    filename = args.filename
-    timestamps = args.timestamps
+    config = parser.parse_args()
+    model_name = config.model_name
+    filename = config.filename
+    timestamps = config.timestamps
 
     audio = Audio(model_name=model_name)
     result = audio.transcribe(filename=filename, timestamps=timestamps)
 
-    output_filename = f"{Path(filename).stem}.txt"
-    with Path(output_filename).open("w") as file:
-        file.write(result)
+    input_path = Path(filename)
+    output_path = input_path.with_suffix(".txt")
+
+    with output_path.open("w", encoding="utf-8") as file:
+        file.write(str(result))

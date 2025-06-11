@@ -38,10 +38,9 @@ class DiscordBot(discord.Client, ChatBot):
         if content == "info":
             await message.channel.send("Model: " + ChatBot.get_model_info())
             return
-        elif content == "reset":
-            await message.channel.send("Deleting current context...")
-            self.context.clear()
-            return
+        await message.channel.send("Deleting current context...")
+        self.context.clear()
+        return
 
         if message.author == self.user:
             return

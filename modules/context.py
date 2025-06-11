@@ -10,7 +10,7 @@ class Context():
     def add(self, message, prune=True, role="user", replace_context=False):
         # If we're passing in a list, assume this is the complete
         # chat history and replace it with the new
-        if type(message) is list:
+        if isinstance(message, list):
             if replace_context:
                 self.context = message
             else:

@@ -65,7 +65,7 @@ model_info = get_model_info()
 class ChatBot():
 
     ASSISTANT_NAME = "Luna"
-    TEMPERATURE = 0.7
+    temperature = 0.7
 
     def __init__(self, model_name=None, **args):
         self.context = Context()
@@ -73,7 +73,7 @@ class ChatBot():
         self.args = args
 
         if "temperature" in self.args:
-            self.TEMPERATURE = self.args["temperature"]
+            self.temperature = self.args["temperature"]
 
     # Remove punctuation and whitespace from the end of the string.
     def sanitize_string(self, input_string):
@@ -90,7 +90,7 @@ class ChatBot():
         voice = settings.tts_voice
         output_file = "stream_output.wav"
         url = f"http://{host}/api/tts-generate-streaming?text={text}&voice={voice}&language=en&output_file={output_file}"
-        response = requests.get(url, stream=True)
+        response = requests.get(url, stream=True, timeout=20)
 
         if response.status_code == HttpStatus.OK:
             with tempfile.NamedTemporaryFile(suffix=".wav") as temp_file:
@@ -120,14 +120,12 @@ class ChatBot():
                 if not active:
                     if self.args["assistant"] and user_input.lower() != self.get_wake_word():
                         continue
-                    else:
-                        active = True
-                        self.speak("I'm listening")
-                        continue
-                else:
-                    if user_input.lower() == "goodbye":
-                        self.speak("Be seeing you")
-                        sys.exit(0)
+                    active = True
+                    self.speak("I'm listening")
+                    continue
+                if user_input.lower() == "goodbye":
+                    self.speak("Be seeing you")
+                    sys.exit(0)
                 print(f"\b\b\b\b\b\b\b\b\b\b\b\b{user_input}")
             else:
                 try:
@@ -179,8 +177,9 @@ class ChatBot():
             return func_call.run(messages[-1]["content"])
         return self.send_message_to_model(messages, replace_context=True)
 
-    def send_message_to_model(self, messages, args={}, prune=True, replace_context=False, tool_name=None, tool_list=None):
-        if type(messages) is not list:
+    def send_message_to_model(self, messages, args=None, prune=True, replace_context=False, tool_name=None, tool_list=None):
+        args = args or {}
+        if not isinstance(messages, list):
             messages = [{"role": "user", "content": messages}]
         self.context.add(messages, prune, replace_context)
 
@@ -242,7 +241,7 @@ class ChatBot():
             "messages": self.context.get(),
             "tool_name": tool_name,
             "tool_list": tool_list,
-            "temperature": self.TEMPERATURE,
+            "temperature": self.temperature,
             "enable_thinking": self.args.get("enable_thinking", False),
             **args
         }
@@ -251,6 +250,7 @@ class ChatBot():
             URI_CHAT,
             json=request,
             stream=True,
+            timeout=20
         )
         content = ""
         for chunk in response.iter_content(chunk_size=1024):
@@ -284,18 +284,15 @@ class ChatBot():
         response_json = None
         try:
             response_json = json.loads(strip_code_fences(content))
-        except json.decoder.JSONDecodeError:
+        except ValueError as e:
             print(f"Content generating invalid JSON: {content}")
-            raise ValueError("Request type response is not proper JSON.")
+            raise ValueError("Request type response is not proper JSON.") from e
 
         return response_json
 
     @staticmethod
     def get_streaming_message(streamer):
-        response = ""
-        for x in streamer:
-            response += x
-        return response
+        return "".join(streamer)
 
     @staticmethod
     def get_model_attribute(model_name, attribute):
@@ -303,15 +300,16 @@ class ChatBot():
            model_name in model_info and \
            attribute in model_info[model_name]:
             return model_info[model_name][attribute]
+        return None
 
     @staticmethod
     def get_model_info():
-        response = requests.get(URI_MODEL_INFO)
+        response = requests.get(URI_MODEL_INFO, timeout=10)
         return response.json()["model_name"]
 
     @staticmethod
     def get_model_list():
-        response = requests.get(URI_MODEL_LIST)
+        response = requests.get(URI_MODEL_LIST, timeout=10)
 
         model_names = response.json()["model_names"]
 
@@ -350,8 +348,7 @@ class ChatBot():
         current_model = ChatBot.get_model_info()
         if current_model == model:
             return {"status": "OK"}
-        else:
-            return requests.post(URI_MODEL_LOAD, json={"model_name": model}).json()
+        return requests.post(URI_MODEL_LOAD, json={"model_name": model}, timeout=120).json()
 
 
 if __name__ == "__main__":
@@ -386,20 +383,20 @@ if __name__ == "__main__":
         help="STT (Speech to Text)",
         action="store_true"
     )
-    args = parser.parse_args()
-    assistant = args.assistant
-    mode = args.mode
-    tts = args.tts
-    stt = args.stt
+    config = parser.parse_args()
+    assistant = config.assistant
+    mode = config.mode
+    tts = config.tts
+    stt = config.stt
 
     if mode == "interactive":
-        chatbot = ChatBot(assistant=args.assistant, debug=args.debug, stt=stt, tts=tts)
+        chatbot = ChatBot(assistant=config.assistant, debug=config.debug, stt=stt, tts=tts)
         chatbot.interactive()
     elif mode == "chatgpt":
         from modules.discord_bot import DiscordBot
-        client = DiscordBot(model_name="gpt-4o-mini")
-        client.run_bot()
+        bot = DiscordBot(model_name="gpt-4o-mini")
+        bot.run_bot()
     elif mode == "localllm":
         from modules.discord_bot import DiscordBot
-        client = DiscordBot()
-        client.run_bot()
+        bot = DiscordBot()
+        bot.run_bot()

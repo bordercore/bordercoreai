@@ -33,7 +33,7 @@ class FunctionCall():
         try:
             tool_call = json.loads(json_string)
         except json.JSONDecodeError as e:
-            raise JsonParsingError(f"Error decoding JSON: {e}")
+            raise JsonParsingError(f"Error decoding JSON: {e}") from e
 
         tool_call_id = self.generate_random_id()
 

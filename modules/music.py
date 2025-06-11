@@ -34,7 +34,7 @@ Here is the instruction:
     }
     content = json.loads(ChatBot.get_streaming_message(response))
     query_string = urllib.parse.urlencode(content)
-    music_info = requests.get(f"{URI_MUSIC}?{query_string}", headers=headers).json()
+    music_info = requests.get(f"{URI_MUSIC}?{query_string}", headers=headers, timeout=20).json()
 
     if settings.debug:
         print(music_info)
