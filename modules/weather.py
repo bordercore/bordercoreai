@@ -1,12 +1,28 @@
+"""
+This module provides a function to retrieve current weather conditions and forecasts
+from a remote API, format the information into natural language, and generate a
+response to a weather-related question using a language model.
+"""
+
 import requests
 from api import settings
 
 URI_API = f"http://api.weatherapi.com/v1/forecast.json?key={settings.weather_api_key}&q=02138&days=1&aqi=yes&alerts=yes"
 
 
-def get_weather_info(model_name, command):
+def get_weather_info(model_name: str, command: str) -> str:
+    """
+    Retrieve current weather and forecast data from a weather API, construct a weather summary,
+    and generate a response to a weather-related question using a language model.
 
-    weather_info = requests.get(URI_API).json()
+    Args:
+        model_name: The name of the language model to use for generating a response.
+        command: The weather-related question or command from the user.
+
+    Returns:
+        The generated response from the language model, based on the weather data.
+    """
+    weather_info = requests.get(URI_API, timeout=20).json()
 
     weather_description = f"""
     The current temperature is {int(weather_info['current']['temp_f'])}.
