@@ -7,6 +7,7 @@ import tempfile
 import urllib.parse
 import warnings
 
+print(f"-------------- {sys.path}")
 import anthropic
 import openai
 import pysbd
