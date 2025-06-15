@@ -188,3 +188,7 @@ To run the unit tests:
 ```bash
 pytest
 ```
+
+---
+
+[![Run Pytest](https://github.com/bordercore/bordercoreai/actions/workflows/pytest.yml/badge.svg)](https://github.com/bordercore/bordercoreai/actions/workflows/pytest.yml)
