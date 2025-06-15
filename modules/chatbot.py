@@ -35,12 +35,6 @@ except ImportError:
     pass
 
 
-HOST = settings.api_host
-URI_CHAT = f"{HOST}/v1/chat/completions"
-URI_MODEL_INFO = f"{HOST}/v1/internal/model/info"
-URI_MODEL_LIST = f"{HOST}/v1/internal/model/list"
-URI_MODEL_LOAD = f"{HOST}/v1/internal/model/load"
-
 RED = "\033[91m"
 COLOR_GREEN = "\033[32m"
 COLOR_BLUE = "\033[34m"
@@ -74,6 +68,16 @@ class ChatBot():
 
         if "temperature" in self.args:
             self.temperature = self.args["temperature"]
+
+    @staticmethod
+    def get_api_endpoints() -> dict[str, str]:
+        host = settings.api_host
+        return {
+            "CHAT": f"{host}/v1/chat/completions",
+            "MODEL_INFO": f"{host}/v1/internal/model/info",
+            "MODEL_LIST": f"{host}/v1/internal/model/list",
+            "MODEL_LOAD": f"{host}/v1/internal/model/load",
+        }
 
     # Remove punctuation and whitespace from the end of the string.
     def sanitize_string(self, input_string):
@@ -246,8 +250,10 @@ class ChatBot():
             **args
         }
 
+        endpoints = ChatBot.get_api_endpoints()
+
         response = requests.post(
-            URI_CHAT,
+            endpoints["CHAT"],
             json=request,
             stream=True,
             timeout=20
@@ -304,12 +310,14 @@ class ChatBot():
 
     @staticmethod
     def get_model_info():
-        response = requests.get(URI_MODEL_INFO, timeout=10)
+        endpoints = ChatBot.get_api_endpoints()
+        response = requests.get(endpoints["MODEL_INFO"], timeout=10)
         return response.json()["model_name"]
 
     @staticmethod
     def get_model_list():
-        response = requests.get(URI_MODEL_LIST, timeout=10)
+        endpoints = ChatBot.get_api_endpoints()
+        response = requests.get(endpoints["MODEL_LIST"], timeout=10)
 
         model_names = response.json()["model_names"]
 
@@ -348,7 +356,12 @@ class ChatBot():
         current_model = ChatBot.get_model_info()
         if current_model == model:
             return {"status": "OK"}
-        return requests.post(URI_MODEL_LOAD, json={"model_name": model}, timeout=120).json()
+        endpoints = ChatBot.get_api_endpoints()
+        return requests.post(
+            endpoints["MODEL_LOAD"],
+            json={"model_name": model},
+            timeout=120
+        ).json()
 
 
 if __name__ == "__main__":
