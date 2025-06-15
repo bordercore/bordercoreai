@@ -18,8 +18,6 @@ from .chatbot import ChatBot
 DISCORD_TOKEN = os.environ.get("DISCORD_TOKEN")
 DISCORD_CHANNEL_ID = settings.discord_channel_id
 
-openai.api_key = settings.openai_api_key
-
 
 class DiscordBot(discord.Client, ChatBot):
     """

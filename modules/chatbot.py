@@ -42,8 +42,6 @@ COLOR_RESET = "\033[0m"
 
 CONTROL_VALUE = "9574724975"
 
-openai.api_key = settings.openai_api_key
-
 seg = pysbd.Segmenter(language="en", clean=False)
 
 logger = logging.getLogger("whisper_mic")
@@ -198,6 +196,7 @@ class ChatBot():
         return response
 
     def send_message_to_model_openai(self, args):
+        openai.api_key = settings.openai_api_key
         response = openai.ChatCompletion.create(
             model=self.model_name,
             messages=self.context.get(),
