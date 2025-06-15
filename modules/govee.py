@@ -8,10 +8,6 @@ from http_constants.status import HttpStatus
 from requests.exceptions import HTTPError
 
 URL_BASE = "https://developer-api.govee.com/v1"
-headers = {
-    "Govee-API-Key": settings.govee_api_key,
-    "Content-Type": "application/json"
-}
 
 CYAN = "\033[36m"
 MAGENTA = "\033[35m"
@@ -19,11 +15,18 @@ RED = "\033[91m"
 END = "\033[0m"
 
 
+def get_headers():
+    return {
+        "Govee-API-Key": settings.govee_api_key,
+        "Content-Type": "application/json"
+    }
+
+
 def get_devices():
 
     url = f"{URL_BASE}/devices"
 
-    response = requests.get(url, headers=headers, timeout=10)
+    response = requests.get(url, headers=get_headers(), timeout=10)
 
     return response.json()
 
@@ -91,7 +94,7 @@ Here is the instruction:
 def control_device(payload):
     url = f"{URL_BASE}/devices/control"
 
-    response = requests.put(url, headers=headers, data=payload)
+    response = requests.put(url, headers=get_headers(), data=payload)
 
     if response.status_code != HttpStatus.OK:
         print(response.json()["message"])
