@@ -13,8 +13,6 @@ import urllib.parse
 import requests
 from api import settings
 
-URI_MUSIC = f"{settings.music_api_host}/api/search/music"
-
 
 def play_music(model_name: str, command: str) -> str:
     """
@@ -49,12 +47,13 @@ Here is the instruction:
     response = chatbot.send_message_to_model(prompt, args)
 
     # Get the song info from the music API
+    uri_music = f"{settings.music_api_host}/api/search/music"
     headers = {
         "Authorization": f"Token {os.environ.get('DRF_TOKEN_JERRELL')}",
     }
     content = json.loads(ChatBot.get_streaming_message(response))
     query_string = urllib.parse.urlencode(content)
-    music_info = requests.get(f"{URI_MUSIC}?{query_string}", headers=headers, timeout=20).json()
+    music_info = requests.get(f"{uri_music}?{query_string}", headers=headers, timeout=20).json()
 
     if settings.debug:
         print(music_info)
