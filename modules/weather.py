@@ -7,8 +7,6 @@ response to a weather-related question using a language model.
 import requests
 from api import settings
 
-URI_API = f"http://api.weatherapi.com/v1/forecast.json?key={settings.weather_api_key}&q=02138&days=1&aqi=yes&alerts=yes"
-
 
 def get_weather_info(model_name: str, command: str) -> str:
     """
@@ -22,7 +20,8 @@ def get_weather_info(model_name: str, command: str) -> str:
     Returns:
         The generated response from the language model, based on the weather data.
     """
-    weather_info = requests.get(URI_API, timeout=20).json()
+    uri_api = f"http://api.weatherapi.com/v1/forecast.json?key={settings.weather_api_key}&q=02138&days=1&aqi=yes&alerts=yes"
+    weather_info = requests.get(uri_api, timeout=20).json()
 
     weather_description = f"""
     The current temperature is {int(weather_info['current']['temp_f'])}.
