@@ -23,11 +23,13 @@ def get_model_info() -> Dict[str, Any]:
     Returns:
         dict: A dictionary containing model configuration data.
     """
-    models_file_path = Path(__file__).resolve().parent.parent / Path("models.yaml")
-    with open(models_file_path, "r", encoding="utf-8") as file:
-        model_info = yaml.safe_load(file)
-
-    return model_info
+    try:
+        models_file_path = Path(__file__).resolve().parent.parent / Path("models.yaml")
+        with open(models_file_path, "r", encoding="utf-8") as file:
+            model_info = yaml.safe_load(file)
+        return model_info
+    except FileNotFoundError:
+        return {}
 
 
 def sort_models(
