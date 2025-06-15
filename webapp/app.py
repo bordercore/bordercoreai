@@ -78,8 +78,9 @@ def rag_chat():
     speak = request.form.get("speak", "false")
     audio_speed = float(request.form.get("audio_speed", 1.0))
     temperature = float(request.form.get("temperature", 0.7))
+    enable_thinking = request.form.get("enable_thinking", "false").lower() == "true"
 
-    store_params_in_session(speak, audio_speed, temperature)
+    store_params_in_session(speak, audio_speed, temperature, enable_thinking)
 
     chromdb = Path(__file__).resolve().parent.parent / "chromdb"
     rag = RAG(model_name, chromdb=str(chromdb))
@@ -136,8 +137,9 @@ def audio_chat():
     speak = request.form.get("speak", "false")
     audio_speed = float(request.form.get("audio_speed", 1.0))
     temperature = float(request.form.get("temperature", 0.7))
+    enable_thinking = request.form.get("enable_thinking", "false").lower() == "true"
 
-    store_params_in_session(speak, audio_speed, temperature)
+    store_params_in_session(speak, audio_speed, temperature, enable_thinking)
 
     audio = Audio()
     return audio.query_transcription(model_name, message, transcript)
@@ -153,8 +155,9 @@ def audio_vision():
     speak = request.form.get("speak", "false")
     audio_speed = float(request.form.get("audio_speed", 1.0))
     temperature = float(request.form.get("temperature", 0.7))
+    enable_thinking = request.form.get("enable_thinking", "false").lower() == "true"
 
-    store_params_in_session(speak, audio_speed, temperature)
+    store_params_in_session(speak, audio_speed, temperature, enable_thinking)
 
     vision = Vision(model_name, message, image)
     return vision()
