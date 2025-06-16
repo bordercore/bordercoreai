@@ -618,19 +618,19 @@ if __name__ == "__main__":
         action="store_true"
     )
     config = parser.parse_args()
-    assistant = config.assistant
-    mode = config.mode
-    tts = config.tts
-    stt = config.stt
+    arg_assistant = config.assistant
+    arg_mode = config.mode
+    arg_tts = config.tts
+    arg_stt = config.stt
 
-    if mode == "interactive":
-        chatbot = ChatBot(assistant=config.assistant, debug=config.debug, stt=stt, tts=tts)
+    if arg_mode == "interactive":
+        chatbot = ChatBot(assistant=arg_assistant, debug=config.debug, stt=arg_stt, tts=arg_tts)
         chatbot.interactive()
-    elif mode == "chatgpt":
+    elif arg_mode == "chatgpt":
         from modules.discord_bot import DiscordBot
         bot = DiscordBot(model_name="gpt-4o-mini")
         bot.run_bot()
-    elif mode == "localllm":
+    elif arg_mode == "localllm":
         from modules.discord_bot import DiscordBot
         bot = DiscordBot()
         bot.run_bot()

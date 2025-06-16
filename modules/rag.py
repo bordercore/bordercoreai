@@ -263,7 +263,7 @@ if __name__ == "__main__":
     arg_use_openai_embeddings = config.openai
     arg_filename = config.filename
     arg_text = config.text
-    list_collections = config.list
+    arg_list_collections = config.list
 
     if arg_filename and arg_text:
         raise ValueError("Error: you cannot specify both a filename and text.")
@@ -273,7 +273,7 @@ if __name__ == "__main__":
     rag = RAG(arg_model_name, use_openai_embeddings=arg_use_openai_embeddings)
     rag.add_document(text=arg_text.encode("utf-8") if arg_text else None, filename=arg_filename, name=arg_filename or "stdin")
 
-    if list_collections:
+    if arg_list_collections:
         rag.list_collections()
     else:
         rag.run(arg_force_index)

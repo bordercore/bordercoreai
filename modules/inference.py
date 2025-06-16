@@ -421,9 +421,9 @@ if __name__ == "__main__":
     config = parser.parse_args()
     arg_model_path = config.model_path
     arg_quantize = config.quantize
-    tts = config.tts
-    stt = config.stt
-    image = config.image
+    arg_tts = config.tts
+    arg_stt = config.stt
+    arg_image = config.image
 
     inference = Inference(
         model_path=arg_model_path,
@@ -432,10 +432,10 @@ if __name__ == "__main__":
     inference.load_model()
 
     from modules.chatbot import ChatBot
-    chatbot = ChatBot(stt=stt, tts=tts)
+    chatbot = ChatBot(stt=arg_stt, tts=arg_tts)
 
-    if image:
-        image_messages = inference.prepare_image(image)
+    if arg_image:
+        image_messages = inference.prepare_image(arg_image)
         inference.context.add(image_messages, True)
         response = inference.generate(inference.context.get())
         for chunk in response:
