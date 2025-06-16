@@ -1,3 +1,20 @@
+"""
+This module defines the `ChatBot` class, which provides an interactive interface for
+communicating with language models via local or remote APIs (e.g., OpenAI, Anthropic).
+It supports multiple capabilities including:
+
+- Message routing based on intent classification
+- Integration with tools like music playback, smart lighting, calendar, and weather
+- Support for voice interaction (STT and TTS)
+- Streaming output from model completions
+- Model management (listing, loading, metadata retrieval)
+
+The chatbot can operate in different modes including interactive CLI or as a backend
+for services like Discord bots.
+
+Configuration is handled via command-line arguments and the `api.settings` module.
+"""
+
 import argparse
 import json
 import logging
@@ -6,6 +23,8 @@ import sys
 import tempfile
 import urllib.parse
 import warnings
+from typing import (Any, Dict, Generator, Iterable, Iterator, List, Optional,
+                    Union)
 
 import anthropic
 import openai
@@ -55,11 +74,22 @@ model_info = get_model_info()
 
 
 class ChatBot():
+    """
+    ChatBot provides an interactive command-line interface to Luna, supporting
+    local LLMs, OpenAI, and Anthropic APIs, as well as TTS, STT, and various tools.
+    """
 
     ASSISTANT_NAME = "Luna"
     temperature = 0.7
 
-    def __init__(self, model_name=None, **args):
+    def __init__(self, model_name: Optional[str] = None, **args: Any) -> None:
+        """
+        Initialize a ChatBot instance.
+
+        Args:
+            model_name: Name of the model to use (API or local).
+            **args: Arbitrary keyword arguments to configure behavior (e.g., temperature, stt, tts).
+        """
         self.context = Context()
         self.model_name = model_name
         self.args = args
@@ -69,6 +99,12 @@ class ChatBot():
 
     @staticmethod
     def get_api_endpoints() -> dict[str, str]:
+        """
+        Return the endpoints for local LLM HTTP API interactions.
+
+        Returns:
+            Mapping of endpoint keys to full URL strings.
+        """
         host = settings.api_host
         return {
             "CHAT": f"{host}/v1/chat/completions",
@@ -78,15 +114,35 @@ class ChatBot():
         }
 
     # Remove punctuation and whitespace from the end of the string.
-    def sanitize_string(self, input_string):
+    def sanitize_string(self, input_string: str) -> str:
+        """
+        Remove trailing punctuation and whitespace from a string.
+
+        Args:
+            input_string: The raw string to sanitize.
+        Returns:
+            A trimmed string without trailing punctuation.
+        """
         while input_string and input_string[-1] in string.punctuation:
             input_string = input_string[:-1]
         return input_string.strip()
 
-    def get_wake_word(self):
+    def get_wake_word(self) -> str:
+        """
+        Get the lowercase wake word for activating voice mode.
+
+        Returns:
+            The wake word string.
+        """
         return f"{self.ASSISTANT_NAME}".lower()
 
-    def speak(self, text):
+    def speak(self, text: str) -> None:
+        """
+        Perform text-to-speech for the given text and play audio.
+
+        Args:
+            text: The text string to vocalize.
+        """
         text = urllib.parse.quote(text)
         host = settings.tts_host
         voice = settings.tts_voice
@@ -106,8 +162,13 @@ class ChatBot():
         else:
             print(f"Failed to get audio: status_code = {response.status_code}")
 
-    def interactive(self, inference=None):
+    def interactive(self, inference: Optional[Any] = None) -> None:
+        """
+        Enter an interactive loop reading user input and printing AI responses.
 
+        Args:
+            inference: Optional inference engine providing generate() method.
+        """
         if self.args["stt"]:
             print("Loading STT package...")
             mic = WhisperMic(model="small", energy=100)
@@ -153,7 +214,15 @@ class ChatBot():
             except ConnectionError:
                 print("Error: API refusing connections.")
 
-    def handle_message(self, messages):
+    def handle_message(self, messages: List[Dict[str, Any]]) -> Any:
+        """
+        Route the last message to the appropriate tool or model.
+
+        Args:
+            messages: List of message dicts with keys 'role' and 'content'.
+        Returns:
+            The result from the selected tool or model streaming output.
+        """
         if self.args.get("wolfram_alpha", False):
             request_type = {"category": "math"}
         elif self.args.get("url", None):
@@ -179,7 +248,27 @@ class ChatBot():
             return func_call.run(messages[-1]["content"])
         return self.send_message_to_model(messages, replace_context=True)
 
-    def send_message_to_model(self, messages, args=None, prune=True, replace_context=False, tool_name=None, tool_list=None):
+    def send_message_to_model(self,
+                              messages: Union[str, List[Dict[str, Any]]],
+                              args: Optional[Dict[str, Any]] = None,
+                              prune: bool = True,
+                              replace_context: bool = False,
+                              tool_name: Optional[str] = None,
+                              tool_list: Optional[List[str]] = None) -> Iterator[str]:
+        """
+        Send messages to the configured model or tool, updating the conversation context.
+
+        Args:
+            messages: A string or a list of message dicts (each with 'role' and 'content').
+            args: Optional dict of additional parameters for the model call.
+            prune: Whether to prune old messages from context before adding new ones.
+            replace_context: Whether to replace the entire context with these messages.
+            tool_name: Name of a specific tool to invoke for a local LLM, if applicable.
+            tool_list: Optional list of tools available for local LLM invocation.
+
+        Returns:
+            An iterator yielding streamed response chunks from the selected model or tool.
+        """
         args = args or {}
         if not isinstance(messages, list):
             messages = [{"role": "user", "content": messages}]
@@ -195,7 +284,15 @@ class ChatBot():
 
         return response
 
-    def send_message_to_model_openai(self, args):
+    def send_message_to_model_openai(self, args: Dict[str, Any]) -> Iterator[str]:
+        """
+        Send the current conversation context to OpenAI's ChatCompletion API and stream the response.
+
+        Args:
+            args: Additional keyword arguments for openai.ChatCompletion.create (e.g., temperature).
+        Yields:
+            Streamed content chunks from the OpenAI API response.
+        """
         openai.api_key = settings.openai_api_key
         response = openai.ChatCompletion.create(
             model=self.model_name,
@@ -207,7 +304,21 @@ class ChatBot():
             content = chunk["choices"][0]["delta"].get("content", "")
             yield content
 
-    def send_message_to_model_anthropic(self, args):
+    def send_message_to_model_anthropic(self, args: Dict[str, Any]) -> Generator[str, None, None]:
+        """
+        Sends a message to an Anthropic language model and yields streamed response chunks.
+
+        This method prepares a message list according to Anthropic's API requirements,
+        removing unsupported attributes and separating out the system prompt. It then
+        sends the request with streaming enabled and yields the text content of each
+        streamed chunk as it arrives.
+
+        Args:
+            args: Additional keyword arguments to be passed to the Anthropic `messages.create()` method.
+
+        Yields:
+            The text content of each streamed response chunk from the Anthropic model.
+        """
         messages = self.context.get()
 
         # Anthropic will reject messages with extraneous attributes
@@ -238,7 +349,27 @@ class ChatBot():
             if chunk.type == "content_block_delta":
                 yield chunk.delta.text
 
-    def send_message_to_model_local_llm(self, args, tool_name, tool_list):
+    def send_message_to_model_local_llm(
+        self,
+        args: Dict[str, Any],
+        tool_name: Optional[str],
+        tool_list: Optional[List[str]]
+    ) -> Generator[str, None, None]:
+        """
+        Sends a request to a locally hosted LLM API endpoint and yields streamed response chunks.
+
+        Constructs a request payload using the current context and additional parameters,
+        sends it to the local model's `/chat` endpoint, and streams the response back.
+        The full decoded content is also appended to the conversation context.
+
+        Args:
+            args: Additional arguments to be merged into the request JSON.
+            tool_name: The name of the tool to include in the payload.
+            tool_list: The tool's function list or identifier string.
+
+        Yields:
+            The text content of each streamed response chunk as UTF-8 decoded strings.
+        """
         request = {
             "mode": "instruct",
             "messages": self.context.get(),
@@ -264,7 +395,18 @@ class ChatBot():
                 yield chunk.decode("utf-8")
         self.context.add(content, role="assistant")
 
-    def get_agenda(self):
+    def get_agenda(self) -> str:
+        """
+        Retrieves a combined daily agenda consisting of weather and calendar information.
+
+        This method sends queries to obtain the current weather and the day's calendar schedule
+        using the model associated with this instance. It processes the responses using
+        ChatBot's streaming message handler and combines them into a single formatted string.
+
+        Returns:
+            A string containing the weather information followed by the calendar schedule,
+            separated by two newlines.
+        """
         response = get_weather_info(self.model_name, "What's the weather today?")
         weather_content = ChatBot.get_streaming_message(response)
 
@@ -273,7 +415,20 @@ class ChatBot():
 
         return f"{weather_content}\n\n{calendar_content}"
 
-    def get_request_type(self, message):
+    def get_request_type(self, message: str) -> Dict[str, Any]:
+        """
+        Classifies a user instruction into a predefined request type category.
+
+        This method constructs a prompt to classify the given instruction into one of several
+        categories such as "music", "lights", "weather", "calendar", "agenda", "math", or "other".
+        It sends the prompt to a chatbot and expects a single-line JSON response with a "category" field.
+
+        Args:
+            message: The user's instruction to classify.
+
+        Returns:
+            A dictionary with a single key "category" indicating the classified request type.
+        """
         prompt = """
         I want you to put this instruction into one of multiple categories. If the instruction is to play some music, the category is "music". If the instruction is to control lights, the category is "lights". If the instruction is asking about the weather or the moon's phase, the category is "weather". If the instruction is asking about today's calendar, or is something like 'What's happening today' or 'What is my schedule', the category is "calendar". If the instruction is asking about today's agenda, or something like 'What's my update?', the category is "agenda". If the instruction is asking for mathematical calculation, the category is "math". For everything else, the category is "other". Give me the category in JSON format with the field name "category". Do not format the JSON by including newlines. Give only the JSON and no additional characters, text, or comments. Here is the instruction:
         """
@@ -296,11 +451,30 @@ class ChatBot():
         return response_json
 
     @staticmethod
-    def get_streaming_message(streamer):
+    def get_streaming_message(streamer: Iterable[str]) -> str:
+        """
+        Joins and returns a complete string from a stream of text chunks.
+
+        Args:
+            streamer: An iterable of string chunks (e.g., from a streaming LLM response).
+
+        Returns:
+            A single concatenated string formed by joining all elements of the stream.
+        """
         return "".join(streamer)
 
     @staticmethod
-    def get_model_attribute(model_name, attribute):
+    def get_model_attribute(model_name: Optional[str], attribute: str) -> Optional[Any]:
+        """
+        Retrieves a specific attribute for a given model from the model_info dictionary.
+
+        Args:
+            model_name: The name of the model to look up.
+            attribute: The attribute key to retrieve for the given model.
+
+        Returns:
+            The value of the attribute if it exists, otherwise None.
+        """
         if model_name and \
            model_name in model_info and \
            attribute in model_info[model_name]:
@@ -308,13 +482,32 @@ class ChatBot():
         return None
 
     @staticmethod
-    def get_model_info():
+    def get_model_info() -> str:
+        """
+        Retrieves the current model name from the model info API.
+
+        Sends a GET request to the local `/model_info` endpoint and extracts
+        the model name from the JSON response.
+
+        Returns:
+            A string representing the current model's name.
+        """
         endpoints = ChatBot.get_api_endpoints()
         response = requests.get(endpoints["MODEL_INFO"], timeout=10)
         return response.json()["model_name"]
 
     @staticmethod
-    def get_model_list():
+    def get_model_list() -> List[Dict[str, Any]]:
+        """
+        Retrieves and returns a sorted list of available models, including both local and API-based ones.
+
+        Fetches the model list from the server endpoint, appends additional models defined via API config,
+        transforms them into a standardized list of dictionaries, and returns the sorted result.
+
+        Returns:
+            A sorted list of dictionaries, where each dictionary contains metadata about a model,
+            such as "model", "name", "type", and optional "qwen_vision".
+        """
         endpoints = ChatBot.get_api_endpoints()
         response = requests.get(endpoints["MODEL_LIST"], timeout=10)
 
@@ -337,7 +530,23 @@ class ChatBot():
         )
 
     @staticmethod
-    def get_personal_model_names(model_list):
+    def get_personal_model_names(model_list: List[str]) -> List[Dict[str, Any]]:
+        """
+        Maps a list of model names to detailed model metadata dictionaries.
+
+        For each model in the input list, looks up details in the `model_info` dictionary
+        and constructs a standardized representation.
+
+        Args:
+            model_list: A list of model identifier strings.
+
+        Returns:
+            A list of dictionaries, each containing keys:
+                - "model": the model identifier
+                - "name": the display name
+                - "type": the model's type (e.g., "local", "api")
+                - "qwen_vision": vision support flag (optional)
+        """
         models = [
             {
                 "model": x,
@@ -351,7 +560,21 @@ class ChatBot():
         return models
 
     @staticmethod
-    def load_model(model):
+    def load_model(model: str) -> Dict[str, Any]:
+        """
+        Loads the specified model if it is not already active.
+
+        Compares the requested model name to the currently active model.
+        If they differ, sends a request to the backend to load the specified model.
+        Otherwise, returns a success status without reloading.
+
+        Args:
+            model: The name of the model to load.
+
+        Returns:
+            A dictionary representing the JSON response from the backend.
+            If the model is already loaded, returns {"status": "OK"}.
+        """
         current_model = ChatBot.get_model_info()
         if current_model == model:
             return {"status": "OK"}
@@ -364,7 +587,6 @@ class ChatBot():
 
 
 if __name__ == "__main__":
-
     parser = argparse.ArgumentParser(description="")
     parser.add_argument(
         "-a",
