@@ -1,3 +1,10 @@
+"""
+This module defines an `Inference` class that loads, configures, and interacts with
+language and vision models (e.g., Qwen, LLaMA, Gemma). It supports quantization,
+custom templates, image-based prompts, and streaming text generation.
+The module can be executed as a script to run inference interactively or with an image.
+"""
+
 import argparse
 import base64
 import importlib
@@ -5,6 +12,7 @@ import json
 import os
 from pathlib import Path
 from threading import Thread
+from typing import Any, Generator, Optional
 
 import torch
 import transformers
@@ -33,13 +41,35 @@ COLOR_RESET = "\033[0m"
 
 
 class Inference:
+    """Encapsulates model loading, image handling, prompt templating, and inference."""
 
     max_new_tokens = 4096
     temperature_default = 0.7
     top_p = 0.95
     top_k = 40
 
-    def __init__(self, model_path, temperature=None, quantize=False, tool_name=None, tool_list=None, enable_thinking=False, debug=False):
+    def __init__(
+        self,
+        model_path: str,
+        temperature: Optional[float] = None,
+        quantize: bool = False,
+        tool_name: Optional[str] = None,
+        tool_list: Optional[str] = None,
+        enable_thinking: bool = False,
+        debug: bool = False,
+    ) -> None:
+        """
+        Initialize the Inference class with model configuration and options.
+
+        Args:
+            model_path: Path to the model directory.
+            temperature: Sampling temperature for generation.
+            quantize: Whether to use 4-bit quantization.
+            tool_name: Optional tool module to invoke.
+            tool_list: Function name to use from the tool module.
+            enable_thinking: Whether to enable tool reasoning mode.
+            debug: Enable debug mode for verbose output.
+        """
         self.context = Context()
         self.model_path = model_path
         self.model_name = Path(model_path).parts[-1]
@@ -51,8 +81,18 @@ class Inference:
         self.tool_list = tool_list
         self.enable_thinking = enable_thinking
         self.debug = debug
+        self.model: Optional[Any] = None
 
-    def prepare_image(self, image_path):
+    def prepare_image(self, image_path: str) -> list[dict[str, Any]]:
+        """
+        Read and encode an image into a base64 string and format it into a prompt.
+
+        Args:
+            image_path: Path to the image file.
+
+        Returns:
+            A list containing a single message dict formatted for vision models.
+        """
 
         path = Path(image_path)
 
@@ -81,14 +121,30 @@ class Inference:
 
         return messages
 
-    def get_template_type(self):
+    def get_template_type(self) -> str:
+        """
+        Determine which chat template type to use for message formatting.
+
+        Returns:
+            A string indicating the template type, such as 'llama2' or 'chatml'.
+        """
         if self.model_name in self.model_info and "template" in self.model_info[self.model_name]:
             return self.model_info[self.model_name]["template"]
 
         print("No chat template found in models.yaml. Using llama2.")
         return "llama2"
 
-    def get_prompt_template(self, tokenizer, messages):
+    def get_prompt_template(self, tokenizer: Any, messages: list[dict[str, Any]]) -> str:
+        """
+        Construct a text prompt based on input messages using a chat template.
+
+        Args:
+            tokenizer: The tokenizer with optional chat_template support.
+            messages: A list of role-based chat message dictionaries.
+
+        Returns:
+            A formatted prompt string suitable for model inference.
+        """
         if hasattr(tokenizer, "chat_template"):
             return tokenizer.apply_chat_template(
                 messages,
@@ -121,7 +177,13 @@ class Inference:
                 template += f"{message['content']}</s>"
         return template
 
-    def get_model_config(self):
+    def get_model_config(self) -> dict[str, Any]:
+        """
+        Load the model's configuration from its config.json file.
+
+        Returns:
+            A dictionary containing model configuration parameters.
+        """
         config_file = f"{self.model_path}/config.json"
 
         if not os.path.isdir(self.model_path) or not os.path.isfile(config_file):
@@ -131,12 +193,28 @@ class Inference:
             model_config = json.load(file)
         return model_config
 
-    def get_config_option(self, name, default=None):
+    def get_config_option(self, name: str, default: Any = None) -> Any:
+        """
+        Retrieve a model configuration value from the model_info dictionary.
+
+        Args:
+            name: The key of the configuration option.
+            default: The fallback value if the key is not present.
+
+        Returns:
+            The value of the configuration option or the default.
+        """
         if name in self.model_info[self.model_name]:
             return self.model_info[self.model_name][name]
         return default
 
-    def get_quantization_config(self):
+    def get_quantization_config(self) -> Optional[BitsAndBytesConfig]:
+        """
+        Build and return a quantization configuration if enabled or required.
+
+        Returns:
+            A BitsAndBytesConfig object for 4-bit quantization or None.
+        """
         if self.quantize or self.model_info[self.model_name].get("quantize", None):
             return BitsAndBytesConfig(
                 load_in_4bit=True,
@@ -145,14 +223,26 @@ class Inference:
             )
         return None
 
-    def get_tools(self):
-        if self.tool_name:
+    def get_tools(self) -> Optional[list[Any]]:
+        """
+        Dynamically import and return callable tool functions if configured.
+
+        Returns:
+            A list containing the tool function or None if not specified.
+        """
+        if self.tool_name and self.tool_list:
             main_module = importlib.import_module(f"modules.{self.tool_name}")
             func = getattr(main_module, self.tool_list)
             return [func]
         return None
 
-    def get_tokenizer(self):
+    def get_tokenizer(self) -> Any:
+        """
+        Load and return the tokenizer or processor for the specified model.
+
+        Returns:
+            A tokenizer or processor instance compatible with the model.
+        """
         if self.get_config_option("qwen_vision", False):
             tokenizer = AutoProcessor.from_pretrained(self.model_path)
         else:
@@ -168,7 +258,10 @@ class Inference:
 
         return tokenizer
 
-    def load_model(self):
+    def load_model(self) -> None:
+        """
+        Load the model into memory based on its type and configuration.
+        """
         model_config = self.get_model_config()
         args = {
             "device_map": {"": 0},
@@ -201,10 +294,16 @@ class Inference:
                 **args
             )
 
-    def generate(self, messages):
-        # Set the system message based on the user's settings. If it already exists,
-        #  override it. Otherwise add it. If tools are being used,
-        #  make no changes.
+    def generate(self, messages: list[dict[str, Any]]) -> Generator[str, None, None]:
+        """
+        Generate a streaming text response from the model given input messages.
+
+        Args:
+            messages: A list of chat-style messages, each with a role and content.
+
+        Yields:
+            Segments of the model's generated response as strings.
+        """
         if not self.tool_name:
             try:
                 index = next(i for i, item in enumerate(messages) if item["role"] == "system")
@@ -252,6 +351,9 @@ class Inference:
                 return_tensors="pt",
             )
             inputs = inputs.to("cuda")
+
+            if self.model is None:
+                raise RuntimeError("Model must be loaded before generating output.")
 
             # Qwen2 Vision doesn't yet support pipeline streaming
             generated_ids = self.model.generate(**inputs, max_new_tokens=128)
@@ -317,15 +419,15 @@ if __name__ == "__main__":
     )
 
     config = parser.parse_args()
-    model_path = config.model_path
-    quantize = config.quantize
+    arg_model_path = config.model_path
+    arg_quantize = config.quantize
     tts = config.tts
     stt = config.stt
     image = config.image
 
     inference = Inference(
-        model_path=model_path,
-        quantize=quantize,
+        model_path=arg_model_path,
+        quantize=arg_quantize,
     )
     inference.load_model()
 
@@ -333,8 +435,8 @@ if __name__ == "__main__":
     chatbot = ChatBot(stt=stt, tts=tts)
 
     if image:
-        messages = inference.prepare_image(image)
-        inference.context.add(messages, True)
+        image_messages = inference.prepare_image(image)
+        inference.context.add(image_messages, True)
         response = inference.generate(inference.context.get())
         for chunk in response:
             print(chunk, end="", flush=True)
