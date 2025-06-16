@@ -1,4 +1,10 @@
-# Inspired by https://medium.com/@richardhayes777/using-chatgpt-to-control-hue-lights-37729959d94f
+"""
+This module provides functions to control Govee smart lights using natural language commands.
+It fetches device information, builds prompts for a language model to generate control JSON,
+and sends the resulting commands to the Govee API.
+
+Inspired by https://medium.com/@richardhayes777/using-chatgpt-to-control-hue-lights-37729959d94f
+"""
 
 import argparse
 
@@ -15,15 +21,26 @@ RED = "\033[91m"
 END = "\033[0m"
 
 
-def get_headers():
+def get_headers() -> dict[str, str]:
+    """
+    Build the request headers for the Govee API.
+
+    Returns:
+        A dictionary containing the API key and content type.
+    """
     return {
         "Govee-API-Key": settings.govee_api_key,
         "Content-Type": "application/json"
     }
 
 
-def get_devices():
+def get_devices() -> dict:
+    """
+    Fetch the list of Govee devices associated with the API key.
 
+    Returns:
+        A dictionary containing the device data.
+    """
     url = f"{URL_BASE}/devices"
 
     response = requests.get(url, headers=get_headers(), timeout=10)
@@ -31,9 +48,17 @@ def get_devices():
     return response.json()
 
 
-def balance_braces(input_string):
-    # Remove excessive close braces from an LLM response.
-    #  Useful if the LLM returns bogus JSON.
+def balance_braces(input_string: str) -> str:
+    """
+    Remove extra closing braces from a malformed JSON string.
+    Useful if the LLM returns bogus JSON.
+
+    Args:
+        input_string: The original string with possible unbalanced braces.
+
+    Returns:
+        A corrected JSON string with balanced braces.
+    """
     open_count = 0
     close_count = 0
 
@@ -55,7 +80,16 @@ def balance_braces(input_string):
     return input_string
 
 
-def build_prompt(device_list):
+def build_prompt(device_list: dict) -> str:
+    """
+    Build an instruction prompt for the LLM including all known devices.
+
+    Args:
+        device_list: Dictionary of Govee devices from the API.
+
+    Returns:
+        A formatted string prompt suitable for model input.
+    """
     device_string = ""
     for device in reversed(device_list["data"]["devices"]):
         device_string += f"One device has id '{device['device']}' with model name '{device['model']}'. I will refer to this device as '{device['deviceName']}'.\n"
@@ -91,17 +125,33 @@ Here is the instruction:
 """
 
 
-def control_device(payload):
+def control_device(payload: str) -> None:
+    """
+    Send a control command to the Govee API using the given payload.
+
+    Args:
+        payload: A JSON string describing the light control command.
+    """
     url = f"{URL_BASE}/devices/control"
 
-    response = requests.put(url, headers=get_headers(), data=payload)
+    response = requests.put(url, headers=get_headers(), data=payload, timeout=20)
 
     if response.status_code != HttpStatus.OK:
         print(response.json()["message"])
 
 
-def control_lights(model_name, command, device_list=None):
+def control_lights(model_name: str, command: str, device_list: dict | None = None) -> str:
+    """
+    Use a language model to interpret a command and control Govee lights.
 
+    Args:
+        model_name: The model name to use for instruction parsing.
+        command: The user's natural language lighting instruction.
+        device_list: Optional pre-fetched list of devices; if not provided, will fetch.
+
+    Returns:
+        A confirmation string.
+    """
     if not device_list:
         device_list = get_devices()
 
@@ -124,7 +174,6 @@ def control_lights(model_name, command, device_list=None):
 
 
 if __name__ == "__main__":
-
     parser = argparse.ArgumentParser(description="")
     parser.add_argument(
         "-m",
@@ -134,11 +183,10 @@ if __name__ == "__main__":
         help="The model to use: chatgpt or llama"
     )
     config = parser.parse_args()
-    model = config.model
+    arg_model = config.model
+    arg_device_list = get_devices()
 
-    device_list = get_devices()
-
-    print("Devices available: " + ", ".join([x["deviceName"] for x in device_list["data"]["devices"]]))
+    print("Devices available: " + ", ".join([x["deviceName"] for x in arg_device_list["data"]["devices"]]))
     while True:
-        command = input(f"{MAGENTA}Command:{END} ")
-        control_lights(model, command, device_list=device_list)
+        user_command = input(f"{MAGENTA}Command:{END} ")
+        control_lights(arg_model, user_command, device_list=arg_device_list)
