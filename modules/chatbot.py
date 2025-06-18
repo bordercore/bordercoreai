@@ -165,54 +165,93 @@ class ChatBot():
     def interactive(self, inference: Optional[Any] = None) -> None:
         """
         Enter an interactive loop reading user input and printing AI responses.
+        """
+        mic = self.init_stt_if_enabled()
+        active = False
 
-        Args:
-            inference: Optional inference engine providing generate() method.
+        while True:
+            user_input = self.get_user_input(mic, active)
+            if user_input is None:
+                continue
+            if self.args["stt"] and not active:
+                active = True
+                self.speak("I'm listening")
+                continue
+            if user_input.lower() == "goodbye":
+                self.speak("Be seeing you")
+                sys.exit(0)
+
+            self.handle_response(user_input, inference)
+
+    def init_stt_if_enabled(self) -> Optional["WhisperMic"]:
+        """Initialise the WhisperMic when STT is turned on.
+
+        Returns:
+            WhisperMic instance when ``self.args["stt"]`` is truthy; otherwise
+            ``None``.
         """
         if self.args["stt"]:
             print("Loading STT package...")
-            mic = WhisperMic(model="small", energy=100)
-            active = False
+            return WhisperMic(model="small", energy=100)
+        return None
 
-        while True:
-            if self.args["stt"]:
-                print("Listening...")
-                user_input = self.sanitize_string(mic.listen())
-                if self.args["debug"]:
-                    print(user_input)
-                if not active:
-                    if self.args["assistant"] and user_input.lower() != self.get_wake_word():
-                        continue
-                    active = True
-                    self.speak("I'm listening")
-                    continue
-                if user_input.lower() == "goodbye":
-                    self.speak("Be seeing you")
-                    sys.exit(0)
-                print(f"\b\b\b\b\b\b\b\b\b\b\b\b{user_input}")
+    def get_user_input(
+        self,
+        mic: Optional["WhisperMic"],
+        active: bool,
+    ) -> Optional[str]:
+        """Retrieve a single line of user input (voice or keyboard).
+
+        Args:
+            mic: Active ``WhisperMic`` instance if STT is enabled, else ``None``.
+            active: ``True`` once the wake-word has been detected; determines
+                whether normal utterances are processed or ignored.
+
+        Returns:
+            A sanitised input string, or ``None`` when:
+            * the wake-word has not yet been spoken, or
+            * no actionable input was captured.
+        """
+        if self.args["stt"]:
+            print("Listening...")
+            user_input = self.sanitize_string(mic.listen())
+            if self.args["debug"]:
+                print(user_input)
+            if self.args["assistant"] and not active and user_input.lower() != self.get_wake_word():
+                return None
+            print(f"\b\b\b\b\b\b\b\b\b\b\b\b{user_input}")
+            return user_input
+        try:
+            return input(f"\n{COLOR_GREEN}You:{COLOR_RESET} ")
+        except KeyboardInterrupt:
+            sys.exit(0)
+
+    def handle_response(self, user_input: str, inference: Optional[Any]) -> None:
+        """Generate the assistant’s reply and (optionally) speak it aloud.
+
+        Args:
+            user_input: The final, cleaned user utterance.
+            inference: External inference engine providing ``context`` and
+                ``generate``; if ``None``, calls
+                :py:meth:`self.send_message_to_model` directly.
+        """
+        try:
+            if inference:
+                inference.context.add(user_input, True)
+                response = inference.generate(inference.context.get())
             else:
-                try:
-                    user_input = input(f"\n{COLOR_GREEN}You:{COLOR_RESET} ")
-                except KeyboardInterrupt:
-                    sys.exit(0)
+                response = self.send_message_to_model(user_input)
 
-            try:
-                if inference:
-                    inference.context.add(user_input, True)
-                    response = inference.generate(inference.context.get())
-                else:
-                    response = self.send_message_to_model(user_input)
-                print(f"\n{COLOR_BLUE}AI{COLOR_RESET} ", end="")
-                content = ""
-                for x in response:
-                    content += x
-                    print(x, end="", flush=True)
-                print()
-                if self.args["tts"]:
-                    self.speak(content)
-
-            except ConnectionError:
-                print("Error: API refusing connections.")
+            print(f"\n{COLOR_BLUE}AI{COLOR_RESET} ", end="")
+            content = ""
+            for x in response:
+                content += x
+                print(x, end="", flush=True)
+            print()
+            if self.args["tts"]:
+                self.speak(content)
+        except ConnectionError:
+            print("Error: API refusing connections.")
 
     def handle_message(self, messages: List[Dict[str, Any]]) -> Any:
         """
