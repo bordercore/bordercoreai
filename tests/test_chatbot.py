@@ -64,3 +64,66 @@ def test_handle_response_inference_enabled():
     instance.speak = MagicMock()
     instance.handle_response("Hi", inference)
     inference.context.add.assert_called_once_with("Hi", True)
+
+
+def test_handle_message_lights(chatbot):
+    """Ensure a lights request calls control_lights and returns its response."""
+    chatbot.get_request_type = MagicMock(return_value={"category": "lights"})
+    with patch("modules.chatbot.control_lights", return_value="light-response") as mock_control:
+        messages = [{"role": "user", "content": "turn on the lights"}]
+        result = chatbot.handle_message(messages)
+        assert result == "light-response"
+        mock_control.assert_called_once()
+
+
+def test_handle_message_music(chatbot):
+    """Ensure a music request calls play_music and returns its response."""
+    chatbot.get_request_type = MagicMock(return_value={"category": "music"})
+    with patch("modules.chatbot.play_music", return_value="music-response") as mock_play:
+        messages = [{"role": "user", "content": "play music"}]
+        result = chatbot.handle_message(messages)
+        assert result == "music-response"
+        mock_play.assert_called_once()
+
+
+def test_handle_message_math_with_wolfram(chatbot):
+    """Ensure math requests use Wolfram Alpha when wolfram_alpha is enabled."""
+    chatbot.args["wolfram_alpha"] = True
+    messages = [{"role": "user", "content": "what is 2+2"}]
+    with patch("modules.chatbot.WolframAlphaFunctionCall") as mock_class:
+        mock_instance = mock_class.return_value
+        mock_instance.run.return_value = "4"
+        result = chatbot.handle_message(messages)
+        assert result == "4"
+        mock_instance.run.assert_called_once_with("what is 2+2")
+
+
+def test_handle_message_math_with_thinking_enabled(chatbot):
+    """Ensure math requests fall back to the model when enable_thinking is True."""
+    chatbot.args["enable_thinking"] = True
+    chatbot.get_request_type = MagicMock(return_value={"category": "math"})
+    messages = [{"role": "user", "content": "what is 2+2"}]
+    chatbot.send_message_to_model = MagicMock(return_value="llm-response")
+    result = chatbot.handle_message(messages)
+    assert result == "llm-response"
+
+
+def test_handle_message_default(chatbot):
+    """Ensure unrecognized categories route to send_message_to_model."""
+    chatbot.get_request_type = MagicMock(return_value={"category": "unknown"})
+    messages = [{"role": "user", "content": "tell me a joke"}]
+    chatbot.send_message_to_model = MagicMock(return_value="default-response")
+    result = chatbot.handle_message(messages)
+    assert result == "default-response"
+
+
+def test_handle_message_with_url(chatbot):
+    """Ensure URL content is appended and the message is routed to the model."""
+    chatbot.args["url"] = "http://example.com"
+    with patch("modules.chatbot.get_webpage_contents", return_value="Example site") as mock_get:
+        chatbot.get_request_type = MagicMock(return_value={"category": "other"})
+        messages = [{"role": "user", "content": "summarize"}]
+        chatbot.send_message_to_model = MagicMock(return_value="summarized")
+        result = chatbot.handle_message(messages)
+        assert "Example site" in messages[-1]["content"]
+        assert result == "summarized"

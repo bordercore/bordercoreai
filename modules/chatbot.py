@@ -266,25 +266,29 @@ class ChatBot():
             request_type = {"category": "math"}
         elif self.args.get("url", None):
             request_type = {"category": "other"}
-            contents = get_webpage_contents(self.args.get("url"))
+            contents = get_webpage_contents(self.args["url"])
             messages[-1]["content"] += f": {contents}"
         else:
             request_type = self.get_request_type(messages[-1]["content"])
 
-        if request_type["category"] == "lights":
-            return control_lights(self.model_name, messages[-1]["content"])
-        if request_type["category"] == "music":
-            return play_music(self.model_name, messages[-1]["content"])
-        if request_type["category"] == "weather":
-            return get_weather_info(self.model_name, messages[-1]["content"])
-        if request_type["category"] == "calendar":
-            return get_schedule(self.model_name, messages[-1]["content"])
-        if request_type["category"] == "agenda":
-            return self.get_agenda()
-        # Don't use Wolfram Alpha if the user has enabled thinking
-        if request_type["category"] == "math" and not self.args.get("enable_thinking", False):
-            func_call = WolframAlphaFunctionCall(self.model_name)
-            return func_call.run(messages[-1]["content"])
+        category = request_type["category"]
+        content = messages[-1]["content"]
+        handlers = {
+            "lights": lambda: control_lights(self.model_name, content),
+            "music": lambda: play_music(self.model_name, content),
+            "weather": lambda: get_weather_info(self.model_name, content),
+            "calendar": lambda: get_schedule(self.model_name, content),
+            "agenda": self.get_agenda,
+            "math": lambda: WolframAlphaFunctionCall(self.model_name).run(content)
+            if not self.args.get("enable_thinking", False) else None
+        }
+
+        result = handlers.get(category)
+        if result:
+            output = result()
+            if output is not None:
+                return output
+
         return self.send_message_to_model(messages, replace_context=True)
 
     def send_message_to_model(self,
