@@ -261,7 +261,23 @@ class Audio:
         return ChatBot.get_streaming_message(response)
 
 
-if __name__ == "__main__":
+def main() -> None:
+    """
+    Command-line entry point for transcribing audio files using a Whisper model.
+
+    This function parses command-line arguments to determine the input audio file,
+    optional model selection, and whether to include per-chunk timestamp output.
+    It then performs transcription using the specified model and writes the result
+    to a `.txt` file with the same base name as the input audio.
+
+    Command-line arguments:
+        filename           : Path to the audio file to transcribe (any ffmpeg-supported format).
+        -m / --model-name  : Optional Hugging Face model name (default: distil-whisper/distil-large-v3).
+        -t / --timestamps  : If specified, emits per-chunk timestamps to <filename>_chunks.txt.
+
+    Output:
+        Writes transcribed text to <filename>.txt in UTF-8 encoding.
+    """
     parser = argparse.ArgumentParser(description="CLI wrapper for audio.py")
     parser.add_argument(
         "filename",
@@ -281,10 +297,14 @@ if __name__ == "__main__":
         default=False,
     )
 
-    config = parser.parse_args()
+    args = parser.parse_args()
 
-    audio = Audio(model_name=config.model_name)
-    TEXT = audio.transcribe(filename=config.filename, timestamps=config.timestamps)
+    audio = Audio(model_name=args.model_name)
+    text = audio.transcribe(filename=args.filename, timestamps=args.timestamps)
 
-    output_path = Path(config.filename).with_suffix(".txt")
-    output_path.write_text(TEXT, encoding="utf-8")
+    output_path = Path(args.filename).with_suffix(".txt")
+    output_path.write_text(text, encoding="utf-8")
+
+
+if __name__ == "__main__":
+    main()

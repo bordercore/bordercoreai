@@ -248,7 +248,28 @@ class RAG:
             print(f"\n{answer}")
 
 
-if __name__ == "__main__":
+def main() -> None:
+    """
+    Command-line entry point for running RAG-based document ingestion and querying.
+
+    This function allows users to index or query documents using a retrieval-augmented
+    generation (RAG) engine backed by a local or OpenAI LLM. Users can provide either
+    a file or a text string to query, and optionally choose the embedding source.
+
+    Command-line arguments:
+        -i, --index        : Force re-indexing of the document.
+        -m, --model-name   : The model name to use for answering queries (default: gpt-4o-mini).
+        -o, --openai       : Use OpenAI embeddings instead of local embedding models.
+        -f, --filename     : Path to a document file to ingest and query.
+        -t, --text         : Raw text string to ingest and query.
+        -l, --list         : List all indexed document collections.
+
+    Behavior:
+        - If both `--filename` and `--text` are specified, an error is raised.
+        - If neither is provided, an error is raised.
+        - Otherwise, the specified input is indexed and a query is run.
+        - If `--list` is set, it lists available document collections instead.
+    """
     parser = argparse.ArgumentParser(description="Run RAG document ingestion and query engine.")
     parser.add_argument("-i", "--index", help="Index document", action="store_true")
     parser.add_argument("-m", "--model-name", help="The LLM model name", default="gpt-4o-mini")
@@ -256,24 +277,22 @@ if __name__ == "__main__":
     parser.add_argument("-f", "--filename", help="The file to query")
     parser.add_argument("-t", "--text", help="The text to query")
     parser.add_argument("-l", "--list", help="List collections", action="store_true")
-    config = parser.parse_args()
 
-    arg_force_index = config.index
-    arg_model_name = config.model_name
-    arg_use_openai_embeddings = config.openai
-    arg_filename = config.filename
-    arg_text = config.text
-    arg_list_collections = config.list
+    args = parser.parse_args()
 
-    if arg_filename and arg_text:
+    if args.filename and args.text:
         raise ValueError("Error: you cannot specify both a filename and text.")
-    if not arg_filename and not arg_text:
+    if not args.filename and not args.text:
         raise ValueError("Error: you must specify either a filename or some text to query.")
 
-    rag = RAG(arg_model_name, use_openai_embeddings=arg_use_openai_embeddings)
-    rag.add_document(text=arg_text.encode("utf-8") if arg_text else None, filename=arg_filename, name=arg_filename or "stdin")
+    rag = RAG(args.model_name, use_openai_embeddings=args.use_openai_embeddings)
+    rag.add_document(text=args.text.encode("utf-8") if args.text else None, filename=args.filename, name=args.filename or "stdin")
 
-    if arg_list_collections:
+    if args.list_collections:
         rag.list_collections()
     else:
-        rag.run(arg_force_index)
+        rag.run(args.force_index)
+
+
+if __name__ == "__main__":
+    main()

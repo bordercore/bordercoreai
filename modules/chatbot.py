@@ -629,7 +629,31 @@ class ChatBot():
         ).json()
 
 
-if __name__ == "__main__":
+def main() -> None:
+    """
+    Command-line entry point for launching a chatbot in various modes (interactive, local LLM, or ChatGPT-based).
+
+    This module provides a command-line interface to run a voice-enabled chatbot either
+    in interactive terminal mode or connected to Discord using either a local language
+    model or OpenAI's ChatGPT.
+
+    Supported options:
+        -a, --assistant     : Enable assistant-specific behavior (passed to ChatBot).
+        -d, --debug         : Enable debug mode.
+        -m, --mode          : Choose between 'interactive' (default), 'localllm', or 'chatgpt'.
+        --tts               : Enable Text-to-Speech output.
+        --stt               : Enable Speech-to-Text input.
+
+    Usage:
+        python run.py --mode chatgpt
+        python run.py --tts --stt
+        python run.py -m localllm -a -d
+
+    Depending on the mode, the script either launches:
+        - an interactive console-based chatbot
+        - a Discord bot powered by a local LLM
+        - a Discord bot using OpenAI's ChatGPT
+    """
     parser = argparse.ArgumentParser(description="")
     parser.add_argument(
         "-a",
@@ -660,20 +684,20 @@ if __name__ == "__main__":
         help="STT (Speech to Text)",
         action="store_true"
     )
-    config = parser.parse_args()
-    arg_assistant = config.assistant
-    arg_mode = config.mode
-    arg_tts = config.tts
-    arg_stt = config.stt
+    args = parser.parse_args()
 
-    if arg_mode == "interactive":
-        chatbot = ChatBot(assistant=arg_assistant, debug=config.debug, stt=arg_stt, tts=arg_tts)
+    if args.mode == "interactive":
+        chatbot = ChatBot(assistant=args.assistant, debug=args.debug, stt=args.stt, tts=args.tts)
         chatbot.interactive()
-    elif arg_mode == "chatgpt":
+    elif args.mode == "chatgpt":
         from modules.discord_bot import DiscordBot
         bot = DiscordBot(model_name="gpt-4o-mini")
         bot.run_bot()
-    elif arg_mode == "localllm":
+    elif args.mode == "localllm":
         from modules.discord_bot import DiscordBot
         bot = DiscordBot()
         bot.run_bot()
+
+
+if __name__ == "__main__":
+    main()
