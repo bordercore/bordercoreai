@@ -173,7 +173,15 @@ def control_lights(model_name: str, command: str, device_list: dict | None = Non
     return "Done"
 
 
-if __name__ == "__main__":
+def main() -> None:
+    """
+    Command-line entry point for controlling smart lights via an LLM.
+
+    The function parses a single `--model` argument (choice of `"openai"` or `"llama"`),
+    prints the names of all discovered lighting devices, and then enters an infinite
+    read-eval loop. Each line of user input is passed to `control_lights()` together
+    with the selected model backend and the previously obtained `device_list`.
+    """
     parser = argparse.ArgumentParser(description="")
     parser.add_argument(
         "-m",
@@ -182,11 +190,13 @@ if __name__ == "__main__":
         default="llama",
         help="The model to use: chatgpt or llama"
     )
-    config = parser.parse_args()
-    arg_model = config.model
-    arg_device_list = get_devices()
+    args = parser.parse_args()
 
-    print("Devices available: " + ", ".join([x["deviceName"] for x in arg_device_list["data"]["devices"]]))
+    print("Devices available: " + ", ".join([x["deviceName"] for x in args.device_list["data"]["devices"]]))
     while True:
         user_command = input(f"{MAGENTA}Command:{END} ")
-        control_lights(arg_model, user_command, device_list=arg_device_list)
+        control_lights(args.model, user_command, device_list=args.device_list)
+
+
+if __name__ == "__main__":
+    main()

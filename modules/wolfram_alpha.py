@@ -38,8 +38,19 @@ class WolframAlphaFunctionCall(FunctionCall):
     tool_list = "calculate"
 
 
-if __name__ == "__main__":
+def main() -> None:
+    """
+    Launch an interactive loop for querying Wolfram Alpha via the FunctionCall interface.
+
+    This function continuously prompts the user for input, sends the query to a
+    WolframAlphaFunctionCall instance, and prints the result. It is intended for
+    simple REPL-style debugging or manual exploration of the Wolfram Alpha tool logic.
+    """
     while True:
         user_input = input("Query: ")
         func = WolframAlphaFunctionCall("")
         print(func.run(user_input))
+
+
+if __name__ == "__main__":
+    main()
