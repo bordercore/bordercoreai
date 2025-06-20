@@ -1,5 +1,4 @@
-"""audio.py
-=================
+"""
 High‑level wrapper utilities for transcribing or interrogating audio using
 Whisper‑style models.
 
@@ -28,6 +27,7 @@ This runs much faster if the attn_implementation parameter for
  AutoModelForSpeechSeq2Seq is set to "eager" instead of the default
  of "sdpa" for PyTorch 2.1.1 and later. Why?
 """
+
 from __future__ import annotations
 
 import argparse
@@ -141,9 +141,11 @@ class Audio:
         )
 
         if timestamps and filename is not None:
-            fixed = self.fix_timestamps(result["chunks"])
-            out_file = f"{Path(filename).stem}_chunks.txt"
-            Path(out_file).write_text(str(fixed), encoding="utf-8")
+            fixed_chunks = self.fix_timestamps(result["chunks"])
+            input_path = Path(filename)
+            output_filename = f"{input_path.stem}_chunks.txt"
+            output_path = input_path.with_name(output_filename)
+            output_path.write_text(str(fixed_chunks), encoding="utf-8")
 
         print(f"Time: {time.time() - start_time}")
         return str(result["text"])
