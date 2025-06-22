@@ -42,7 +42,7 @@ class RAG:
     chunk_size: int = 1024
     overlap: int = 20
 
-    def __init__(self, model_name: str, chromdb: str = "chromdb", use_openai_embeddings: bool = True):
+    def __init__(self, model_name: str | None, chromdb: str = "chromdb", use_openai_embeddings: bool = True):
         """
         Initialize the RAG system.
 

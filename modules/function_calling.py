@@ -60,7 +60,7 @@ class FunctionCall():
         if old_key in data:
             data[new_key] = data.pop(old_key)
 
-    def call_function_from_json(self, messages: List[Dict[str, Any]], response: str) -> str:
+    def call_function_from_json(self, messages: List[Dict[str, Any]], model_response: str) -> str:
         """
         Parse a function call from a model-generated response, call the corresponding tool,
         and return the model's final response.
@@ -72,10 +72,10 @@ class FunctionCall():
         Returns:
             The final content string returned from the model after invoking the tool.
         """
-        json_match = re.search(r"<\|python_tag\|>(.*?)<\|eom_id\|>", response)
+        json_match = re.search(r"<\|python_tag\|>(.*?)<\|eom_id\|>", model_response)
 
         if not json_match:
-            raise LLMResponseError(f"No JSON found in the LLM response: {response}")
+            raise LLMResponseError(f"No JSON found in the LLM response: {model_response}")
 
         tool_call = None
         json_string = json_match.group(1)
