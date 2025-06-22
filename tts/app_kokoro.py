@@ -18,6 +18,7 @@ import hashlib
 import io
 import os
 import time
+from typing import Iterator
 
 import numpy as np
 import soundfile as sf
@@ -48,7 +49,20 @@ pipeline = KPipeline(lang_code="a")  # <= make sure lang_code matches voice
 
 
 @app.route("/", methods=["GET"])
-def generate_tts_audio():
+def generate_tts_audio() -> Response:
+    """
+    **/ (GET)** – Generate text-to-speech audio.
+
+    Expected query parameters
+    -------------------------
+    text : str
+        The text that should be converted to speech.
+
+    Returns
+    -------
+    flask.Response
+        A streaming response with ``Content-Type: audio/wav``.
+    """
     payload = request.args
     if DEBUG:
         # Create a filename based on timestamp and a hash of the text
@@ -60,7 +74,14 @@ def generate_tts_audio():
         os.makedirs(os.path.dirname(save_path), exist_ok=True)
 
     # Set up streaming response
-    def generate_audio_chunks():
+    def generate_audio_chunks() -> Iterator[bytes]:
+        """
+        Yield fixed-size chunks (**1024 bytes**) from an in-memory WAV buffer.
+
+        The Kokoro pipeline first creates individual chunks, which are then
+        concatenated into a single NumPy array, written to an in-memory WAV
+        buffer, and finally streamed back to the caller.
+        """
         # Generate, display, and save audio files in a loop.
         generator = pipeline(
             payload["text"],
