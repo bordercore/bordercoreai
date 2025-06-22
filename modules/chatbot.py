@@ -54,7 +54,6 @@ except ImportError:
     pass
 
 
-RED = "\033[91m"
 COLOR_GREEN = "\033[32m"
 COLOR_BLUE = "\033[34m"
 COLOR_RESET = "\033[0m"
@@ -212,6 +211,9 @@ class ChatBot():
             * the wake-word has not yet been spoken, or
             * no actionable input was captured.
         """
+        if mic is None:
+            raise RuntimeError("WhisperMic Model must be loaded before calling listen().")
+
         if self.args["stt"]:
             print("Listening...")
             user_input = self.sanitize_string(mic.listen())
@@ -273,13 +275,20 @@ class ChatBot():
 
         category = request_type["category"]
         content = messages[-1]["content"]
+
+        if self.model_name is None:
+            raise RuntimeError("Model must be specified before LLM is called.")
+
+        # Avoids mypy error due to type narrowing not persisting in lambdas
+        model_name: str = self.model_name  # now guaranteed non-None
+
         handlers = {
-            "lights": lambda: control_lights(self.model_name, content),
-            "music": lambda: play_music(self.model_name, content),
-            "weather": lambda: get_weather_info(self.model_name, content),
-            "calendar": lambda: get_schedule(self.model_name, content),
+            "lights": lambda: control_lights(model_name, content),
+            "music": lambda: play_music(model_name, content),
+            "weather": lambda: get_weather_info(model_name, content),
+            "calendar": lambda: get_schedule(model_name, content),
             "agenda": self.get_agenda,
-            "math": lambda: WolframAlphaFunctionCall(self.model_name).run(content)
+            "math": lambda: WolframAlphaFunctionCall(model_name).run(content)
             if not self.args.get("enable_thinking", False) else None
         }
 
@@ -297,7 +306,7 @@ class ChatBot():
                               prune: bool = True,
                               replace_context: bool = False,
                               tool_name: Optional[str] = None,
-                              tool_list: Optional[List[str]] = None) -> Iterator[str]:
+                              tool_list: Optional[str] = None) -> Iterator[str]:
         """
         Send messages to the configured model or tool, updating the conversation context.
 
@@ -315,7 +324,7 @@ class ChatBot():
         args = args or {}
         if not isinstance(messages, list):
             messages = [{"role": "user", "content": messages}]
-        self.context.add(messages, prune, replace_context)
+        self.context.add(messages, prune, "user", replace_context)
 
         model_vendor = ChatBot.get_model_attribute(self.model_name, "vendor")
         if model_vendor == "openai":
@@ -372,7 +381,7 @@ class ChatBot():
         #  as a separate parameter and not be present in the
         #  list of user messages.
 
-        system = []
+        system: str = ""
         if messages[0]["role"] == "system":
             system = messages[0]["content"]
             messages.pop(0)
@@ -396,7 +405,7 @@ class ChatBot():
         self,
         args: Dict[str, Any],
         tool_name: Optional[str],
-        tool_list: Optional[List[str]]
+        tool_list: Optional[str]
     ) -> Generator[str, None, None]:
         """
         Sends a request to a locally hosted LLM API endpoint and yields streamed response chunks.
@@ -450,6 +459,9 @@ class ChatBot():
             A string containing the weather information followed by the calendar schedule,
             separated by two newlines.
         """
+        if self.model_name is None:
+            raise RuntimeError("Model must be specified before LLM is called.")
+
         response = get_weather_info(self.model_name, "What's the weather today?")
         weather_content = ChatBot.get_streaming_message(response)
 

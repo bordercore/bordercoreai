@@ -228,7 +228,7 @@ class Audio:
         model_name: str,
         messages: List[Dict[str, str]],
         transcript: str,
-    ) -> Iterator[str]:
+    ) -> str:
         """Answer a user question *solely* from a provided transcript.
 
         The LLM receives a system prompt that forbids it from using any data
@@ -245,7 +245,7 @@ class Audio:
 
         Returns
         -------
-        Iterator[str]
+        str
             Streaming response from the chat model.
         """
         from modules.chatbot import \

@@ -580,7 +580,7 @@ def main() -> None:
             # Handle image-based inference
             prompt_text = "Describe this image in detail."
             image_messages = inference.prepare_image_prompt(args.image, prompt_text)
-            inference.context.add(image_messages, is_vision_prompt=True)
+            inference.context.add(image_messages)
 
             print(f"{COLOR_GREEN}You: {prompt_text}{COLOR_RESET}")
             print(f"\n{COLOR_BLUE}AI: ", end="")
