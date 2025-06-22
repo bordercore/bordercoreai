@@ -23,8 +23,7 @@ import sys
 import tempfile
 import urllib.parse
 import warnings
-from typing import (Any, Dict, Generator, Iterable, Iterator, List, Optional,
-                    Union)
+from typing import Any, Dict, Generator, Iterable, Iterator, List, Union
 
 import anthropic
 import openai
@@ -81,7 +80,7 @@ class ChatBot():
     ASSISTANT_NAME = "Luna"
     temperature = 0.7
 
-    def __init__(self, model_name: Optional[str] = None, **args: Any) -> None:
+    def __init__(self, model_name: str | None = None, **args: Any) -> None:
         """
         Initialize a ChatBot instance.
 
@@ -161,7 +160,7 @@ class ChatBot():
         else:
             print(f"Failed to get audio: status_code = {response.status_code}")
 
-    def interactive(self, inference: Optional[Any] = None) -> None:
+    def interactive(self, inference: Any | None = None) -> None:
         """
         Enter an interactive loop reading user input and printing AI responses.
         """
@@ -182,7 +181,7 @@ class ChatBot():
 
             self.handle_response(user_input, inference)
 
-    def init_stt_if_enabled(self) -> Optional["WhisperMic"]:
+    def init_stt_if_enabled(self) -> WhisperMic | None:
         """Initialise the WhisperMic when STT is turned on.
 
         Returns:
@@ -196,9 +195,9 @@ class ChatBot():
 
     def get_user_input(
         self,
-        mic: Optional["WhisperMic"],
+            mic: WhisperMic | None,
         active: bool,
-    ) -> Optional[str]:
+    ) -> str | None:
         """Retrieve a single line of user input (voice or keyboard).
 
         Args:
@@ -228,7 +227,7 @@ class ChatBot():
         except KeyboardInterrupt:
             sys.exit(0)
 
-    def handle_response(self, user_input: str, inference: Optional[Any]) -> None:
+    def handle_response(self, user_input: str, inference: Any | None) -> None:
         """Generate the assistant’s reply and (optionally) speak it aloud.
 
         Args:
@@ -302,11 +301,11 @@ class ChatBot():
 
     def send_message_to_model(self,
                               messages: Union[str, List[Dict[str, Any]]],
-                              args: Optional[Dict[str, Any]] = None,
+                              args: Dict[str, Any] | None = None,
                               prune: bool = True,
                               replace_context: bool = False,
-                              tool_name: Optional[str] = None,
-                              tool_list: Optional[str] = None) -> Iterator[str]:
+                              tool_name: str | None = None,
+                              tool_list: str | None = None) -> Iterator[str]:
         """
         Send messages to the configured model or tool, updating the conversation context.
 
@@ -404,8 +403,8 @@ class ChatBot():
     def send_message_to_model_local_llm(
         self,
         args: Dict[str, Any],
-        tool_name: Optional[str],
-        tool_list: Optional[str]
+        tool_name: str | None,
+        tool_list: str | None
     ) -> Generator[str, None, None]:
         """
         Sends a request to a locally hosted LLM API endpoint and yields streamed response chunks.
@@ -519,7 +518,7 @@ class ChatBot():
         return "".join(streamer)
 
     @staticmethod
-    def get_model_attribute(model_name: Optional[str], attribute: str) -> Optional[Any]:
+    def get_model_attribute(model_name: str | None, attribute: str) -> Any | None:
         """
         Retrieves a specific attribute for a given model from the model_info dictionary.
 

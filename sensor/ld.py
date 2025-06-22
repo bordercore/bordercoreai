@@ -11,7 +11,7 @@ import argparse
 import asyncio
 import logging
 import time
-from typing import Any, Iterator, Optional
+from typing import Any, Iterator
 
 from api import settings
 from bleak import BleakScanner
@@ -32,7 +32,7 @@ class LD():
     sensor and stores the last detection payload in `last_detection`.
     """
 
-    def __init__(self, serial_device: Optional[str] = None, debug: bool = False) -> None:
+    def __init__(self, serial_device: str | None = None, debug: bool = False) -> None:
         """
         Initialize the radar interface.
 
@@ -45,8 +45,8 @@ class LD():
         self.debug = debug
         self.last_detection = None
         # Populated only in BLE mode
-        self.scanner: Optional[BleakScanner] = None
-        self.ld2410b: Optional[LD2410BLE] = None
+        self.scanner: BleakScanner | None = None
+        self.ld2410b: LD2410BLE | None = None
         # Populated only in serial mode
         self.radar: Any = None
 
@@ -159,7 +159,7 @@ class LD():
         for gate in range(0, 9):
             logging.info("  Gate %s: %s", gate, params[2][gate])
 
-    def read(self) -> Iterator[Optional[Any]]:
+    def read(self) -> Iterator[Any | None]:
         """
         Continuously yield the most recent detection payload.
 

@@ -12,7 +12,7 @@ Classes:
              to enforce a maximum character size limit.
 """
 
-from typing import Dict, List, Optional, Union
+from typing import Dict, List, Union
 
 
 class Context:
@@ -26,7 +26,7 @@ class Context:
 
     context_limit: int = 4096
 
-    def __init__(self, context: Optional[List[Dict[str, str]]] = None) -> None:
+    def __init__(self, context: List[Dict[str, str]] | None = None) -> None:
         """
         Initialize the Context instance.
 

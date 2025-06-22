@@ -14,7 +14,7 @@ import hashlib
 import os
 import uuid
 from io import BytesIO
-from typing import BinaryIO, List, Optional
+from typing import BinaryIO, List
 
 import chromadb
 import openai
@@ -54,7 +54,7 @@ class RAG:
         self.model_name = model_name
         self.use_openai_embeddings = use_openai_embeddings
         self.client = chromadb.PersistentClient(path=chromdb)
-        self.document: Optional[Collection] = None
+        self.document: Collection | None = None
         self.collection = None
 
     def extract_text_from_pdf(self, pdf: BinaryIO) -> str:
@@ -73,7 +73,7 @@ class RAG:
             content += page.extract_text()
         return content
 
-    def add_document(self, text: Optional[bytes] = None, filename: Optional[str] = None, name: Optional[str] = None) -> None:
+    def add_document(self, text: bytes | None = None, filename: str | None = None, name: str | None = None) -> None:
         """
         Load and index a document into ChromaDB.
 

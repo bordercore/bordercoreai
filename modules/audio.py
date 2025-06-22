@@ -34,7 +34,7 @@ import argparse
 import os
 import time
 from pathlib import Path
-from typing import Any, Dict, Iterator, List, Optional, Tuple, TypedDict
+from typing import Any, Dict, List, Tuple, TypedDict
 
 import torch
 import yt_dlp
@@ -77,8 +77,8 @@ class Audio:
     def transcribe(
         self,
         *,
-        filename: Optional[str] = None,
-        audio_data: Optional[Any] = None,
+        filename: str | None = None,
+        audio_data: Any | None = None,
         timestamps: bool = False,
     ) -> str:
         """Transcribe *either* an audio file *or* in‑memory waveform.
@@ -150,7 +150,7 @@ class Audio:
         print(f"Time: {time.time() - start_time}")
         return str(result["text"])
 
-    def download_audio(self, url: str) -> Optional[str]:
+    def download_audio(self, url: str) -> str | None:
         """Download a YouTube video's audio track as an MP3 file.
 
         Parameters

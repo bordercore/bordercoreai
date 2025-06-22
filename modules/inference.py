@@ -12,7 +12,7 @@ import importlib
 import json
 from pathlib import Path
 from threading import Thread
-from typing import Any, Dict, Generator, List, Optional
+from typing import Any, Dict, Generator, List
 
 import torch
 import transformers
@@ -54,10 +54,10 @@ class Inference:
     def __init__(
         self,
         model_path: str,
-        temperature: Optional[float] = None,
+        temperature: float | None = None,
         quantize: bool = False,
-        tool_name: Optional[str] = None,
-        tool_list: Optional[str] = None,
+        tool_name: str | None = None,
+        tool_list: str | None = None,
         enable_thinking: bool = False,
         debug: bool = False,
     ) -> None:
@@ -88,7 +88,7 @@ class Inference:
         self.tools = self.load_tools()
 
         self.tokenizer = self.load_tokenizer()
-        self.model: Optional[Any] = None
+        self.model: Any | None = None
 
     def load_model(self) -> None:
         """
@@ -186,7 +186,7 @@ class Inference:
 
         return tokenizer
 
-    def load_tools(self) -> Optional[List[Any]]:
+    def load_tools(self) -> List[Any] | None:
         """
         Dynamically import a callable tool function from a specified module.
 
@@ -234,7 +234,7 @@ class Inference:
 
         return args
 
-    def get_quantization_config(self) -> Optional[BitsAndBytesConfig]:
+    def get_quantization_config(self) -> BitsAndBytesConfig | None:
         """
         Return a 4-bit quantization configuration if enabled for this model.
 

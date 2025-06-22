@@ -10,7 +10,7 @@ import json
 import random
 import re
 import string
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List
 
 from modules.exceptions import JsonParsingError, LLMResponseError
 
@@ -31,8 +31,8 @@ class FunctionCall():
         """
         self.model_name = model_name
         self.args = args
-        self.tool_name: Optional[str] = args.get("tool_name")
-        self.tool_list: Optional[str] = args.get("tool_list")
+        self.tool_name: str | None = args.get("tool_name")
+        self.tool_list: str | None = args.get("tool_list")
 
     def generate_random_id(self, length: int = 6) -> str:
         """
