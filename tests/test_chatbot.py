@@ -50,7 +50,8 @@ def test_get_user_input_keyboard_interrupt():
     instance.args = {"stt": False}
     with patch("builtins.input", side_effect=KeyboardInterrupt):
         with pytest.raises(SystemExit):
-            instance.get_user_input(mic=None, active=False)
+            mic = MagicMock()
+            instance.get_user_input(mic, active=False)
 
 
 def test_handle_response_inference_enabled():
