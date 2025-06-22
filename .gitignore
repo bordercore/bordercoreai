@@ -14,3 +14,4 @@ chromdb/
 voices/
 calendar_credentials.json
 local/
+tts/old/
