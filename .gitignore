@@ -15,3 +15,4 @@ voices/
 calendar_credentials.json
 local/
 tts/old/
+.dir-locals.el
