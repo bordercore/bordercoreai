@@ -14,20 +14,19 @@ Environment:
     temperature, and default model name.
 """
 
-import gc
 import importlib
 import os
 from typing import Any, Dict, Generator, List, Mapping
 
-import torch
 from flask import Flask, Response, jsonify, request
 from modules.inference import Inference
+from modules.model_manager import ModelManager
 
 from api import settings
 
 app = Flask(__name__)
-
-model = None
+app.config["model_manager"] = ModelManager()
+app.config["model_manager"].load(settings.model_name)
 
 
 def get_model_list(directory: str) -> List[str]:
@@ -54,44 +53,6 @@ def get_model_list(directory: str) -> List[str]:
     return directories
 
 
-def unload_model() -> None:
-    """
-    Unload the current model from memory, clearing GPU VRAM and Python GC.
-    """
-    global model
-
-    # Remove model from VRAM
-    del model
-    gc.collect()
-    torch.cuda.empty_cache()
-    model = None
-
-
-def load_model(model_name: str) -> None:
-    """
-    Load the specified model into memory if not already loaded.
-
-    Args:
-        model_name: The name of the model to load.
-    """
-    global model
-
-    if model:
-        return
-
-    settings.model_name = model_name
-
-    model_path = f"{settings.model_dir}/{settings.model_name}"
-
-    inference = Inference(
-        model_path=model_path,
-        quantize=True
-    )
-
-    inference.load_model()
-    model = inference.model
-
-
 def get_temperature(payload: Mapping[str, Any]) -> float:
     """
     Extract the temperature value from the payload or fallback to settings.
@@ -107,9 +68,6 @@ def get_temperature(payload: Mapping[str, Any]) -> float:
     if temp == 0:
         temp = 0.1
     return temp
-
-
-load_model(settings.model_name)
 
 
 @app.route("/v1/internal/model/info")
@@ -151,8 +109,9 @@ def load() -> tuple[Response, int]:
         return jsonify(status="Error", message="model_name required"), 400
 
     try:
-        unload_model()
-        load_model(str(payload_raw["model_name"]))
+        manager = app.config["model_manager"]
+        manager.unload()
+        manager.load(payload_raw["model_name"])
         status = "OK"
         message = ""
     except Exception as e:
@@ -204,5 +163,5 @@ def main() -> Generator[str, None, None] | tuple[Response, int]:
         enable_thinking=payload.get("enable_thinking", False),
         debug=True,
     )
-    inference.model = model
+    inference.model = app.config["model_manager"].get_model()
     return inference.generate(payload["messages"])
