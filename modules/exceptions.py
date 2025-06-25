@@ -1,3 +1,7 @@
+"""
+This module defines custom exception classes for JSON parsing failures and improper LLM response formats.
+"""
+
 class JsonParsingError(Exception):
     """Custom exception for JSON parsing errors."""
 
