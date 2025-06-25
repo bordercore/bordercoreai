@@ -259,8 +259,7 @@ class Audio:
         )
 
         chatbot = ChatBot(model_name)
-        response = chatbot.send_message_to_model(prompt, {})
-        return ChatBot.get_streaming_message(response)
+        return chatbot.send_message_to_model(prompt, {})
 
 
 def main() -> None:

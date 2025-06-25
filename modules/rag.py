@@ -206,8 +206,7 @@ class RAG:
             prompt += f" Here is one chunk of text: {chunk}."
 
         chatbot = ChatBot(self.model_name)
-        response = chatbot.send_message_to_model(prompt, {})
-        return ChatBot.get_streaming_message(response)
+        return chatbot.send_message_to_model(prompt, {})
 
     def query_document(self, query: str) -> str:
         """
@@ -230,7 +229,7 @@ class RAG:
             args["query_texts"] = [query]
 
         results = self.collection.query(**args)
-        return ChatBot.get_streaming_message(self.get_response(query, results["documents"]))
+        return self.get_response(query, results["documents"])
 
     def run(self, force_index: bool = False) -> None:
         """

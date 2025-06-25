@@ -43,5 +43,4 @@ class Vision():
 
         from modules.chatbot import ChatBot
         chatbot = ChatBot(self.model_name)
-        response = chatbot.send_message_to_model(self.message, {})
-        return ChatBot.get_streaming_message(response)
+        return chatbot.send_message_to_model(self.message, {})

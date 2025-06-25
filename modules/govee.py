@@ -162,11 +162,10 @@ def control_lights(model_name: str, command: str, device_list: dict | None = Non
 
     from modules.chatbot import ChatBot
     chatbot = ChatBot(model_name)
-    response = chatbot.send_message_to_model(
+    content = chatbot.send_message_to_model(
         f"{build_prompt(device_list)}\n{command}",
         args
     )
-    content = ChatBot.get_streaming_message(response)
     content = balance_braces(content)
     control_device(content)
 

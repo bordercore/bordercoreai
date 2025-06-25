@@ -46,5 +46,4 @@ def get_weather_info(model_name: str, command: str) -> str:
 
     from modules.chatbot import ChatBot
     chatbot = ChatBot(model_name)
-    response = chatbot.send_message_to_model(prompt, args)
-    return ChatBot.get_streaming_message(response)
+    return chatbot.send_message_to_model(prompt, args)

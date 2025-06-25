@@ -23,7 +23,8 @@ import sys
 import tempfile
 import urllib.parse
 import warnings
-from typing import Any, Dict, Generator, Iterable, Iterator, List, Union
+from typing import (Any, Dict, Generator, Iterator, List, Literal, Union,
+                    overload)
 
 import anthropic
 import openai
@@ -297,21 +298,45 @@ class ChatBot():
             if output is not None:
                 return output
 
-        return self.send_message_to_model(messages, replace_context=True)
+        return self.send_message_to_model(messages, stream=True, replace_context=True)
+
+    # These overloads allow mypy to correctly infer the return type depending on the `stream` argument.
+    @overload
+    def send_message_to_model(self,
+                              messages: Union[str, List[Dict[str, Any]]],
+                              args: Dict[str, Any] | None = None,
+                              prune: bool = True,
+                              *,
+                              stream: Literal[True],
+                              replace_context: bool = False,
+                              tool_name: str | None = None,
+                              tool_list: str | None = None) -> Iterator[str]: ...
+    @overload
+    def send_message_to_model(self,
+                              messages: Union[str, List[Dict[str, Any]]],
+                              args: Dict[str, Any] | None = None,
+                              prune: bool = True,
+                              *,
+                              replace_context: bool = False,
+                              tool_name: str | None = None,
+                              tool_list: str | None = None) -> str: ...
 
     def send_message_to_model(self,
                               messages: Union[str, List[Dict[str, Any]]],
                               args: Dict[str, Any] | None = None,
                               prune: bool = True,
+                              *,
+                              stream: bool = False,
                               replace_context: bool = False,
                               tool_name: str | None = None,
-                              tool_list: str | None = None) -> Iterator[str]:
+                              tool_list: str | None = None) -> Iterator[str] | str:
         """
         Send messages to the configured model or tool, updating the conversation context.
 
         Args:
             messages: A string or a list of message dicts (each with 'role' and 'content').
             args: Optional dict of additional parameters for the model call.
+            stream: Whether to stream the response back
             prune: Whether to prune old messages from context before adding new ones.
             replace_context: Whether to replace the entire context with these messages.
             tool_name: Name of a specific tool to invoke for a local LLM, if applicable.
@@ -333,7 +358,9 @@ class ChatBot():
         else:
             response = self.send_message_to_model_local_llm(args, tool_name, tool_list)
 
-        return response
+        if stream:
+            return response
+        return "".join(response)
 
     def send_message_to_model_openai(self, args: Dict[str, Any]) -> Iterator[str]:
         """
@@ -461,11 +488,8 @@ class ChatBot():
         if self.model_name is None:
             raise RuntimeError("Model must be specified before LLM is called.")
 
-        response = get_weather_info(self.model_name, "What's the weather today?")
-        weather_content = ChatBot.get_streaming_message(response)
-
-        response = get_schedule(self.model_name, "What's on my calendar today?")
-        calendar_content = ChatBot.get_streaming_message(response)
+        weather_content = get_weather_info(self.model_name, "What's the weather today?")
+        calendar_content = get_schedule(self.model_name, "What's on my calendar today?")
 
         return f"{weather_content}\n\n{calendar_content}"
 
@@ -487,10 +511,7 @@ class ChatBot():
         I want you to put this instruction into one of multiple categories. If the instruction is to play some music, the category is "music". If the instruction is to control lights, the category is "lights". If the instruction is asking about the weather or the moon's phase, the category is "weather". If the instruction is asking about today's calendar, or is something like 'What's happening today' or 'What is my schedule', the category is "calendar". If the instruction is asking about today's agenda, or something like 'What's my update?', the category is "agenda". If the instruction is asking for mathematical calculation, the category is "math". For everything else, the category is "other". Give me the category in JSON format with the field name "category". Do not format the JSON by including newlines. Give only the JSON and no additional characters, text, or comments. Here is the instruction:
         """
         prompt += message
-
-        chatbot = ChatBot(self.model_name, temperature=0.1)
-        response = chatbot.send_message_to_model(prompt)
-        content = ChatBot.get_streaming_message(response)
+        content = self.send_message_to_model(prompt)
 
         if settings.debug:
             print(f"{content=}")
@@ -503,19 +524,6 @@ class ChatBot():
             raise ValueError("Request type response is not proper JSON.") from e
 
         return response_json
-
-    @staticmethod
-    def get_streaming_message(streamer: Iterable[str]) -> str:
-        """
-        Joins and returns a complete string from a stream of text chunks.
-
-        Args:
-            streamer: An iterable of string chunks (e.g., from a streaming LLM response).
-
-        Returns:
-            A single concatenated string formed by joining all elements of the stream.
-        """
-        return "".join(streamer)
 
     @staticmethod
     def get_model_attribute(model_name: str | None, attribute: str) -> Any | None:

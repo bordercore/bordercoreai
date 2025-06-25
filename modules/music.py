@@ -44,14 +44,13 @@ Here is the instruction:
 
     from modules.chatbot import CONTROL_VALUE, ChatBot
     chatbot = ChatBot(model_name)
-    response = chatbot.send_message_to_model(prompt, args)
+    content = json.loads(chatbot.send_message_to_model(prompt, args))
 
     # Get the song info from the music API
     uri_music = f"{settings.music_api_host}/api/search/music"
     headers = {
         "Authorization": f"Token {os.environ.get('DRF_TOKEN_JERRELL')}",
     }
-    content = json.loads(ChatBot.get_streaming_message(response))
     query_string = urllib.parse.urlencode(content)
     music_info = requests.get(f"{uri_music}?{query_string}", headers=headers, timeout=20).json()
 

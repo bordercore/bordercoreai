@@ -130,8 +130,7 @@ class FunctionCall():
 
         from modules.chatbot import ChatBot
         chatbot = ChatBot(self.model_name, temperature=0.1)
-        response = chatbot.send_message_to_model(messages, replace_context=True, tool_name=self.tool_name, tool_list=self.tool_list)
-        content = ChatBot.get_streaming_message(response)
+        content = chatbot.send_message_to_model(messages, replace_context=True, tool_name=self.tool_name, tool_list=self.tool_list)
 
         # Remove trailing <|eot_id|> token.
         eot_id = "<|eot_id|>"
@@ -152,8 +151,7 @@ class FunctionCall():
         """
         from modules.chatbot import ChatBot
         chatbot = ChatBot(self.model_name)
-        response = chatbot.send_message_to_model(messages, replace_context=True, tool_name=self.tool_name, tool_list=self.tool_list)
-        return ChatBot.get_streaming_message(response)
+        return chatbot.send_message_to_model(messages, replace_context=True, tool_name=self.tool_name, tool_list=self.tool_list)
 
     def run(self, prompt: str) -> str:
         """

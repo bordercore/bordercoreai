@@ -10,7 +10,6 @@ import sys
 from typing import Any
 
 import discord
-import openai
 from api import settings
 
 from .chatbot import ChatBot
@@ -79,7 +78,7 @@ class DiscordBot(discord.Client, ChatBot):
         if self.user.name in [x.name for x in message.mentions]:
             async with message.channel.typing():
                 response = self.send_message_to_model(content)
-            await message.channel.send(ChatBot.get_streaming_message(response))
+            await message.channel.send(response)
 
     def run_bot(self) -> None:
         """
