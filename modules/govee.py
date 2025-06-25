@@ -7,11 +7,16 @@ Inspired by https://medium.com/@richardhayes777/using-chatgpt-to-control-hue-lig
 """
 
 import argparse
+from typing import TYPE_CHECKING
 
 import requests
 from api import settings
 from http_constants.status import HttpStatus
 from requests.exceptions import HTTPError
+
+if TYPE_CHECKING:
+    from mypackage.chatbot import ChatBot
+
 
 URL_BASE = "https://developer-api.govee.com/v1"
 
@@ -140,12 +145,12 @@ def control_device(payload: str) -> None:
         print(response.json()["message"])
 
 
-def control_lights(model_name: str, command: str, device_list: dict | None = None) -> str:
+def control_lights(chatbot: "ChatBot", command: str, device_list: dict | None = None) -> str:
     """
     Use a language model to interpret a command and control Govee lights.
 
     Args:
-        model_name: The model name to use for instruction parsing.
+        chatbot: ChatBot instance providing LLM access
         command: The user's natural language lighting instruction.
         device_list: Optional pre-fetched list of devices; if not provided, will fetch.
 
@@ -160,8 +165,6 @@ def control_lights(model_name: str, command: str, device_list: dict | None = Non
 
     args = {"temperature": 0.1}
 
-    from modules.chatbot import ChatBot
-    chatbot = ChatBot(model_name)
     content = chatbot.send_message_to_model(
         f"{build_prompt(device_list)}\n{command}",
         args

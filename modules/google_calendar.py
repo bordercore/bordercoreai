@@ -8,6 +8,7 @@ for a chatbot model to answer user questions.
 import json
 from datetime import datetime, timedelta
 from pathlib import Path
+from typing import TYPE_CHECKING
 
 import dateutil.parser
 import httplib2
@@ -18,14 +19,17 @@ from oauth2client.client import OAuth2Credentials
 from .rfc3339 import datetimetostr
 from .rfc3339 import now as now_rfc3339
 
+if TYPE_CHECKING:
+    from mypackage.chatbot import ChatBot
 
-def get_schedule(model_name: str, command: str) -> str:
+
+def get_schedule(chatbot: "ChatBot", command: str) -> str:
     """
     Fetch upcoming calendar events and use a chatbot model to answer a question
     about the user's schedule.
 
     Args:
-        model_name: The name of the language model to use for generating the response.
+        chatbot: ChatBot instance providing LLM access
         command: The user's natural language query about their schedule.
 
     Returns:
@@ -86,6 +90,4 @@ def get_schedule(model_name: str, command: str) -> str:
 
     args = {"temperature": 0.1}
 
-    from modules.chatbot import ChatBot
-    chatbot = ChatBot(model_name)
     return chatbot.send_message_to_model(prompt, args)

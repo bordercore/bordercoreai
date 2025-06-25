@@ -10,9 +10,12 @@ import json
 import random
 import re
 import string
-from typing import Any, Dict, List
+from typing import TYPE_CHECKING, Any, Dict, List
 
 from modules.exceptions import JsonParsingError, LLMResponseError
+
+if TYPE_CHECKING:
+    from mypackage.chatbot import ChatBot
 
 
 class FunctionCall():
@@ -21,15 +24,15 @@ class FunctionCall():
     JSON parsing, argument translation, and integration with chatbot messaging flow.
     """
 
-    def __init__(self, model_name: str, **args: Any) -> None:
+    def __init__(self, chatbot: "ChatBot", **args: Any) -> None:
         """
         Initialize FunctionCall with a model name and additional configuration.
 
         Args:
-            model_name: The name of the model to use for follow-up inference.
+            chatbot: ChatBot instance providing LLM access
             **args: Additional attributes, such as tool_name and tool_list.
         """
-        self.model_name = model_name
+        self.chatbot = chatbot
         self.args = args
         self.tool_name: str | None = args.get("tool_name")
         self.tool_list: str | None = args.get("tool_list")
@@ -128,9 +131,7 @@ class FunctionCall():
             }
         )
 
-        from modules.chatbot import ChatBot
-        chatbot = ChatBot(self.model_name, temperature=0.1)
-        content = chatbot.send_message_to_model(messages, replace_context=True, tool_name=self.tool_name, tool_list=self.tool_list)
+        content = self.chatbot.send_message_to_model(messages, replace_context=True, tool_name=self.tool_name, tool_list=self.tool_list)
 
         # Remove trailing <|eot_id|> token.
         eot_id = "<|eot_id|>"
@@ -149,9 +150,7 @@ class FunctionCall():
         Returns:
             A string response containing the model's tool function decision.
         """
-        from modules.chatbot import ChatBot
-        chatbot = ChatBot(self.model_name)
-        return chatbot.send_message_to_model(messages, replace_context=True, tool_name=self.tool_name, tool_list=self.tool_list)
+        return self.chatbot.send_message_to_model(messages, replace_context=True, tool_name=self.tool_name, tool_list=self.tool_list)
 
     def run(self, prompt: str) -> str:
         """

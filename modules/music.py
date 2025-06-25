@@ -9,17 +9,21 @@ a formatted response with playback instructions.
 import json
 import os
 import urllib.parse
+from typing import TYPE_CHECKING
 
 import requests
 from api import settings
 
+if TYPE_CHECKING:
+    from mypackage.chatbot import ChatBot
 
-def play_music(model_name: str, command: str) -> str:
+
+def play_music(chatbot: "ChatBot", command: str) -> str:
     """
     Parse a natural language command to play music using an LLM, then look up matching music.
 
     Args:
-        model_name: The name of the LLM model to use for parsing the command.
+        chatbot: ChatBot instance providing LLM access
         command: A string instruction like "Play Just Drive by Wolf Club".
 
     Returns:
@@ -42,8 +46,8 @@ Here is the instruction:
     prompt += command
     args = {"temperature": 1.0}
 
-    from modules.chatbot import CONTROL_VALUE, ChatBot
-    chatbot = ChatBot(model_name)
+    from modules.chatbot import CONTROL_VALUE
+
     content = json.loads(chatbot.send_message_to_model(prompt, args))
 
     # Get the song info from the music API

@@ -276,19 +276,13 @@ class ChatBot():
         category = request_type["category"]
         content = messages[-1]["content"]
 
-        if self.model_name is None:
-            raise RuntimeError("Model must be specified before LLM is called.")
-
-        # Avoids mypy error due to type narrowing not persisting in lambdas
-        model_name: str = self.model_name  # now guaranteed non-None
-
         handlers = {
-            "lights": lambda: control_lights(model_name, content),
-            "music": lambda: play_music(model_name, content),
-            "weather": lambda: get_weather_info(model_name, content),
-            "calendar": lambda: get_schedule(model_name, content),
+            "lights": lambda: control_lights(self, content),
+            "music": lambda: play_music(self, content),
+            "weather": lambda: get_weather_info(self, content),
+            "calendar": lambda: get_schedule(self, content),
             "agenda": self.get_agenda,
-            "math": lambda: WolframAlphaFunctionCall(model_name).run(content)
+            "math": lambda: WolframAlphaFunctionCall(self).run(content)
             if not self.args.get("enable_thinking", False) else None
         }
 
@@ -488,8 +482,8 @@ class ChatBot():
         if self.model_name is None:
             raise RuntimeError("Model must be specified before LLM is called.")
 
-        weather_content = get_weather_info(self.model_name, "What's the weather today?")
-        calendar_content = get_schedule(self.model_name, "What's on my calendar today?")
+        weather_content = get_weather_info(self, "What's the weather today?")
+        calendar_content = get_schedule(self, "What's on my calendar today?")
 
         return f"{weather_content}\n\n{calendar_content}"
 

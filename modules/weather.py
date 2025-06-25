@@ -4,17 +4,23 @@ from a remote API, format the information into natural language, and generate a
 response to a weather-related question using a language model.
 """
 
+from typing import TYPE_CHECKING
+
 import requests
 from api import settings
 
+if TYPE_CHECKING:
+    from mypackage.chatbot import ChatBot
 
-def get_weather_info(model_name: str, command: str) -> str:
+
+
+def get_weather_info(chatbot: "ChatBot", command: str) -> str:
     """
     Retrieve current weather and forecast data from a weather API, construct a weather summary,
     and generate a response to a weather-related question using a language model.
 
     Args:
-        model_name: The name of the language model to use for generating a response.
+        chatbot: ChatBot instance providing LLM access
         command: The weather-related question or command from the user.
 
     Returns:
@@ -44,6 +50,4 @@ def get_weather_info(model_name: str, command: str) -> str:
     """
     args = {"temperature": 0.1}
 
-    from modules.chatbot import ChatBot
-    chatbot = ChatBot(model_name)
     return chatbot.send_message_to_model(prompt, args)
