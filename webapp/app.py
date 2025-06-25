@@ -400,10 +400,6 @@ def chat() -> Response:
 
     chatbot = ChatBot(
         model_name=model_name,
-        assistant=False,
-        debug=False,
-        voice=False,
-        speak=False,
         temperature=temperature,
         wolfram_alpha=wolfram_alpha,
         url=url,
